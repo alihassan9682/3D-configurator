@@ -46,11 +46,7 @@ li {
 }
 
 @media (min-width: 640px) {
-  .hero {
-    position: relative;
-    background: url('./assets/Hero/microsoft365.jpg') no-repeat center/cover;
-    height: 500px;
-  }
+ 
   
 
   .hero-img {
@@ -66,11 +62,7 @@ li {
   .hero .overlay p.text {
     width: 300px;
   }
-  .hero1 {
-    position: relative;
-    background: url('./assets/Hero/surfacepro8.webp') no-repeat center/cover;
-    height: 500px;
-  }
+ 
   .hero-img1 {
     display: none;
   }
@@ -83,10 +75,6 @@ li {
 
   .hero1 .overlay1 p.text {
     width: 300px;
-  }
-  .one-drive {
-    background: url('./assets/onedrive.webp') no-repeat
-      center/cover;
   }
 }
 

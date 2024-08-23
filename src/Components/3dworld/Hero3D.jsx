@@ -1,59 +1,107 @@
 import React, { useState } from "react";
 import ModelViewer from "./modalFor3D";
-import ARView from "./ARView"; // Import the AR view component
-import level2 from "../../assets/GLBs/Shelfs glb/Shelf2.glb";
-import level3 from "../../assets/GLBs/Shelfs glb/Shelf3.glb";
-import level4 from "../../assets/GLBs/Shelfs glb/Shelf4.glb";
+import ARView from "./ARView";
+import level2 from "../../assets/GLBs/Shelfs_Segment/6InShelf.glb";
+import level3 from "../../assets/GLBs/Shelfs_Segment/12InShelf.glb";
+import level4 from "../../assets/GLBs/Shelfs_Segment/24InShelf.glb";
 import logo from "../../assets/logos/dura.webp";
 import { TbAugmentedReality, TbView360Number } from "react-icons/tb";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import the styles
 
-// Main App component
 const App = () => {
-  const [modelColor, setModelColor] = useState("#ffffff");
-  const [scale, setScale] = useState(10);
+  const [scale] = useState(0.05);
   const [levels, setLevels] = useState([]);
-  const [activeView, setActiveView] = useState("VR"); // Default to VR
+  const [cumulativeHeight, setCumulativeHeight] = useState(0);
+  const [activeView, setActiveView] = useState("VR");
+  const [selectedOption, setSelectedOption] = useState("PDOUBLE");
+  const [dropHeight, setDropHeight] = useState(6);
 
-  const levelUrls = [level2, level3, level4];
+  const actualHeights = {
+    6: 6,
+    12: 12,
+    24: 24,
+  };
+
+  const levelUrls = {
+    6: level2,
+    12: level3,
+    24: level4,
+  };
+
+  const maxLayers = {
+    PDOUBLE: 2,
+    PTRIPLE: 3,
+    PQUAD: 4,
+    PTRIPLE_L: 0, // Disabled
+    PQUAD_L: 0, // Disabled
+  };
+
+  const adjustLayers = (newOption) => {
+    const allowedLayers = maxLayers[newOption];
+    if (levels.length > allowedLayers) {
+      // Remove excess layers
+      const excess = levels.length - allowedLayers;
+      const newLevels = levels.slice(0, -excess);
+      const removedHeight = levels.slice(-excess).reduce((sum, level) => sum + level.height, 0);
+      
+      setLevels(newLevels);
+      setCumulativeHeight(cumulativeHeight - removedHeight);
+      toast.info(`Removed ${excess} extra layer(s) for ${newOption}`);
+    }
+  };
 
   const addLevel = () => {
-    if (levels.length < levelUrls.length) {
-      const newLevels = [
-        ...levels,
-        {
-          url: levelUrls[levels.length],
-          position: [0, 0, 0], // No height offset
-        },
-      ];
-      setLevels(newLevels);
+    if (levels.length >= maxLayers[selectedOption]) {
+      toast.error(`Cannot add more than ${maxLayers[selectedOption]} layers for ${selectedOption}`);
+      return;
     }
+
+    const selectedLevelUrl = levelUrls[dropHeight];
+    const actualHeight = actualHeights[dropHeight] * scale;
+    const newPosition = [0, -cumulativeHeight - actualHeight, 0];
+    const newLevel = {
+      id: Date.now(),
+      url: selectedLevelUrl,
+      position: newPosition,
+      height: actualHeight,
+    };
+
+    setCumulativeHeight(cumulativeHeight + actualHeight);
+    setLevels([...levels, newLevel]);
+    toast.success(`Added level with height ${dropHeight} inches`);
   };
 
   const removeLevel = () => {
     if (levels.length > 0) {
-      const newLevels = levels.slice(0, -1);
-      setLevels(newLevels);
+      const lastLevel = levels[levels.length - 1];
+      setCumulativeHeight(cumulativeHeight - lastLevel.height);
+      setLevels(levels.slice(0, -1));
+      toast.info('Removed the last level');
     }
   };
 
   const toggleView = (view) => {
     setActiveView(view);
-    console.log(`${view} View`);
+  };
+
+  const handleDropdownChange = (e) => {
+    const newOption = e.target.value;
+    setSelectedOption(newOption);
+    adjustLayers(newOption);
+  };
+
+  const handleDropHeightChange = (e) => {
+    setDropHeight(parseInt(e.target.value));
   };
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
-      {/* Sidebar for Configuration */}
       <div className="w-full md:w-80 p-4 md:p-6 bg-gray-200 shadow-lg rounded-lg flex-shrink-0">
         <div className="flex justify-center mb-6">
-          <img
-            src={logo}
-            alt="Logo"
-            className="w-24 md:w-36 h-auto"
-          />
+          <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto" />
         </div>
 
-        {/* Toggle Button for AR and VR views */}
         <div className="flex justify-center mb-6">
           <div className="flex bg-gray-300 rounded-full p-1 shadow-inner">
             <button
@@ -68,7 +116,9 @@ const App = () => {
                 borderBottomRightRadius: 0,
               }}
             >
-               <div className="flex items-center gap-2">  <TbAugmentedReality size={24} /> <span>AR View</span></div>  
+              <div className="flex items-center gap-2">
+                <TbAugmentedReality size={24} /> <span>AR View</span>
+              </div>
             </button>
             <button
               onClick={() => toggleView("VR")}
@@ -82,37 +132,48 @@ const App = () => {
                 borderBottomLeftRadius: 0,
               }}
             >
-           <div className="flex items-center gap-2">  <TbView360Number size={24}/><span>VR View</span></div>  
+              <div className="flex items-center gap-2">
+                <TbView360Number size={24} />
+                <span>VR View</span>
+              </div>
             </button>
           </div>
         </div>
 
-        <h2 className="text-xl md:text-2xl mb-6 text-gray-800 text-center md:text-left">Model Configurator</h2>
+        <h2 className="text-xl md:text-2xl mb-6 text-gray-800 text-center md:text-left">
+          Model Configurator
+        </h2>
 
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-medium mb-2">
-            Model Color:
-            <input
-              type="color"
-              value={modelColor}
-              onChange={(e) => setModelColor(e.target.value)}
-              className="ml-2 w-12 h-8 border-none p-1 rounded-md cursor-pointer"
-            />
+            Select Model Type:
           </label>
+          <select
+            value={selectedOption}
+            onChange={handleDropdownChange}
+            className="p-2 border border-gray-300 rounded-md w-full"
+          >
+            <option value="PDOUBLE">PDOUBLE</option>
+            <option value="PTRIPLE">PTRIPLE</option>
+            <option value="PTRIPLE-L" disabled>PTRIPLE-L</option>
+            <option value="PQUAD">PQUAD</option>
+            <option value="PQUAD-L" disabled>PQUAD-L</option>
+          </select>
         </div>
 
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-medium mb-2">
-            Scale:
-            <input
-              type="number"
-              min="0.1"
-              step="0.1"
-              value={scale}
-              onChange={(e) => setScale(parseFloat(e.target.value))}
-              className="ml-2 p-2 border border-gray-300 rounded-md w-full"
-            />
+            Drop Level Height:
           </label>
+          <select
+            value={dropHeight}
+            onChange={handleDropHeightChange}
+            className="p-2 border border-gray-300 rounded-md w-full"
+          >
+            <option value={6}>6</option>
+            <option value={12}>12</option>
+            <option value={24}>24</option>
+          </select>
         </div>
 
         <div className="flex flex-wrap justify-center md:justify-start space-x-4 mb-4">
@@ -131,16 +192,18 @@ const App = () => {
         </div>
       </div>
 
-      {/* Conditional Rendering */}
       {activeView === "VR" ? (
-        <ModelViewer modelColor={modelColor} scale={scale} levels={levels} />
+        <ModelViewer scale={scale} dropHeight={dropHeight} levels={levels} />
       ) : activeView === "AR" ? (
         <ARView />
       ) : (
         <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full">
-          <p className="text-gray-800">Select a view to start.</p>
+          <p className="text-red-700">Select a view to start.</p>
         </div>
       )}
+
+      {/* Add ToastContainer component */}
+      <ToastContainer />
     </div>
   );
 };
