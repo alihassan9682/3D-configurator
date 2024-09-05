@@ -20,7 +20,7 @@ import PQL24 from "../../assets/GLBs/PQUADL/PQL24.glb";
 import logo from "../../assets/logos/dura.webp";
 import { TbAugmentedReality, TbView360Number } from "react-icons/tb";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import the styles
+import "react-toastify/dist/ReactToastify.css"; 
 
 const App = () => {
   const [scale] = useState(0.05);
@@ -73,10 +73,14 @@ const App = () => {
   }, [selectedType]);
 
   useEffect(() => {
-    if (firstLevelAdded) {
-      // Re-enable inputs once the first level is added
+    if (levels.length === 0) {
+      // Reset states when levels are empty
+      setSelectedLength(24);
+      setPlatformsPerLevel(1);
+      setFirstLevelAdded(false);
+      setSelectedType("");
     }
-  }, [firstLevelAdded]);
+  }, [levels]);
 
   const addLevel = () => {
     let currentLength = selectedLength;
