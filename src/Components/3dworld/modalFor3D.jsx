@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import level2 from "../../assets/GLBs/Shelfs_Segment/6InShelf.glb";
 
 const LoadingIndicator = () => {
   return (
@@ -36,8 +35,9 @@ const Level = ({ url, position, scale }) => {
 };
 
 const ModelViewer = ({ scale, levels }) => {
+  console.log(levels)
   return (
-    <div className="flex-1 p-4 md:p-6 flex items-center justify-center">
+    <div className="flex-1 p-4 md:p-6 flex items-center justify-center ">
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
           <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Modal</p>
@@ -54,10 +54,10 @@ const ModelViewer = ({ scale, levels }) => {
             <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
             {levels.map((level, index) => (
               <Level
-                key={`${level.url}-${index}-${Math.random()}`} // Ensure a unique key for each Level
+                key={`${level.url}-${index}-${Math.random()}`} 
                 url={level.url}
                 position={level.position}
-                scale={[scale, scale, scale]} // Apply scale here
+                scale={[scale, scale, scale]}
               />
             ))}
             <OrbitControls />

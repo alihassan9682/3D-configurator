@@ -1,8 +1,20 @@
 import React from "react";
-import Model from "../../assets/GLBs/Shelfrevised.glb";
 import IMG from "./targets.mind";
 
-const ARComponent = () => {
+const ARComponent = ({ layers }) => {
+  const generateModels = () => {
+    return layers?.map((layer, index) => `
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-gltf-model 
+          src="#model-${index}" 
+          position="${layer.position?.join(" ") || "0 0 0"}" 
+          scale="${layer.scale?.join(" ") || "0.1 0.1 0.1"}" 
+          rotation="${layer.rotation?.join(" ") || "0 0 0"}">
+        </a-gltf-model>
+      </a-entity>
+    `).join("\n");
+  };
+
   return (
     <div
       style={{
@@ -16,27 +28,33 @@ const ARComponent = () => {
       <iframe
         srcDoc={`<html>
           <head>
-            <meta name="viewport" content="width=device-width, initial-scale=50" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
           </head>
           <body style="margin: 0; overflow: hidden;">
-            <a-scene mindar-image="imageTargetSrc:${IMG};" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" style="width: 100vw; height: 100vh;">
+            <a-scene 
+              mindar-image="imageTargetSrc:${IMG};" 
+              vr-mode-ui="enabled: false" 
+              device-orientation-permission-ui="enabled: false" 
+              style="width: 100vw; height: 100vh;"
+            >
               <a-assets>
-                <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
-                <a-asset-item id="avatarModel" src="${Model}" />
+                ${layers?.map((layer, index) => `
+                  <a-asset-item id="model-${index}" src="${layer.url}" />
+                `).join("\n")}
               </a-assets>
 
               <!-- Lighting -->
-              <a-light type="ambient" color="#ffffff" intensity="50"></a-light>
-              <a-light type="directional" color="#ffffff" intensity="50" position="1 2 3"></a-light>
-              <a-light type="point" color="#ffffff" intensity="50" position="0 3 5" distance="10"></a-light>
-              <a-light type="spot" color="#ffffff" intensity="40" position="0 5 10" angle="45" penumbra="1" distance="10"></a-light>
+              <a-light type="ambient" color="#ffffff" intensity="1"></a-light>
+              <a-light type="directional" color="#ffffff" intensity="1" position="1 2 3"></a-light>
 
-              <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-              <a-entity mindar-image-target="targetIndex: 0">
-                <a-gltf-model rotation="90 -90 -90" position="0 0 0" scale="1 1 1" src="#avatarModel" animation="property: position; to: 0 0 0; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-gltf-model>
-              </a-entity>
+              <!-- Camera -->
+              <a-camera position="0 0 5" look-controls="enabled: false"></a-camera>
+
+              <!-- Models -->
+              ${generateModels()}
+
             </a-scene>
           </body>
         </html>`}

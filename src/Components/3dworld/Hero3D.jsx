@@ -1,21 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ModelViewer from "./modalFor3D";
 import ARView from "./ARView";
-import level2 from "../../assets/GLBs/Shelfs_Segment/6InShelf.glb";
-import level3 from "../../assets/GLBs/Shelfs_Segment/12InShelf.glb";
-import level4 from "../../assets/GLBs/Shelfs_Segment/24InShelf.glb";
+import PD6 from "../../assets/GLBs/P-Double/PD6.glb";
+import PD12 from "../../assets/GLBs/P-Double/PD12.glb";
+import PD24 from "../../assets/GLBs/P-Double/PD24.glb";
+import PT6 from "../../assets/GLBs/PTRIPLE/PT6.glb";
+import PT12 from "../../assets/GLBs/PTRIPLE/PT12.glb";
+import PT24 from "../../assets/GLBs/PTRIPLE/PT24.glb";
+import PTL6 from "../../assets/GLBs/PTRIPLEL/PTL6.glb";
+import PTL12 from "../../assets/GLBs/PTRIPLEL/PTL12.glb";
+import PTL24 from "../../assets/GLBs/PTRIPLEL/PTL24.glb";
+import PQ6 from "../../assets/GLBs/PQUAD/PQ6.glb";
+import PQ12 from "../../assets/GLBs/PQUAD/PQ12.glb";
+import PQ24 from "../../assets/GLBs/PQUAD/PQ24.glb";
+import PQL6 from "../../assets/GLBs/PQUADL/PQL6.glb";
+import PQL12 from "../../assets/GLBs/PQUADL/PQL12.glb";
+import PQL24 from "../../assets/GLBs/PQUADL/PQL24.glb";
+
 import logo from "../../assets/logos/dura.webp";
 import { TbAugmentedReality, TbView360Number } from "react-icons/tb";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Import the styles
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import the styles
 
 const App = () => {
   const [scale] = useState(0.05);
   const [levels, setLevels] = useState([]);
   const [cumulativeHeight, setCumulativeHeight] = useState(0);
   const [activeView, setActiveView] = useState("VR");
-  const [selectedOption, setSelectedOption] = useState("PDOUBLE");
-  const [dropHeight, setDropHeight] = useState(6);
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedLength, setSelectedLength] = useState(24); // Default to 24 inches
+  const [platformsPerLevel, setPlatformsPerLevel] = useState(1); // Number of platforms per level
+  const [firstLevelAdded, setFirstLevelAdded] = useState(false); // State to track if the first level is added
 
   const actualHeights = {
     6: 6,
@@ -24,52 +39,78 @@ const App = () => {
   };
 
   const levelUrls = {
-    6: level2,
-    12: level3,
-    24: level4,
+    PDOUBLE: {
+      6: PD6,
+      12: PD12,
+      24: PD24,
+    },
+    PTRIPLE: {
+      6: PT6,
+      12: PT12,
+      24: PT24,
+    },
+    PTRIPLE_L: {
+      6: PTL6,
+      12: PTL12,
+      24: PTL24,
+    },
+    PQUAD: {
+      6: PQ6,
+      12: PQ12,
+      24: PQ24,
+    },
+    PQUAD_L: {
+      6: PQL6,
+      12: PQL12,
+      24: PQL24,
+    },
   };
 
-  const maxLayers = {
-    PDOUBLE: 2,
-    PTRIPLE: 3,
-    PQUAD: 4,
-    PTRIPLE_L: 0, // Disabled
-    PQUAD_L: 0, // Disabled
-  };
-
-  const adjustLayers = (newOption) => {
-    const allowedLayers = maxLayers[newOption];
-    if (levels.length > allowedLayers) {
-      // Remove excess layers
-      const excess = levels.length - allowedLayers;
-      const newLevels = levels.slice(0, -excess);
-      const removedHeight = levels.slice(-excess).reduce((sum, level) => sum + level.height, 0);
-      
-      setLevels(newLevels);
-      setCumulativeHeight(cumulativeHeight - removedHeight);
-      toast.info(`Removed ${excess} extra layer(s) for ${newOption}`);
+  useEffect(() => {
+    if (selectedType && !firstLevelAdded) {
+      addLevel(); // Automatically add the first level when type is selected
     }
-  };
+  }, [selectedType]);
+
+  useEffect(() => {
+    if (firstLevelAdded) {
+      // Re-enable inputs once the first level is added
+    }
+  }, [firstLevelAdded]);
 
   const addLevel = () => {
-    if (levels.length >= maxLayers[selectedOption]) {
-      toast.error(`Cannot add more than ${maxLayers[selectedOption]} layers for ${selectedOption}`);
-      return;
+    let currentLength = selectedLength;
+
+    // Ensure the first level is always added with 24 inches length
+    if (!firstLevelAdded) {
+      currentLength = 24;
+      setSelectedLength(24); // Force the dropdown to reflect 24 for the first level
     }
 
-    const selectedLevelUrl = levelUrls[dropHeight];
-    const actualHeight = actualHeights[dropHeight] * scale;
-    const newPosition = [0, -cumulativeHeight - actualHeight, 0];
-    const newLevel = {
-      id: Date.now(),
-      url: selectedLevelUrl,
-      position: newPosition,
-      height: actualHeight,
-    };
+    const selectedLevelUrl = levelUrls[selectedType][currentLength];
+    const actualHeight = actualHeights[currentLength] * scale;
 
-    setCumulativeHeight(cumulativeHeight + actualHeight);
-    setLevels([...levels, newLevel]);
-    toast.success(`Added level with height ${dropHeight} inches`);
+    let newLevels = [];
+    let newCumulativeHeight = cumulativeHeight;
+
+    for (let i = 0; i < platformsPerLevel; i++) {
+      const newPosition = [0, -newCumulativeHeight - actualHeight, 0];
+      const newLevel = {
+        id: Date.now() + i, // Unique ID for each level
+        url: selectedLevelUrl,
+        position: newPosition,
+        height: actualHeight,
+      };
+
+      newCumulativeHeight += actualHeight;
+      newLevels.push(newLevel);
+    }
+
+    setCumulativeHeight(newCumulativeHeight);
+    setLevels([...levels, ...newLevels]); // Add all new levels
+    setFirstLevelAdded(true); // Mark the first level as added
+
+    toast.success(`Added ${platformsPerLevel} level(s) with ${platformsPerLevel} platform(s) each.`);
   };
 
   const removeLevel = () => {
@@ -77,7 +118,7 @@ const App = () => {
       const lastLevel = levels[levels.length - 1];
       setCumulativeHeight(cumulativeHeight - lastLevel.height);
       setLevels(levels.slice(0, -1));
-      toast.info('Removed the last level');
+      toast.info("Removed the last level");
     }
   };
 
@@ -85,14 +126,17 @@ const App = () => {
     setActiveView(view);
   };
 
-  const handleDropdownChange = (e) => {
-    const newOption = e.target.value;
-    setSelectedOption(newOption);
-    adjustLayers(newOption);
+  const handleTypeChange = (e) => {
+    setSelectedType(e.target.value);
   };
 
-  const handleDropHeightChange = (e) => {
-    setDropHeight(parseInt(e.target.value));
+  const handleLengthChange = (e) => {
+    const selectedLengthValue = parseInt(e.target.value);
+    if (levels.length === 0 && selectedLengthValue !== 24) {
+      toast.error("The first level must have a length of 24 inches.");
+    } else {
+      setSelectedLength(selectedLengthValue);
+    }
   };
 
   return (
@@ -149,31 +193,47 @@ const App = () => {
             Select Model Type:
           </label>
           <select
-            value={selectedOption}
-            onChange={handleDropdownChange}
+            value={selectedType}
+            onChange={handleTypeChange}
             className="p-2 border border-gray-300 rounded-md w-full"
           >
+            <option value="">Select Type</option>
             <option value="PDOUBLE">PDOUBLE</option>
             <option value="PTRIPLE">PTRIPLE</option>
-            <option value="PTRIPLE-L" disabled>PTRIPLE-L</option>
+            <option value="PTRIPLE_L">PTRIPLE-L</option>
             <option value="PQUAD">PQUAD</option>
-            <option value="PQUAD-L" disabled>PQUAD-L</option>
+            <option value="PQUAD_L">PQUAD-L</option>
           </select>
         </div>
 
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-medium mb-2">
-            Drop Level Height:
+            Select Length (in inches):
           </label>
           <select
-            value={dropHeight}
-            onChange={handleDropHeightChange}
+            value={selectedLength}
+            onChange={handleLengthChange}
             className="p-2 border border-gray-300 rounded-md w-full"
+            disabled={!firstLevelAdded} // Disable until the first level is added
           >
             <option value={6}>6</option>
             <option value={12}>12</option>
             <option value={24}>24</option>
           </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-medium mb-2">
+            Number of Platforms per Level:
+          </label>
+          <input
+            type="number"
+            value={platformsPerLevel}
+            onChange={(e) => setPlatformsPerLevel(parseInt(e.target.value))}
+            className="p-2 border border-gray-300 rounded-md w-full"
+            min="1"
+            disabled={!firstLevelAdded} // Disable until the first level is added
+          />
         </div>
 
         <div className="flex flex-wrap justify-center md:justify-start space-x-4 mb-4">
@@ -193,16 +253,19 @@ const App = () => {
       </div>
 
       {activeView === "VR" ? (
-        <ModelViewer scale={scale} dropHeight={dropHeight} levels={levels} />
+        <ModelViewer
+          scale={scale}
+          dropHeight={selectedLength}
+          levels={levels}
+        />
       ) : activeView === "AR" ? (
-        <ARView />
+        <ARView layers={levels} />
       ) : (
         <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full">
           <p className="text-red-700">Select a view to start.</p>
         </div>
       )}
 
-      {/* Add ToastContainer component */}
       <ToastContainer />
     </div>
   );
