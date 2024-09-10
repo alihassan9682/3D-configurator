@@ -1,20 +1,8 @@
 import React from "react";
 import IMG from "./targets.mind";
+import PS6 from "../../assets/GLBs/PSINGLE/PS6.glb";
 
-const ARComponent = ({ layers }) => {
-  const generateModels = () => {
-    return layers?.map((layer, index) => `
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model 
-          src="#model-${index}" 
-          position="${layer.position?.join(" ") || "0 0 0"}" 
-          scale="${layer.scale?.join(" ") || "0.1 0.1 0.1"}" 
-          rotation="${layer.rotation?.join(" ") || "0 0 0"}">
-        </a-gltf-model>
-      </a-entity>
-    `).join("\n");
-  };
-
+const ARComponent = () => {
   return (
     <div
       style={{
@@ -40,9 +28,7 @@ const ARComponent = ({ layers }) => {
               style="width: 100vw; height: 100vh;"
             >
               <a-assets>
-                ${layers?.map((layer, index) => `
-                  <a-asset-item id="model-${index}" src="${layer.url}" />
-                `).join("\n")}
+                <a-asset-item id="model-0" src=${PS6} />
               </a-assets>
 
               <!-- Lighting -->
@@ -52,8 +38,15 @@ const ARComponent = ({ layers }) => {
               <!-- Camera -->
               <a-camera position="0 0 5" look-controls="enabled: false"></a-camera>
 
-              <!-- Models -->
-              ${generateModels()}
+              <!-- Model -->
+              <a-entity mindar-image-target="targetIndex: 0">
+                <a-gltf-model 
+                  src="#model-0" 
+                  position="0 0 0" 
+                  scale="0.05 0.05 0.05" 
+                  rotation="0 0 0">
+                </a-gltf-model>
+              </a-entity>
 
             </a-scene>
           </body>
