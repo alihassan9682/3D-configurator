@@ -1,8 +1,8 @@
 import React from "react";
 import IMG from "./targets.mind";
-import PS6 from "../../assets/GLBs/PSINGLE/PS6.glb";
 
-const ARComponent = () => {
+const ARComponent = ({ modal }) => {
+
   return (
     <div
       style={{
@@ -28,7 +28,7 @@ const ARComponent = () => {
               style="width: 100vw; height: 100vh;"
             >
               <a-assets>
-                <a-asset-item id="model-0" src=${PS6} />
+                <a-asset-item id="model-0" src="${modal}" />
               </a-assets>
 
               <!-- Lighting -->
@@ -36,14 +36,14 @@ const ARComponent = () => {
               <a-light type="directional" color="#ffffff" intensity="1" position="1 2 3"></a-light>
 
               <!-- Camera -->
-              <a-camera position="0 0 5" look-controls="enabled: false"></a-camera>
+              <a-camera position="0 0 5" look-controls="enabled: True"></a-camera>
 
               <!-- Model -->
               <a-entity mindar-image-target="targetIndex: 0">
                 <a-gltf-model 
                   src="#model-0" 
                   position="0 0 0" 
-                  scale="0.05 0.05 0.05" 
+                  scale="0.5 0.5 0.5" 
                   rotation="0 0 0">
                 </a-gltf-model>
               </a-entity>

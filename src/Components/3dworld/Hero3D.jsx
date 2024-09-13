@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import ModelViewer from "./modalFor3D";
+// import ModelViewer from "./modalFor3D";
+import ModelViewer from "./exporterForAR";
 import ARView from "./ARView";
-
 import logo from "../../assets/logos/dura.webp";
 import { TbAugmentedReality, TbView360Number } from "react-icons/tb";
 import { ToastContainer, toast } from "react-toastify";
@@ -23,6 +23,7 @@ const App = () => {
   const [selectedType, setSelectedType] = useState("");
   const [selectedLength, setSelectedLength] = useState(24);
   const [platformsPerLevel, setPlatformsPerLevel] = useState(1);
+  const [modal, setModal] = useState();
 
   const handleBaseTypeChange = (e) => {
     const newBaseType = e.target.value;
@@ -279,11 +280,11 @@ const App = () => {
       {activeView === "VR" ? (
         <ModelViewer
           scale={scale}
-          dropHeight={selectedLength}
           levels={levels}
+          setModal={setModal}
         />
       ) : activeView === "AR" ? (
-        <ARView layers={levels} />
+        <ARView modal={modal} />
       ) : (
         <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full">
           <p className="text-red-700">Select a view to start.</p>
