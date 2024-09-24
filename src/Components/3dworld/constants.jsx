@@ -59,13 +59,41 @@ export const levelUrls = {
 
 
 export const baseTypeOptions = [
-  { value: "", label: "Select Base Type" },
-  { value: "PSINGLE", label: "PSINGLE" },
-  { value: "PDOUBLE", label: "PDOUBLE" },
-  { value: "PTRIPLE", label: "PTRIPLE" },
-  { value: "PTRIPLE_L", label: "PTRIPLE_L" },
-  { value: "PQUAD", label: "PQUAD" },
-  { value: "PQUAD_L", label: "PQUAD_L" },
+  {
+    id: 1,
+    value: "",
+    label: "Select Base Type"
+  },
+  {
+    id: 2,
+    value: "PSINGLE",
+    label: "PSINGLE"
+  },
+  {
+    id: 8542404804827,
+    value: "PDOUBLE",
+    label: "PDOUBLE"
+  },
+  {
+    id: 8542545903835,
+    value: "PTRIPLE",
+    label: "PTRIPLE"
+  },
+  {
+    id: 8542553833691,
+    value: "PTRIPLE_L",
+    label: "PTRIPLE_L"
+  },
+  {
+    id: 8651522113755,
+    value: "PQUAD",
+    label: "PQUAD"
+  },
+  {
+    id: 8652301172955,
+    value: "PQUAD_L",
+    label: "PQUAD_L"
+  },
 ];
 
 

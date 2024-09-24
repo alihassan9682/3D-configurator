@@ -13,6 +13,7 @@ import {
   baseTypeOptions,
   conditionalOptions,
 } from "./constants";
+import { useParams } from "react-router-dom";
 
 const App = () => {
   const [scale] = useState(0.05);
@@ -24,6 +25,19 @@ const App = () => {
   const [selectedLength, setSelectedLength] = useState(24);
   const [platformsPerLevel, setPlatformsPerLevel] = useState(1);
   const [modal, setModal] = useState();
+
+  const { id } = useParams();
+  useEffect(() => {
+    const baseTypeFromId = baseTypeOptions.find(option => option.id === parseInt(id));
+
+    if (baseTypeFromId) {
+      handleBaseTypeChange({ target: { value: baseTypeFromId.value } });
+      console.log(baseTypeFromId);
+    } else {
+      toast.error("Invalid base type ID");
+    }
+  }, [id]);
+
 
   const handleBaseTypeChange = (e) => {
     const newBaseType = e.target.value;
@@ -161,11 +175,10 @@ const App = () => {
           <div className="flex bg-gray-300 rounded-full p-1 shadow-inner">
             <button
               onClick={() => toggleView("AR")}
-              className={`px-4 py-2 rounded-full transition duration-300 ${
-                activeView === "AR"
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-300 text-gray-700"
-              }`}
+              className={`px-4 py-2 rounded-full transition duration-300 ${activeView === "AR"
+                ? "bg-gray-700 text-white"
+                : "bg-gray-300 text-gray-700"
+                }`}
               style={{
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0,
@@ -177,11 +190,10 @@ const App = () => {
             </button>
             <button
               onClick={() => toggleView("VR")}
-              className={`px-4 py-2 rounded-full transition duration-300 ${
-                activeView === "VR"
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-300 text-gray-700"
-              }`}
+              className={`px-4 py-2 rounded-full transition duration-300 ${activeView === "VR"
+                ? "bg-gray-700 text-white"
+                : "bg-gray-300 text-gray-700"
+                }`}
               style={{
                 borderTopLeftRadius: 0,
                 borderBottomLeftRadius: 0,
@@ -207,7 +219,7 @@ const App = () => {
               Reset all
             </button>
           </div>
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block text-gray-700 text-sm font-medium mb-2">
               Select Base Type:
             </label>
@@ -215,14 +227,29 @@ const App = () => {
               value={baseType}
               onChange={handleBaseTypeChange}
               className="p-2 border border-gray-300 rounded-md w-full"
-              disabled={!!baseType} 
+              disabled={!!baseType}
             >
-              {baseTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              {baseTypeOptions
+                .filter((option) => option.id === id)
+                .map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
             </select>
+
+          </div> */}
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-2">
+              Base Type:
+            </label>
+            <input
+              type="text"
+              value={baseType}
+              className="p-2 border border-gray-300 rounded-md w-full"
+              disabled
+              placeholder={baseType}
+            />
           </div>
 
           <div className="mb-4">
