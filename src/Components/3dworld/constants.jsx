@@ -70,27 +70,27 @@ export const baseTypeOptions = [
     label: "PSINGLE"
   },
   {
-    id: 8542404804827,
+    id: 45649839292635,
     value: "PDOUBLE",
     label: "PDOUBLE"
   },
   {
-    id: 8542545903835,
+    id: 45650105696475,
     value: "PTRIPLE",
     label: "PTRIPLE"
   },
   {
-    id: 8542553833691,
+    id: 45650119459035,
     value: "PTRIPLE_L",
     label: "PTRIPLE_L"
   },
   {
-    id: 8651522113755,
+    id: 45920037339355,
     value: "PQUAD",
     label: "PQUAD"
   },
   {
-    id: 8652301172955,
+    id: 45922991538395,
     value: "PQUAD_L",
     label: "PQUAD_L"
   },

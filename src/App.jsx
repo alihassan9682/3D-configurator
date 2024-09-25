@@ -10,7 +10,7 @@ import {
 
 import Footer from "./Components/Footer";
 import Hero3D from "./Components/3dworld/Hero3D";
-import ShopifyProducts from "./Components/products/ShopifyProduts";
+import ShopifyCollection from "./Components/products/ShopifyProduts";
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
           <Route path="/home/:id" element={<Hero3D />} />
           <Route path="*" element={<Navigate to="/home/1" />} />
         </Routes>
-        <ShopifyProducts/>
+        <ShopifyCollection />
         <Footer />
       </div>
     </Router>
