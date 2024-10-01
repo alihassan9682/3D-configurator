@@ -100,7 +100,7 @@ const Hero2 = () => {
                             </div>
                         </button>
                         <button
-                            onClick={() => toggleView("VR")}
+                            onClick={() => toggleView("VR", dispatch)}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "VR"
                                 ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
