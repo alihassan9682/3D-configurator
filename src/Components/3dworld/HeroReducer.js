@@ -398,7 +398,7 @@ export const addToCart = async (
   descripation,
   dispatch
 ) => {
-  if (!checkout || isInCart || isLoading) return; // Prevent if checkout is not ready, item is already in cart, or loading
+  if (!checkout || isInCart || isLoading) return; 
   dispatch({ type: "SET_Loading" });
   const variant_id = id;
   const variantId = `gid://shopify/ProductVariant/${variant_id}`;
@@ -430,8 +430,8 @@ export const addToCart = async (
     }
   };
  const client = Client.buildClient({
-   domain: process.env.API_URL,
-   storefrontAccessToken: process.env.API_KEY,
+   domain: process.env.REACT_APP_API_URL,
+   storefrontAccessToken: process.env.REACT_APP_API_KEY,
  });
   try {
     const updatedCheckout = await retryWithBackoff(() =>

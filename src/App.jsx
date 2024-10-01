@@ -9,8 +9,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import Footer from "./Components/Footer";
-import Hero1 from "./Components/3dworld/Hero1";
-import Hero2 from "./Components/3dworld/newfolder/hero2";
+import Hero2 from "./Components/3dworld/hero2";
 
 // Adjust the path if HeroContext is in a different folder
 function App() {

@@ -22,7 +22,7 @@ import {
     removeLevel,
     handleBaseTypeChange,
     addToCart
-} from '../exporter';
+} from './exporter';
 import { useParams } from 'react-router-dom';
 import { FaDatabase } from "react-icons/fa6";
 import { FaLayerGroup } from "react-icons/fa6";
@@ -39,11 +39,8 @@ const Hero2 = () => {
   
     useEffect(() => {
         const client = Client.buildClient({
-            domain: process.env.API_URL,
-            storefrontAccessToken: process.env.API_KEY,
-        })
-        client.checkout.create().then((checkout) => {
-            dispatch({type:"SET_CHECKOUT" ,payload:checkout})
+            domain: process.env.REACT_APP_API_URL,
+            storefrontAccessToken: process.env.REACT_APP_API_KEY,
         });
     }, []);
     useEffect(() => {
@@ -52,7 +49,7 @@ const Hero2 = () => {
         );
         if (baseTypeFromId) {
             setInitialPrice(baseTypeFromId.price)
-            dispatch({ type: "SET_PRICE", payload: initalPrice });
+            dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
             dispatch({ type: "SET_BASE_TYPE", payload: baseTypeFromId.value });
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight);
 
@@ -78,8 +75,8 @@ const Hero2 = () => {
         console.log('Model:', state.model);
     }, [state.levels, state.price, state.descripation, state.model]);
     return (
-        <div className="flex flex-col md:flex-row h-screen lg:mb-5 bg-gradient-to-br from-gray-100 to-gray-300">
-            <div className="w-full md:w-80 p-4 md:p-6 bg-gradient-to-br from-green-100 via-white to-blue-100 shadow-2xl rounded-3xl flex-shrink-0">
+        <div className="flex flex-col md:flex-row h-screen lg:mb-5 ">
+            <div className="w-full md:w-80 p-4 md:p-6   bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
                 <div className="flex justify-center mb-6">
                     <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                 </div>
@@ -88,7 +85,7 @@ const Hero2 = () => {
                         <button
                             onClick={() => toggleView("AR",dispatch)}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "AR"
-                                ? "bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-lg transform hover:scale-105"
+                                ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
                                 }`}
                             style={{
@@ -103,7 +100,7 @@ const Hero2 = () => {
                         <button
                             onClick={() => toggleView("VR")}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "VR"
-                                ? "bg-gradient-to-r from-purple-400 to-pink-500 text-white shadow-lg transform hover:scale-105"
+                                ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
                                 }`}
                             style={{
@@ -133,7 +130,7 @@ const Hero2 = () => {
                         </button>
 
                         <button
-                            onClick={()=>resetAll(state.baseType,state.levels,dispatch,toast,initalPrice)}
+                            onClick={()=>resetAll(state.levels,dispatch,toast,initalPrice)}
                             className="bg-yellow-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition duration-300"
                         >
                             <GrPowerReset size={20} className="mr-2" />
