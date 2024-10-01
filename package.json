@@ -36,6 +36,7 @@
     "react-three-fiber": "^6.0.13",
     "react-toastify": "^10.0.5",
     "react-transition-group": "^4.4.5",
+    "shopify-buy": "^2.22.0",
     "slick-carousel": "^1.8.1",
     "three": "^0.164.1",
     "web-vitals": "^2.1.4"

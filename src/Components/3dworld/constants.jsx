@@ -67,32 +67,42 @@ export const baseTypeOptions = [
   {
     id: 2,
     value: "PSINGLE",
-    label: "PSINGLE"
+    label: "PSINGLE",
+    price: 97.96
+
   },
   {
     id: 45649839292635,
     value: "PDOUBLE",
-    label: "PDOUBLE"
+    label: "PDOUBLE",
+    price: 195.94
+
   },
   {
     id: 45650105696475,
     value: "PTRIPLE",
-    label: "PTRIPLE"
+    label: "PTRIPLE",
+    price: 251.46
+
   },
   {
     id: 45650119459035,
     value: "PTRIPLE_L",
-    label: "PTRIPLE_L"
+    label: "PTRIPLE_L",
+    price: 257.58
+
   },
   {
     id: 45920037339355,
     value: "PQUAD",
-    label: "PQUAD"
+    label: "PQUAD",
+    price: 357.68
   },
   {
     id: 45922991538395,
     value: "PQUAD_L",
-    label: "PQUAD_L"
+    label: "PQUAD_L",
+    price: 365.72
   },
 ];
 

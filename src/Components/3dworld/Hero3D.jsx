@@ -20,18 +20,20 @@ const App = () => {
   const [levels, setLevels] = useState([]);
   const [cumulativeHeight, setCumulativeHeight] = useState(0);
   const [activeView, setActiveView] = useState("VR");
-  const [baseType, setBaseType] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedLength, setSelectedLength] = useState(24);
   const [platformsPerLevel, setPlatformsPerLevel] = useState(1);
   const [modal, setModal] = useState();
 
   const { id } = useParams();
+  const [baseType, setBaseType] = useState("");
+
   useEffect(() => {
     const baseTypeFromId = baseTypeOptions.find(option => option.id === parseInt(id));
 
     if (baseTypeFromId) {
       handleBaseTypeChange({ target: { value: baseTypeFromId.value } });
+      setBaseType(baseTypeFromId.value);
       console.log(baseTypeFromId);
     } else {
       toast.error("Invalid base type ID");
@@ -84,6 +86,7 @@ const App = () => {
 
   const handleTypeChange = (e) => {
     setSelectedType(e.target.value);
+    console.log(e.target.value);
   };
 
   const handleLengthChange = (e) => {
@@ -219,26 +222,6 @@ const App = () => {
               Reset all
             </button>
           </div>
-          {/* <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-medium mb-2">
-              Select Base Type:
-            </label>
-            <select
-              value={baseType}
-              onChange={handleBaseTypeChange}
-              className="p-2 border border-gray-300 rounded-md w-full"
-              disabled={!!baseType}
-            >
-              {baseTypeOptions
-                .filter((option) => option.id === id)
-                .map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-            </select>
-
-          </div> */}
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-medium mb-2">
               Base Type:
@@ -247,7 +230,7 @@ const App = () => {
               type="text"
               value={baseType}
               className="p-2 border border-gray-300 rounded-md w-full"
-              disabled
+              disabled ={baseType}
               placeholder={baseType}
             />
           </div>

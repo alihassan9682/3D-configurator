@@ -3,7 +3,6 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from 'three';
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
-
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -31,9 +30,8 @@ const Level = ({ url, position, scale }) => {
   return <primitive object={clonedScene} position={position} scale={scale} />;
 };
 
-const ModelViewer = ({ scale, levels, setModal }) => {
+const ModelViewer = ({ scale,levels,dispatch }) => {
   const sceneRef = useRef(new THREE.Scene());
-
   const exportModel = () => {
     if (!sceneRef.current) return;
 
@@ -43,7 +41,8 @@ const ModelViewer = ({ scale, levels, setModal }) => {
       (result) => {
         const blob = new Blob([JSON.stringify(result)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        setModal(url); 
+        // setModel(url); 
+        dispatch({ type: "SET_MODEL", payload: url });
     },
       { binary: true }
     );
@@ -56,7 +55,7 @@ const ModelViewer = ({ scale, levels, setModal }) => {
   }, [levels]);
 
   return (
-    <div className="flex-1 p-4 md:p-6 flex flex-col items-center justify-center">
+    <div className="flex-1 w-screen flex-wrap p-4 md:p-6 flex flex-col items-center justify-center">
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
           <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
