@@ -39,8 +39,8 @@ const Hero2 = () => {
   
     useEffect(() => {
         const client = Client.buildClient({
-            domain: 'duralifthardware.com',
-            storefrontAccessToken: 'de189c5e871c9aaded8566d9dab068f7',
+            domain: process.env.API_URL,
+            storefrontAccessToken: process.env.API_KEY,
         })
         client.checkout.create().then((checkout) => {
             dispatch({type:"SET_CHECKOUT" ,payload:checkout})
