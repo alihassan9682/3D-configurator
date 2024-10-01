@@ -437,21 +437,17 @@ export const addToCart = async (
 
   // Create the client using environment variables
   const client = Client.buildClient({
-    domain: process.env.REACT_APP_DOMAIN, // Fixed spelling from DOMIAN to DOMAIN
-    storefrontAccessToken: process.env.REACT_APP_API_KEY, // Access key from environment variables
+    domain: "duralifthardware.com", 
+    storefrontAccessToken: process.env.REACT_APP_API_KEY, 
+    
   });
   
   try {
-    // Try to add line items to the checkout
     const updatedCheckout = await retryWithBackoff(() =>
-      client.checkout.addLineItems(checkout.id, lineItemsToAdd)
+      client.checkout.addLineItems(checkout.id, lineItemsToAdd),
     );
-
-    // Dispatch updated checkout to the state
-    dispatch({ type: "SET_CHECKOUT", payload: updatedCheckout });
+    setCheckout(updatedCheckout);
     dispatch({ type: "SET_CART" });
-
-    // Redirect to the checkout URL
     window.location.href = updatedCheckout.webUrl;
   } catch (error) {
     console.error("Failed to add to cart:", error);

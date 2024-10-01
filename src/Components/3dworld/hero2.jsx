@@ -39,17 +39,13 @@ const Hero2 = () => {
     const [checkout, setCheckout] = React.useState(null);
     useEffect(() => {
         const client = Client.buildClient({
-            domain: process.env.REACT_APP_DOMIAN,
+            domain: 'duralifthardware.com',
             storefrontAccessToken: process.env.REACT_APP_API_KEY,
         });
         client.checkout.create().then((checkout) => {
             setCheckout(checkout);
         })
     },[])
-    console.log("Domain:", process.env.REACT_APP_DOMAIN);
-    console.log("API Key:", process.env.REACT_APP_API_KEY);
-
-
     useEffect(() => {
         const baseTypeFromId = baseTypeOptions.find(
             (option) => option.id === parseInt(id)
