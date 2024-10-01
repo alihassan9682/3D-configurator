@@ -13,7 +13,6 @@ export const initialState = {
   value: [],
   isLoading: false,
   isInCart: false,
-  checkout: null,
   model: null,
 };
 
@@ -34,11 +33,6 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         isInCart: !state.isInCart,
-      };
-    case "SET_CHECKOUT":
-      return {
-        ...state,
-        checkout: action.payload,
       };
     case "SET_Loading":
       return {
@@ -396,10 +390,19 @@ export const addToCart = async (
   id,
   price,
   descripation,
-  dispatch
+  dispatch,
+  setCheckout
 ) => {
-  if (!checkout || isInCart || isLoading) return; 
+  if (!checkout) {
+    console.error("Checkout object is null or undefined");
+    return;
+  }
+
+  if (isInCart || isLoading) return;
+
   dispatch({ type: "SET_Loading" });
+  console.log("Button Clicked");
+
   const variant_id = id;
   const variantId = `gid://shopify/ProductVariant/${variant_id}`;
 
@@ -408,16 +411,18 @@ export const addToCart = async (
   const lineItemsToAdd = [
     {
       variantId,
-      quantity: 1,
+      quantity: 1, // Set quantity to 1
       customAttributes: [
         {
-          key: "Price after Custumization",
+          key: "Price after Customization",
           value: JSON.stringify(customPrice),
         },
-        { key: "Customization  Details", value: customDescripation },
+        { key: "Customization Details", value: customDescripation },
       ],
     },
   ];
+
+  // Retry function for handling API throttling
   const retryWithBackoff = async (fn, retries = 5, delay = 1000) => {
     try {
       return await fn();
@@ -429,16 +434,24 @@ export const addToCart = async (
       throw error;
     }
   };
- const client = Client.buildClient({
-   domain: process.env.REACT_APP_API_URL,
-   storefrontAccessToken: process.env.REACT_APP_API_KEY,
- });
+
+  // Create the client using environment variables
+  const client = Client.buildClient({
+    domain: process.env.REACT_APP_DOMAIN, // Fixed spelling from DOMIAN to DOMAIN
+    storefrontAccessToken: process.env.REACT_APP_API_KEY, // Access key from environment variables
+  });
+  
   try {
+    // Try to add line items to the checkout
     const updatedCheckout = await retryWithBackoff(() =>
       client.checkout.addLineItems(checkout.id, lineItemsToAdd)
     );
+
+    // Dispatch updated checkout to the state
     dispatch({ type: "SET_CHECKOUT", payload: updatedCheckout });
     dispatch({ type: "SET_CART" });
+
+    // Redirect to the checkout URL
     window.location.href = updatedCheckout.webUrl;
   } catch (error) {
     console.error("Failed to add to cart:", error);
@@ -446,3 +459,4 @@ export const addToCart = async (
     dispatch({ type: "SET_Loading" });
   }
 };
+

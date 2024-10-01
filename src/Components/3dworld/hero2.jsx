@@ -21,7 +21,7 @@ import {
     resetAll,
     removeLevel,
     handleBaseTypeChange,
-    addToCart
+    addToCart,
 } from './exporter';
 import { useParams } from 'react-router-dom';
 import { FaDatabase } from "react-icons/fa6";
@@ -36,13 +36,20 @@ const Hero2 = () => {
     const [state, dispatch] = useReducer(heroReducer, initialState);
     const [initalPrice,setInitialPrice] = React.useState(0);
     const [drop_down, setDropdownlevel] = React.useState(1);
-  
+    const [checkout, setCheckout] = React.useState(null);
     useEffect(() => {
         const client = Client.buildClient({
-            domain: process.env.REACT_APP_API_URL,
+            domain: process.env.REACT_APP_DOMIAN,
             storefrontAccessToken: process.env.REACT_APP_API_KEY,
         });
-    }, []);
+        client.checkout.create().then((checkout) => {
+            setCheckout(checkout);
+        })
+    },[])
+    console.log("Domain:", process.env.REACT_APP_DOMAIN);
+    console.log("API Key:", process.env.REACT_APP_API_KEY);
+
+
     useEffect(() => {
         const baseTypeFromId = baseTypeOptions.find(
             (option) => option.id === parseInt(id)
@@ -72,7 +79,6 @@ const Hero2 = () => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
         console.log('Levels:', state.levels);
-        console.log('Model:', state.model);
     }, [state.levels, state.price, state.descripation, state.model]);
     return (
         <div className="flex flex-col md:flex-row h-screen lg:mb-5 ">
@@ -121,7 +127,7 @@ const Hero2 = () => {
                 <div className="flex flex-col space-y-4 xl:space-y-2">
                     <div className="flex justify-end mt-4 gap-3">
                         <button
-                            onClick={() => addToCart(state.checkout, state.isInCart, state.isLoading, id, state.price, state.descripation,toast, dispatch)}
+                            onClick={() => addToCart(checkout, state.isInCart, state.isLoading, id, state.price, state.descripation,toast, dispatch,setCheckout)}
                             className="bg-green-500 text-white px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-green-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300"
                             disabled={state.isLoading || state.isInCart}
                         >
