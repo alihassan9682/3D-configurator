@@ -1,4 +1,6 @@
 import Client from "shopify-buy";
+import { actualHeights, levelUrls } from "./index";
+// Initial state of the application
 export const initialState = {
   scale: 0.05,
   levels: [],
@@ -14,8 +16,12 @@ export const initialState = {
   isLoading: false,
   isInCart: false,
   model: null,
+  selectedPart: null,
+  initalPrice: 0,
+  drop_down: 1,
+  rotation: 0,
 };
-
+// Reducer function for the application
 export const heroReducer = (state, action) => {
   switch (action.type) {
     case "SET_BASE_TYPE":
@@ -29,10 +35,25 @@ export const heroReducer = (state, action) => {
           base: action.payload,
         },
       };
+    case "SET_ROTATION":
+      return {
+        ...state,
+        rotation: action.payload,
+      }
+    case "SET_INITIAL_PRICE":
+      return {
+        ...state,
+        initalPrice: action.payload,
+      };
     case "SET_CART":
       return {
         ...state,
         isInCart: !state.isInCart,
+      };
+    case "SET_DROP_DOWN":
+      return {
+        ...state,
+        drop_down: action.payload,
       };
     case "SET_Loading":
       return {
@@ -61,6 +82,11 @@ export const heroReducer = (state, action) => {
           ...state.descripation,
           ...action.payload,
         },
+      };
+    case "SET_SELECTED_PART":
+      return {
+        ...state,
+        selectedPart: action.payload,
       };
     case "REMOVE_DESCRIPTION":
       return {
@@ -115,222 +141,7 @@ export const heroReducer = (state, action) => {
       return state;
   }
 };
-export const Price = (selectedType, selectedLength, price, dispatch) => {
-  let updatePrice = price;
-  const selectedValue = [];
-  let value = [];
-  switch (true) {
-    case selectedType === "PSINGLE" && selectedLength === 24:
-      updatePrice += 97.94;
-      selectedValue.push(97.94);
-      break;
-    case selectedType === "PSINGLE" && selectedLength === 12:
-      updatePrice += 80.94;
-      selectedValue.pus(97.94);
-
-      break;
-    case selectedType === "PSINGLE" && selectedLength === 6:
-      updatePrice += 70.94;
-      selectedValue.push(70.94);
-
-      break;
-    case selectedType === "PDOUBLE" && selectedLength === 24:
-      updatePrice += 195.94;
-      selectedValue.push(195.94);
-
-      break;
-    case selectedType === "PDOUBLE" && selectedLength === 12:
-      updatePrice += 180.94;
-      selectedValue.push(180.84);
-
-      break;
-    case selectedType === "PDOUBLE" && selectedLength === 6:
-      updatePrice += 170.94;
-      selectedValue.push(170.94);
-
-      break;
-    case selectedType === "PTRIPLE" && selectedLength === 24:
-      updatePrice += 190.89;
-      selectedValue.push(190.89);
-
-      break;
-    case selectedType === "PTRIPLE" && selectedLength === 12:
-      updatePrice += 240.46;
-      selectedValue.push(97.94);
-
-      break;
-    case selectedType === "PTRIPLE" && selectedLength === 6:
-      updatePrice += 230.46;
-      selectedValue.push(230.46);
-
-      break;
-    case selectedType === "PTRIPLE_L" && selectedLength === 12:
-      updatePrice += 257.58;
-      selectedValue.push(257.58);
-      break;
-    case selectedType === "PTRIPLE_L" && selectedLength === 6:
-      updatePrice += 257.58;
-      selectedValue.push(257.58);
-
-      break;
-    case selectedType === "PTRIPLE_L" && selectedLength === 24:
-      updatePrice += 240.54;
-      selectedValue.push(240.54);
-
-      break;
-    case selectedType === "PQUAD" && selectedLength === 6:
-      updatePrice += 250.56;
-      selectedValue.push(250.56);
-
-      break;
-    case selectedType === "PQUAD" && selectedLength === 12:
-      updatePrice += 351.35;
-      selectedValue.push(351.35);
-
-      break;
-    case selectedType === "PQUAD" && selectedLength === 24:
-      updatePrice += 351.35;
-      selectedValue.push(351.35);
-
-      break;
-    case selectedType === "PQUAD_L" && selectedLength === 6:
-      updatePrice += 351.35;
-      selectedValue.push(351.35);
-
-      break;
-    case selectedType === "PQUAD_L" && selectedLength === 12:
-      updatePrice += 351.35;
-      selectedValue.push(351.35);
-
-      break;
-    case selectedType === "PQUAD_L" && selectedLength === 24:
-      updatePrice += 376.86;
-      selectedValue.push(376.86);
-      break;
-    default:
-      updatePrice = 0;
-  }
-  dispatch({ type: "SET_PRICE", payload: updatePrice });
-  dispatch({ type: "SET_VALUE", payload: selectedValue });
-};
-
-export const convert = (value) => {
-  switch (value) {
-    case "PSINGLE":
-      return "1X";
-    case "PDOUBLE":
-      return "2X";
-    case "PTRIPLE":
-      return "3X";
-    case "PQUAD":
-      return "4X";
-    case "PTRIPLE_L":
-      return "3X";
-    case "PQUAD_L":
-      return "4X";
-    default:
-      return "Invalid Type";
-  }
-};
-
-export const addLevel = (
-  selectedType,
-  baseType,
-  dispatch,
-  price,
-  levels,
-  levelUrls,
-  setDropdownlevel,
-  actualHeights,
-  scale,
-  cumulativeHeight,
-  platformsPerLevel,
-  selectedLength,
-  toast,
-  drop_down
-) => {
-  if (!selectedType && !baseType) {
-    toast.error(
-      "Please select both the base type and model type before adding levels."
-    );
-    return;
-  }
-  setDropdownlevel(drop_down + 1);
-  Price(selectedType, selectedLength, price, dispatch);
-  const detials = {
-    [`drop_down_level_${drop_down}`]: `${convert(
-      selectedType
-    )} PSINGLE ${selectedLength} INCH`,
-  };
-  dispatch({ type: "SET_DESCRIPTION", payload: detials });
-  const selectedLevelUrl = levelUrls[selectedType][selectedLength];
-  const actualHeight = actualHeights[selectedLength] * scale;
-  let newLevels = [...levels];
-  let newCumulativeHeight = cumulativeHeight;
-  for (let i = 0; i < platformsPerLevel; i++) {
-    const newPosition = [0, -newCumulativeHeight - actualHeight, 0];
-    const newLevel = {
-      id: `${Date.now()}-${i}`,
-      url: selectedLevelUrl,
-      position: newPosition,
-      height: actualHeight,
-    };
-    newCumulativeHeight += actualHeight;
-    newLevels.push(newLevel);
-  }
-  dispatch({ type: "SET_LEVELS", payload: newLevels });
-  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
-  toast.success("Platform(s) added to the modal");
-};
-export const toggleView = (view, dispatch) => {
-  dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
-};
-
-export const resetAll = (levels, dispatch, toast, initalPrice) => {
-  const newlevels = [];
-  newlevels.push(levels[0]);
-  console.log("newlevels", newlevels);
-  dispatch({ type: "SET_PRICE", payload: initalPrice });
-  dispatch({ type: "RESET_ALL", payload: newlevels });
-  toast.info("Reset all settings to default");
-};
-export const removeLevel = (
-  levels,
-  cumulativeHeight,
-  dispatch,
-  drop_down,
-  setDropdownlevel,
-  toast,
-  descripation,
-  value,
-  price
-) => {
-  if (levels.length === 0 || levels.length === 1) {
-    toast.error("No levels to removes");
-  } else if (levels.length > 0) {
-    const lastLevel = levels[levels.length - 1];
-    dispatch({
-      type: "SET_CUMULATIVE_HEIGHT",
-      payload: cumulativeHeight - lastLevel.height,
-    });
-    const newLevels = levels.slice(0, -1);
-    dispatch({ type: "SET_LEVELS", payload: newLevels });
-    const updatedDescripation = { ...descripation };
-    delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
-    console.log("value", value);
-    let newPrice = value[value.length - 1];
-    const Newvalue = value.slice(0, -1);
-    console.log("newPrice", newPrice);
-    price -= newPrice;
-    dispatch({ type: "SET_PRICE", payload: price });
-    dispatch({ type: "SET_VALUE", payload: Newvalue });
-    console.log("updatedDescripation", updatedDescripation);
-    dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
-    setDropdownlevel(drop_down - 1);
-    toast.info("Removed the last level");
-  }
-};
-
+// Setting the initial state of the application model
 export const handleBaseTypeChange = (
   newBaseType,
   levels,
@@ -339,11 +150,11 @@ export const handleBaseTypeChange = (
   scale,
   dispatch,
   toast,
-  cumulativeHeight
+  cumulativeHeight,
+  rotation
 ) => {
   if (newBaseType) {
     let level = levels;
-
     if (level.length === 1) {
       const defaultLength = 24;
       const defaultUrl = levelUrls[newBaseType][defaultLength];
@@ -368,31 +179,40 @@ export const handleBaseTypeChange = (
       const defaultLength = 24;
       const defaultUrl = levelUrls[newBaseType][defaultLength];
       const defaultHeight = actualHeights[defaultLength] * scale;
-
+      const newRoation = rotation;
       const newLevel = {
         id: `${Date.now()}`,
         url: defaultUrl,
         position: [0, -cumulativeHeight - defaultHeight, 0],
         height: defaultHeight,
+        rotation: newRoation,
       };
-
+       console.log("newLevel", newLevel)
       dispatch({ type: "SET_LEVELS", payload: [newLevel] });
       dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
-      toast.success(`Added base modal: ${newBaseType}`);
+      toast.success(
+        `${
+          levels.length === 0 ? "Added" : "Updated"
+        } base model to: ${newBaseType}`
+      );
     }
   }
 };
 
+// CHangung the Application View from VR to AR
+export const toggleView = (view, dispatch) => {
+  dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
+};
+
+// ADDING TO CART FUNCTIONALITY
 export const addToCart = async (
   checkout,
-  isInCart,
-  isLoading,
-  id,
-  price,
-  descripation,
+  state,
+  variant_ID,
   dispatch,
   setCheckout
 ) => {
+  const { isInCart, isLoading, price, descripation } = state;
   if (!checkout) {
     console.error("Checkout object is null or undefined");
     return;
@@ -403,11 +223,9 @@ export const addToCart = async (
   dispatch({ type: "SET_Loading" });
   console.log("Button Clicked");
 
-  const variant_id = id;
+  const variant_id = variant_ID;
   const variantId = `gid://shopify/ProductVariant/${variant_id}`;
 
-  const customPrice = price;
-  const customDescripation = JSON.stringify(descripation);
   const lineItemsToAdd = [
     {
       variantId,
@@ -415,14 +233,16 @@ export const addToCart = async (
       customAttributes: [
         {
           key: "Price after Customization",
-          value: JSON.stringify(customPrice),
+          value: JSON.stringify(price),
         },
-        { key: "Customization Details", value: customDescripation },
+        {
+          key: "Customization Details",
+          value: JSON.stringify(descripation),
+        },
       ],
     },
   ];
 
-  // Retry function for handling API throttling
   const retryWithBackoff = async (fn, retries = 5, delay = 1000) => {
     try {
       return await fn();
@@ -437,14 +257,13 @@ export const addToCart = async (
 
   // Create the client using environment variables
   const client = Client.buildClient({
-    domain: "duralifthardware.com", 
-    storefrontAccessToken: process.env.REACT_APP_API_KEY, 
-    
+    domain: "duralifthardware.com",
+    storefrontAccessToken: process.env.REACT_APP_API_KEY,
   });
-  
+
   try {
     const updatedCheckout = await retryWithBackoff(() =>
-      client.checkout.addLineItems(checkout.id, lineItemsToAdd),
+      client.checkout.addLineItems(checkout.id, lineItemsToAdd)
     );
     setCheckout(updatedCheckout);
     dispatch({ type: "SET_CART" });
@@ -456,3 +275,170 @@ export const addToCart = async (
   }
 };
 
+const priceMap = {
+  PSINGLE: { 24: 97.94, 12: 80.94, 6: 70.94 },
+  PDOUBLE: { 24: 195.94, 12: 180.94, 6: 170.94 },
+  PTRIPLE: { 24: 190.89, 12: 240.46, 6: 230.46 },
+  PTRIPLE_L: { 24: 240.54, 12: 257.58, 6: 257.58 },
+  PQUAD: { 24: 351.35, 12: 351.35, 6: 250.56 },
+  PQUAD_L: { 24: 376.86, 12: 351.35, 6: 351.35 },
+};
+
+// Calculating the Prcie of the model based on the selected type and length
+export const Price = (selectedType, selectedLength, price, dispatch,value) => {
+  const selectedValue = value;
+  const additionalPrice = priceMap[selectedType]?.[selectedLength] || 0;
+  const updatedPrice = price + additionalPrice;
+  selectedValue.push(additionalPrice);
+  dispatch({ type: "SET_PRICE", payload: updatedPrice });
+  dispatch({ type: "SET_VALUE", payload: selectedValue });
+};
+
+// Makign the Descripation for the model to be displayed in the cart
+export const convert = (value) => {
+  const typeMap = {
+    PSINGLE: "1X",
+    PDOUBLE: "2X",
+    PTRIPLE: "3X",
+    PQUAD: "4X",
+    PTRIPLE_L: "3X",
+    PQUAD_L: "4X",
+  };
+  return typeMap[value] || "Invalid Type";
+};
+
+// Adding the levels to the model
+export const addLevel = (state, dispatch, toast) => {
+  const {
+    selectedType,
+    baseType,
+    price,
+    levels,
+    scale,
+    cumulativeHeight,
+    platformsPerLevel,
+    selectedLength,
+    selectedPart,
+    drop_down,
+    value,
+    rotation,
+  } = state;
+  if (!selectedType && !baseType) {
+    toast.error(
+      "Please select both the base type and model type before adding levels."
+    );
+    return;
+  }
+       console.log('rotation',rotation)
+  dispatch({ type: "SET_LOADING" });
+  const Dropdownlevel = drop_down + 1;
+  dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
+  Price(selectedType, selectedLength, price, dispatch, value);
+  const detials = {
+    [`drop_down_level_${drop_down}`]: `${convert(
+      selectedType
+    )} PSINGLE ${selectedLength} INCH`,
+  };
+  dispatch({ type: "SET_DESCRIPTION", payload: detials });
+
+  const selectedLevelUrl = levelUrls[selectedType][selectedLength];
+  console.log("selectedLevelUrl", selectedLevelUrl);
+  const actualHeight = actualHeights[selectedLength] * scale;
+  let newLevels = [...levels];
+  let newCumulativeHeight = cumulativeHeight;
+  let newRotation = rotation;
+  console.log("newRotation", newRotation);
+  for (let i = 0; i < platformsPerLevel; i++) {
+    const xPosition =
+      selectedPart < 1.53
+        ? 0
+        : selectedPart < 3.06
+        ? 1.53
+        :selectedPart < 4.59
+        ? 3.06
+        :selectedPart < 6.13
+        ? 4.59
+        : 0;
+    console.log("selectedPart", selectedPart);
+    console.log("xPosition", xPosition);
+
+    const newPosition = [xPosition, -newCumulativeHeight - actualHeight,0];
+    const newLevel = {
+      id: `${Date.now()}-${i}`,
+      url: selectedLevelUrl,
+      position: newPosition,
+      height: actualHeight,
+      rotation: newRotation,
+    };
+     console.log("newLevel", newLevel.rotation)
+    newCumulativeHeight += actualHeight;
+    newLevels.push(newLevel);
+  }
+
+  dispatch({ type: "SET_LEVELS", payload: newLevels });
+  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
+  dispatch({ type: "SET_LOADING" });
+
+  toast.success("Platform(s) added to the model");
+  dispatch({ type: "SET_SELECTED_TYPE", payload: "" });
+  dispatch({ type: "SET_SELECTED_LENGTH", payload: 24 });
+  dispatch({ type: "SET_ROTATION", payload: 0 });
+};
+
+// Removing the levels from the model
+export const removeLevel = (state, dispatch, toast) => {
+  const {
+    levels,
+    cumulativeHeight,
+    drop_down,
+    descripation,
+    value,
+    price,
+    initalPrice,
+  } = state;
+
+  if (levels.length === 0 || levels.length === 1) {
+    toast.error("No levels to remove");
+    dispatch({ type: "SET_PRICE", payload: initalPrice });
+  } else if (levels.length > 0) {
+    const lastLevel = levels[levels.length - 1];
+
+    // Update cumulative height by removing the height of the last level
+    dispatch({
+      type: "SET_CUMULATIVE_HEIGHT",
+      payload: cumulativeHeight - lastLevel.height,
+    });
+
+    // Remove the last level
+    const newLevels = levels.slice(0, -1);
+    dispatch({ type: "SET_LEVELS", payload: newLevels });
+
+    // Remove the last dropdown description
+    const updatedDescripation = { ...descripation };
+    delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
+
+    const lastValue = value[value.length - 1];
+    const newPrice = price - lastValue;
+
+    const newValueArray = value.slice(0, -1);
+
+    dispatch({ type: "SET_PRICE", payload: newPrice });
+    dispatch({ type: "SET_VALUE", payload: newValueArray });
+    dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
+    dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
+
+    toast.info("Removed the last level");
+  }
+};
+
+// Resetting all the settings to default
+export const resetAll = (state, dispatch, toast) => {
+  const { levels, initalPrice } = state;
+  const newlevels = [];
+  newlevels.push(levels[0]);
+  console.log("newlevels", newlevels);
+  dispatch({ type: "SET_PRICE", payload: initalPrice });
+  dispatch({ type: "RESET_ALL", payload: newlevels });
+  dispatch({ type: "SET_DROP_DOWN", payload: 1 });
+  toast.info("Reset all settings to default");
+};

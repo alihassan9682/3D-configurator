@@ -7,6 +7,7 @@ import {
   removeLevel,
   handleBaseTypeChange,
   addToCart,
+  // actions,
 } from "./HeroReducer";
 import ModelViewer from "./exporterForAR";
 import ARView from "./ARView";
@@ -19,6 +20,8 @@ import { GrPowerReset } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import { IoMdCloseCircle } from "react-icons/io";
 import Client from "shopify-buy";
+import { MdRotate90DegreesCw } from "react-icons/md";
+
 import {
   actualHeights,
   levelUrls,
@@ -50,4 +53,6 @@ export {
   removeLevel,
   handleBaseTypeChange,
   addToCart,
+  MdRotate90DegreesCw,
+  // actions,
 };
