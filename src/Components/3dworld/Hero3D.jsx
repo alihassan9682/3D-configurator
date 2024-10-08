@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 // import ModelViewer from "./modalFor3D";
 import ModelViewer from "./exporterForAR";
 import ARView from "./ARView";
+// import ARView from "./ARtest";
 import logo from "../../assets/logos/dura.webp";
 import { TbAugmentedReality, TbView360Number } from "react-icons/tb";
 import { ToastContainer, toast } from "react-toastify";
