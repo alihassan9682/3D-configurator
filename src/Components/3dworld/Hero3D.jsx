@@ -162,11 +162,10 @@ const App = () => {
           <div className="flex bg-gray-300 rounded-full p-1 shadow-inner">
             <button
               onClick={() => toggleView("AR")}
-              className={`px-4 py-2 rounded-full transition duration-300 ${
-                activeView === "AR"
+              className={`px-4 py-2 rounded-full transition duration-300 ${activeView === "AR"
                   ? "bg-gray-700 text-white"
                   : "bg-gray-300 text-gray-700"
-              }`}
+                }`}
               style={{
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0,
@@ -178,11 +177,10 @@ const App = () => {
             </button>
             <button
               onClick={() => toggleView("VR")}
-              className={`px-4 py-2 rounded-full transition duration-300 ${
-                activeView === "VR"
+              className={`px-4 py-2 rounded-full transition duration-300 ${activeView === "VR"
                   ? "bg-gray-700 text-white"
                   : "bg-gray-300 text-gray-700"
-              }`}
+                }`}
               style={{
                 borderTopLeftRadius: 0,
                 borderBottomLeftRadius: 0,
@@ -216,7 +214,7 @@ const App = () => {
               value={baseType}
               onChange={handleBaseTypeChange}
               className="p-2 border border-gray-300 rounded-md w-full"
-              disabled={!!baseType} 
+              disabled={!!baseType}
             >
               {baseTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>

@@ -36,7 +36,7 @@ const Level = ({ url, position, scale }) => {
   return <primitive object={clonedScene} position={position} scale={scale} />;
 };
 
-const ModelViewer = ({ scale, levels }) => {
+const ModelViewer = ({ scale, levels,setModel }) => {
   
 
   const sceneRef = useRef(new THREE.Scene()); 

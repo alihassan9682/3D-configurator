@@ -59,13 +59,51 @@ export const levelUrls = {
 
 
 export const baseTypeOptions = [
-  { value: "", label: "Select Base Type" },
-  { value: "PSINGLE", label: "PSINGLE" },
-  { value: "PDOUBLE", label: "PDOUBLE" },
-  { value: "PTRIPLE", label: "PTRIPLE" },
-  { value: "PTRIPLE_L", label: "PTRIPLE_L" },
-  { value: "PQUAD", label: "PQUAD" },
-  { value: "PQUAD_L", label: "PQUAD_L" },
+  {
+    id: 1,
+    value: "",
+    label: "Select Base Type",
+  },
+  {
+    id: 2,
+    value: "PSINGLE",
+    label: "PSINGLE",
+  },
+  {
+    id: 8542404804827,
+    value: "PDOUBLE",
+    label: "PDOUBLE",
+    varaintID: 45649839292635,
+    price: 195.94,
+  },
+  {
+    id: 8542545903835,
+    value: "PTRIPLE",
+    label: "PTRIPLE",
+    varaintID: 45650105696475,
+    price: 251.46,
+  },
+  {
+    id: 8542553833691,
+    value: "PTRIPLE_L",
+    label: "PTRIPLE_L",
+    varaintID: 45650119459035,
+    price: 257.85,
+  },
+  {
+    id: 8651522113755,
+    value: "PQUAD",
+    label: "PQUAD",
+    varaintID: 45920037339355,
+    price: 357.68,
+  },
+  {
+    id: 8652301172955,
+    value: "PQUAD_L",
+    label: "PQUAD_L",
+    varaintID: 45922991538395,
+    price: 365.72,
+  },
 ];
 
 
