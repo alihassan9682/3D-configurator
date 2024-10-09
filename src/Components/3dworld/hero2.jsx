@@ -63,7 +63,7 @@ const Hero2 = () => {
     }, [id]); 
     
     useEffect(()=>{
-        console.log(state.selectedPart)
+        console.log("Selected Area",state.selectedPart)
     },[state.selectedPart])
     const handleTypeChange = (e) => {
         dispatch({ type: "SET_SELECTED_TYPE", payload: e.target.value });
@@ -211,12 +211,11 @@ const Hero2 = () => {
                                 disabled={!state.baseType}
                             >
                                 <option value={0}>0</option>
-                                <option value={90}>90</option>
-                                <option value={180}>180</option>
-                                <option value={270}>270</option>
-                                <option value={360}>360</option>
+                                <option value={450}>90</option>
+                                <option value={900}>180</option>
+                                <option value={1350}>270</option>
+                                <option value={1800}>360</option>
                             </select>
-
                             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
                                 <MdRotate90DegreesCw size={20} />
                             </div>
