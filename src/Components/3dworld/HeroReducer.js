@@ -267,6 +267,7 @@ export const addToCart = async (
     domain: "duralifthardware.com",
     storefrontAccessToken: process.env.REACT_APP_API_KEY,
   });
+  console.log("process.env.REACT_APP_API_KEY", process.env.REACT_APP_API_KEY)
 
   try {
     const updatedCheckout = await retryWithBackoff(() =>

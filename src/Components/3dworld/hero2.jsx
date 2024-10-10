@@ -43,6 +43,7 @@ const Hero2 = () => {
             domain: 'duralifthardware.com',
             storefrontAccessToken: process.env.REACT_APP_API_KEY,
         });
+
         client.checkout.create().then((checkout) => {
             setCheckout(checkout);
         })
