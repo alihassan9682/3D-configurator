@@ -1,0 +1,29 @@
+.fade-enter {
+  opacity: 0;
+}
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+.fade-exit {
+  opacity: 1;
+}
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+.customOverlay {
+  @apply flex justify-center items-center;
+}
+
+.customModal {
+  @apply w-4/5 max-w-7xl h-4/5 p-0;
+}
+
+.w-full {
+  @apply w-full;
+}
+
+.h-full {
+  @a
