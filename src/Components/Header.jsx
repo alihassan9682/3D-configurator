@@ -41,9 +41,36 @@ const Header = () => {
     setSelectedItem(subItem);
     navigate(`/${subItem.toLowerCase()}`);
   };
+  const BASE_URL = `${process.env.API_URL}/admin/api/2024-09`;
+  const ACCESS_TOKEN = process.env.API_ACCESS_TOKEN;
+
+   const fetchProducts = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/products.json`, {
+        method: 'GET',
+        headers: {
+          'X-Shopify-Access-Token': ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(data.products);
+      return data.products;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  };
+
 
   return (
     <div className="flex">
+      {fetchProducts}
       <div className="hidden lg:flex fixed top-0 left-0 h-full w-20 bg-white text-white flex-col justify-evenly space-y-96 border-r">
         <div className="text-3xl font-extrabold rotate-180 hover:cursor-pointer">
           <div className="transform rotate-90 mt-12">

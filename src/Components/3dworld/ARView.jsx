@@ -2,7 +2,7 @@ import React from "react";
 import IMG from "./targets.mind";
 
 const ARComponent = ({ modal }) => {
-
+  console.log("MODEL: ",modal)
   return (
     <div
       style={{
