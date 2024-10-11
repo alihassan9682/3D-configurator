@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
-import { Canvas,useThree
- } from "@react-three/fiber";
+import {
+  Canvas, useThree
+} from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
@@ -17,6 +18,8 @@ const LoadingIndicator = () => {
 const Level = ({ url, position, scale, rotation, }) => {
   const { scene } = useGLTF(url);
   const [hovered, setHovered] = useState(null);
+  const clonedScene = scene.clone();
+
   const [originalMaterials, setOriginalMaterials] = useState({});
   useEffect(() => {
     const clonedScene = scene.clone();
@@ -54,15 +57,27 @@ const Level = ({ url, position, scale, rotation, }) => {
   //   }
   // };
   // console.log("Hovered Position:", hovered)
-       console.log("Rotation Value" , rotation)
+  // console.log("Rotation Value", rotation)
+
+
+  clonedScene.traverse((node) => {
+    if (node.isMesh) {
+      node.castShadow = true;
+      node.receiveShadow = true;
+      if (node.material) {
+        node.material.roughness = 0.5;
+        node.material.metalness = 0.5;
+      }
+    }
+  });
   return (
     <primitive
       object={scene.clone()}
       position={position}
       scale={scale}
       rotation={rotation}
-      // onPointerOver={handlePointerOver}
-      // onPointerOut={handlePointerOut}
+    // onPointerOver={handlePointerOver}
+    // onPointerOut={handlePointerOut}
     />
   );
 };
@@ -91,7 +106,6 @@ const ModelViewer = ({
         const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         dispatch({ type: "SET_MODEL", payload: url });
-        console.log("Model exported successfully");
       },
       { binary: true }
     );
@@ -99,7 +113,6 @@ const ModelViewer = ({
 
   useEffect(() => {
     if (levels.length > 0) {
-      console.log("Levels updated, triggering export...");
       setIsLoading(true);
       setTimeout(() => {
         exportModel();
@@ -130,20 +143,24 @@ const ModelViewer = ({
     if (intersects.length > 0) {
       const clickedPosition = intersects[0].point;
       const xPosition = clickedPosition.x;
+      const zPosition = clickedPosition.z;
+      const yPosition = clickedPosition.y;
 
       console.log("Clicked X Position:", xPosition);
+      console.log("Clicked yPosition:", yPosition);
+      console.log("Clicked zPosition:", zPosition);
 
       const Grill =
-        xPosition < 1.53 ? "Platform 01" :
-          xPosition < 3.06 ? "Platform 02" :
-            xPosition < 4.59 ? "Platform 03" :
+        xPosition < 1.2 ? "Platform 01" :
+          xPosition < 2.06 ? "Platform 02" :
+            xPosition < 3.59 ? "Platform 03" :
               xPosition < 6.12 ? "Platform 04" : null;
 
       if (Grill) {
         console.log(`Selected ${Grill}`);
         toast.success(`Selected ${Grill}`);
         setSelectedPart(Grill);
-        dispatch({ type: "SET_SELECTED_PART", payload: xPosition });
+        dispatch({ type: "SET_SELECTED_PART", payload: clickedPosition });
       } else {
         console.log("Clicked outside of defined platforms");
         toast.info("Clicked outside of defined platforms");
@@ -157,11 +174,8 @@ const ModelViewer = ({
   }, [dispatch, toast]);
 
   const ClickHandler = () => {
-    console.log("Click Handler");
     const { camera, scene } = useThree();
-   console.log("Camera and Scene refs", camera, scene);
     useEffect(() => {
-      console.log("Updating camera and scene refs");
       cameraRef.current = camera;
       sceneRef.current = scene;
     }, [camera, scene]);
@@ -177,8 +191,7 @@ const ModelViewer = ({
           <p>Please use the controls on the side to add levels to your model.</p>
         </div>
       ) : (
-          <>
-            {console.log('level',levels)}
+        <>
           <Canvas
             onClick={handleClick}
             shadows

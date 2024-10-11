@@ -199,7 +199,7 @@ const Hero2 = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="mb-4">
+                    {/* <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                             Select the Rotation
                         </label>
@@ -220,7 +220,7 @@ const Hero2 = () => {
                                 <MdRotate90DegreesCw size={20} />
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">

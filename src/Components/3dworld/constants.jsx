@@ -106,7 +106,14 @@ export const baseTypeOptions = [
   },
 ];
 
-
+export const priceMap = {
+  PSINGLE: { 24: 97.94, 12: 80.94, 6: 70.94 },
+  PDOUBLE: { 24: 195.94, 12: 180.94, 6: 170.94 },
+  PTRIPLE: { 24: 190.89, 12: 240.46, 6: 230.46 },
+  PTRIPLE_L: { 24: 240.54, 12: 257.58, 6: 257.58 },
+  PQUAD: { 24: 351.35, 12: 351.35, 6: 250.56 },
+  PQUAD_L: { 24: 376.86, 12: 351.35, 6: 351.35 },
+};
 export const conditionalOptions = {
   PSINGLE: [{ value: "PSINGLE", label: "1" }],
   PDOUBLE: [
