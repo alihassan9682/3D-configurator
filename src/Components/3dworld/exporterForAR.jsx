@@ -1,64 +1,52 @@
 import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
-import {
-  Canvas, useThree
-} from "@react-three/fiber";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 
-const LoadingIndicator = () => {
-  return (
-    <mesh visible position={[0, 0, 0]}>
-      <sphereGeometry args={[1, 16, 16]} />
-      <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
-    </mesh>
-  );
-};
+// Loading Indicator Component
+const LoadingIndicator = () => (
+  <mesh visible position={[0, 0, 0]}>
+    <sphereGeometry args={[1, 16, 16]} />
+    <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
+  </mesh>
+);
 
-const Level = ({ url, position, scale, rotation, }) => {
+// Level Component
+const Level = ({ url, position, scale, rotation, onClick }) => {
   const { scene } = useGLTF(url);
-  const [hovered, setHovered] = useState(null);
+  const groupRef = useRef();
+  const { raycaster, mouse, camera } = useThree();
+
   const clonedScene = scene.clone();
 
-  const [originalMaterials, setOriginalMaterials] = useState({});
-  useEffect(() => {
-    const clonedScene = scene.clone();
-
-    const materials = {};
-    clonedScene.traverse((node) => {
-      if (node.isMesh) {
-        node.castShadow = true;
-        node.receiveShadow = true;
-        if (node.material) {
-          node.material.roughness = 0.5;
-          node.material.metalness = 0.5;
-          materials[node.uuid] = node.material.clone();
-        }
+  useFrame(() => {
+    if (groupRef.current) {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(groupRef.current, true);
+      if (intersects.length > 0) {
+        document.body.style.cursor = 'pointer';
+      } else {
+        document.body.style.cursor = 'default';
       }
-    });
-    setOriginalMaterials(materials);
-  }, [scene]);
+    }
+  });
 
-  // const handlePointerOver = (event) => {
-  //   event.stopPropagation();
-  //   if (event.object !== hovered) {
-  //     if (hovered) {
-  //       hovered.material = originalMaterials[hovered.uuid];
-  //     }
-  //     setHovered(event.object);
-  //     event.object.material = new THREE.MeshStandardMaterial({ color: "red" });
-  //   }
-  // };
-
-  // const handlePointerOut = () => {
-  //   if (hovered) {
-  //     hovered.material = originalMaterials[hovered.uuid];
-  //     setHovered(null);
-  //   }
-  // };
-  // console.log("Hovered Position:", hovered)
-  // console.log("Rotation Value", rotation)
-
+  const handleClick = useCallback((event) => {
+    event.stopPropagation();
+    if (groupRef.current) {
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObject(groupRef.current, true);
+      if (intersects.length > 0) {
+        const clickPosition = intersects[0].point;
+        onClick({
+          position: clickPosition,
+          cameraPosition: camera.position.clone(),
+          normalVector: intersects[0].face.normal.clone()
+        });
+      }
+    }
+  }, [raycaster, mouse, camera, onClick]);
 
   clonedScene.traverse((node) => {
     if (node.isMesh) {
@@ -70,35 +58,24 @@ const Level = ({ url, position, scale, rotation, }) => {
       }
     }
   });
+
   return (
-    <primitive
-      object={scene.clone()}
-      position={position}
-      scale={scale}
-      rotation={rotation}
-    // onPointerOver={handlePointerOver}
-    // onPointerOut={handlePointerOut}
-    />
+    <group ref={groupRef} position={position} scale={scale} rotation={rotation} onClick={handleClick}>
+      <primitive object={clonedScene} />
+    </group>
   );
 };
 
-
-
-const ModelViewer = ({
-  scale,
-  levels,
-  dispatch,
-  toast
-}) => {
+// Main ModelViewer Component
+const ModelViewer = ({ scale, levels, dispatch, toast }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPart, setSelectedPart] = useState(null);
 
+  // GLTF Export function
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
-    console.log("Exporting model...");
-
     const exporter = new GLTFExporter();
     exporter.parse(
       sceneRef.current,
@@ -123,14 +100,13 @@ const ModelViewer = ({
 
   const handleClick = useCallback((event) => {
     event.preventDefault();
-    // ClickHandler();
-    console.log("Click event triggered");
 
     if (!cameraRef.current || !sceneRef.current) {
       console.error("Camera or scene reference is missing");
       return;
     }
 
+    // Normalize mouse coordinates
     const mouse = new THREE.Vector2();
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -147,8 +123,8 @@ const ModelViewer = ({
       const yPosition = clickedPosition.y;
 
       console.log("Clicked X Position:", xPosition);
-      console.log("Clicked yPosition:", yPosition);
-      console.log("Clicked zPosition:", zPosition);
+      console.log("Clicked Y Position:", yPosition);
+      console.log("Clicked Z Position:", zPosition);
 
       const Grill =
         xPosition < 1.2 ? "Platform 01" :
@@ -173,6 +149,7 @@ const ModelViewer = ({
     }
   }, [dispatch, toast]);
 
+  // Hook to manage camera and scene references
   const ClickHandler = () => {
     const { camera, scene } = useThree();
     useEffect(() => {
@@ -192,34 +169,45 @@ const ModelViewer = ({
         </div>
       ) : (
         <>
-          <Canvas
-            onClick={handleClick}
-            shadows
-            style={{ width: "100%", height: "100%" }}
-            camera={{ position: [0, 0, 5], fov: 75 }}
-          >
-            <ClickHandler />
-            <Suspense fallback={<LoadingIndicator />}>
-              <spotLight position={[10, 10, 10]} intensity={1} castShadow />
-              <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
+            <Canvas
+              onClick={handleClick}
+              shadows
+              style={{ width: "100%", height: "100%" }}
+              camera={{ position: [0, 0, 5], fov: 75 }}
+            >
+              <ClickHandler />
+              <Suspense fallback={<LoadingIndicator />}>
+                <spotLight position={[10, 10, 10]} intensity={1} castShadow>
+                  <object3D position={[0, 0, -1]} />
+                </spotLight>
+                <directionalLight position={[10, 10, 10]} intensity={1} castShadow>
+                  <object3D position={[0, 0, -1]} />
+                </directionalLight>
+                {levels.map((level, index) => (
+                  <Level
+                    key={`${level.url}-${index}-${Math.random()}`}
+                    url={level.url}
+                    position={level.position}
+                    scale={[scale, scale, scale]}
+                    rotation={level.rotation}
+                  />
+                ))}
 
-              {levels.map((level, index) => (
-                <Level
-                  key={`${level.url}-${index}-${Math.random()}`}
-                  url={level.url}
-                  position={level.position}
-                  scale={[scale, scale, scale]}
-                  rotation={level.rotation}
+                <OrbitControls
+                  enablePan={Boolean("Pan", true)}
+                  enableZoom={Boolean("Zoom", true)}
+                  enableRotate={Boolean("Rotate", true)}
                 />
-              ))}
-              <OrbitControls />
-            </Suspense>
-          </Canvas>
+              </Suspense>
+            </Canvas>
+
+
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
             </div>
           )}
+
           {selectedPart && (
             <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
               Selected Part: {selectedPart}

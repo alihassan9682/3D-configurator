@@ -54,7 +54,18 @@ const Hero2 = () => {
         if (baseTypeFromId) {
             dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
             dispatch({ type: "SET_BASE_TYPE", payload: baseTypeFromId.value });
-            dispatch({type:"SET_INITIAL_PRICE",payload:baseTypeFromId.price})
+            dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
+            const psingleCount =
+                baseTypeFromId.value === "PTRIPLE" || baseTypeFromId.value === "PTRIPLE_L"
+                    ? 3
+                    : baseTypeFromId.value === "PDOUBLE"
+                        ? 2
+                        : baseTypeFromId.value === "PQUAD" || baseTypeFromId.value === "PQUAD_L"
+                            ? 4
+                            : baseTypeFromId.value === "PSINGLE"
+                                ? 1
+                                : 0;
+            dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
         } else {
@@ -87,7 +98,8 @@ const Hero2 = () => {
     useEffect(() => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
-    }, [state.price, state.descripation])
+        console.log('psingleCount:', state.psingleCount);
+    }, [state.price, state.descripation, state.psingleCount])
     useEffect(() => { 
         console.log("updated roation ", state.rotation)
     }, [state.rotation])
@@ -265,8 +277,8 @@ const Hero2 = () => {
                     scale={state.scale}
                     levels={state.levels}
                     dispatch={dispatch}
-                    // rotation={state.rotation}
                     toast={toast}
+                    psingleCount={state.psingleCount}
                 />
                 
             ) : state.activeView === "AR" ? (
