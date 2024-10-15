@@ -1,469 +1,623 @@
-import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
-import {
-    Canvas, useThree, useFrame
-} from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
-import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
+// import Client from "shopify-buy";
 
-const LoadingIndicator = () => {
-    return (
-        <mesh visible position={[0, 0, 0]}>
-            <sphereGeometry args={[1, 16, 16]} />
-            <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
-        </mesh>
-    );
-};
+// import { actualHeights, levelUrls, priceMap } from "./index";
+// // Initial state of the application
+// export const initialState = {
+//     scale: 0.05,
+//     levels: [],
+//     cumulativeHeight: 0,
+//     activeView: "VR",
+//     baseType: "",
+//     selectedType: "",
+//     selectedLength: 24,
+//     platformsPerLevel: 1,
+//     descripation: { base: "" },
+//     price: 0,
+//     value: [],
+//     isLoading: false,
+//     isInCart: false,
+//     model: null,
+//     selectedPart: 0,
+//     initalPrice: 0,
+//     drop_down: 1,
+//     rotation: 0,
+//     type: [],
+//     pSingle: 0,
+//     levelIndex: 0,
+//     platformName: "",
+// };
+// // Reducer function for the application
+// export const heroReducer = (state, action) => {
+//     switch (action.type) {
+//         case "SET_LEVEL_INDEX":
+//             return {
+//                 ...state,
+//                 levelIndex: action.payload,
+//             };
+//         case "SET_BASE_TYPE":
+//             return {
+//                 ...state,
+//                 baseType: action.payload,
+//                 selectedType: "",
+//                 selectedLength: 24,
+//                 platformsPerLevel: 1,
+//                 descripation: {
+//                     base: action.payload,
+//                 },
+//             };
+//         case "SET_PSINGLE_COUNT":
+//             return {
+//                 ...state,
+//                 pSingle: action.payload,
+//             };
+//         case "ADD_TYPE":
+//             return {
+//                 ...state,
+//                 type: action.payload,
+//             };
+//         case "SET_ROTATION":
+//             return {
+//                 ...state,
+//                 rotation: action.payload,
+//             };
+//         case "SET_INITIAL_PRICE":
+//             return {
+//                 ...state,
+//                 initalPrice: action.payload,
+//             };
+//         case "SET_PLATFORM_NAME":
+//             return {
+//                 ...state,
+//                 platformName: action.payload,
+//             };
+//         case "SET_CART":
+//             return {
+//                 ...state,
+//                 isInCart: !state.isInCart,
+//             };
+//         case "SET_DROP_DOWN":
+//             return {
+//                 ...state,
+//                 drop_down: action.payload,
+//             };
+//         case "SET_Loading":
+//             return {
+//                 ...state,
+//                 isLoading: !state.isLoading,
+//             };
+//         case "SET_PRICE":
+//             return {
+//                 ...state,
+//                 price: action.payload,
+//             };
+//         case "SET_VALUE":
+//             return {
+//                 ...state,
+//                 value: action.payload,
+//             };
+//         case "SET_MODEL":
+//             return {
+//                 ...state,
+//                 model: action.payload,
+//             };
+//         case "SET_DESCRIPTION":
+//             return {
+//                 ...state,
+//                 descripation: {
+//                     ...state.descripation,
+//                     ...action.payload,
+//                 },
+//             };
+//         case "SET_SELECTED_PART":
+//             return {
+//                 ...state,
+//                 selectedPart: action.payload,
+//             };
+//         case "REMOVE_DESCRIPTION":
+//             return {
+//                 ...state,
+//                 descripation: {
+//                     ...action.payload,
+//                 },
+//             };
 
-// const Level = ({ url, position, scale, rotation, onClick }) => {
-//   const { scene } = useGLTF(url);
-//   const groupRef = useRef();
-//   const { raycaster, mouse, camera } = useThree();
-
-//   const clonedScene = scene.clone();
-
-//   useFrame(() => {
-//     if (groupRef.current) {
-//       raycaster.setFromCamera(mouse, camera);
-//       const intersects = raycaster.intersectObject(groupRef.current, true);
-//       if (intersects.length > 0) {
-//         document.body.style.cursor = 'pointer';
-//       } else {
-//         document.body.style.cursor = 'default';
-//       }
+//         case "SET_LEVELS":
+//             return {
+//                 ...state,
+//                 levels: action.payload,
+//             };
+//         case "SET_CUMULATIVE_HEIGHT":
+//             return {
+//                 ...state,
+//                 cumulativeHeight: action.payload,
+//             };
+//         case "SET_SELECTED_TYPE":
+//             return {
+//                 ...state,
+//                 selectedType: action.payload,
+//             };
+//         case "SET_SELECTED_LENGTH":
+//             return {
+//                 ...state,
+//                 selectedLength: action.payload,
+//             };
+//         case "SET_PLATFORMS_PER_LEVEL":
+//             return {
+//                 ...state,
+//                 platformsPerLevel: action.payload,
+//             };
+//         case "SET_ACTIVE_VIEW":
+//             return {
+//                 ...state,
+//                 activeView: action.payload,
+//             };
+//         case "RESET_ALL":
+//             return {
+//                 ...state,
+//                 scale: 0.05,
+//                 activeView: "VR",
+//                 selectedType: "",
+//                 selectedLength: 24,
+//                 platformsPerLevel: 1,
+//                 descripation: { base: state.baseType },
+//                 levels: action.payload,
+//             };
+//         default:
+//             return state;
 //     }
-//   });
+// };
+// // Setting the initial state of the application model
+// export const handleBaseTypeChange = (
+//     newBaseType,
+//     levels,
+//     levelUrls,
+//     actualHeights,
+//     scale,
+//     dispatch,
+//     toast,
+//     cumulativeHeight,
+//     rotation
+// ) => {
+//     if (newBaseType) {
+//         let level = levels;
+//         if (level.length === 1) {
+//             const defaultLength = 24;
+//             const defaultUrl = levelUrls[newBaseType][defaultLength];
+//             const defaultHeight = actualHeights[defaultLength] * scale;
 
-//   const handleClick = useCallback((event) => {
-//     event.stopPropagation();
-//     if (groupRef.current) {
-//       raycaster.setFromCamera(mouse, camera);
-//       const intersects = raycaster.intersectObject(groupRef.current, true);
-//       if (intersects.length > 0) {
-//         const clickPosition = intersects[0].point;
-//         onClick({
-//           position: clickPosition,
-//           cameraPosition: camera.position.clone(),
-//           normalVector: intersects[0].face.normal.clone()
-//         });
-//       }
+//             const updatedLevels = level.map((lev, index) => {
+//                 if (index === 0) {
+//                     return {
+//                         ...lev,
+//                         url: defaultUrl,
+//                         position: [0, -defaultHeight, 0],
+//                         height: defaultHeight,
+//                     };
+//                 }
+//                 return lev;
+//             });
+
+//             dispatch({ type: "SET_LEVELS", payload: updatedLevels });
+//             dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+//             toast.success(`Updated the base modal to: ${newBaseType}`);
+//         } else if (level.length === 0) {
+//             const defaultLength = 24;
+//             const defaultUrl = levelUrls[newBaseType][defaultLength];
+//             const defaultHeight = actualHeights[defaultLength] * scale;
+//             const newRoation = [0, rotation, 0];
+//             const newLevel = {
+//                 id: `${Date.now()}`,
+//                 url: defaultUrl,
+//                 position: [0, -cumulativeHeight - defaultHeight, 0],
+//                 height: defaultHeight,
+//                 rotation: newRoation,
+//             };
+//             console.log("newLevel", newLevel);
+//             dispatch({ type: "SET_LEVELS", payload: [newLevel] });
+//             dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+//             toast.success(
+//                 `${levels.length === 0 ? "Added" : "Updated"
+//                 } base model to: ${newBaseType}`
+//             );
+//         }
 //     }
-//   }, [raycaster, mouse, camera, onClick]);
-
-//   clonedScene.traverse((node) => {
-//     if (node.isMesh) {
-//       node.castShadow = true;
-//       node.receiveShadow = true;
-//       if (node.material) {
-//         node.material.roughness = 0.5;
-//         node.material.metalness = 0.5;
-//       }
-//     }
-//   });
-
-//   return (
-//     <group ref={groupRef} position={position} scale={scale} rotation={rotation} onClick={handleClick}>
-//       <primitive object={clonedScene} />
-//     </group>
-//   );
 // };
 
-// const ModelViewer = ({
-//   scale,
-//   levels,
-//   dispatch,
-//   toast,
-//   psingleCount
-// }) => {
-//   const sceneRef = useRef(new THREE.Scene());
-//   const cameraRef = useRef();
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [selectedPart, setSelectedPart] = useState(null);
-
-//   const exportModel = useCallback(() => {
-//     if (!sceneRef.current) return;
-//     console.log("Exporting model...");
-
-//     const exporter = new GLTFExporter();
-//     exporter.parse(
-//       sceneRef.current,
-//       (result) => {
-//         const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-//         const url = URL.createObjectURL(blob);
-//         dispatch({ type: "SET_MODEL", payload: url });
-//       },
-//       { binary: true }
-//     );
-//   }, [dispatch]);
-
-//   useEffect(() => {
-//     if (levels.length > 0) {
-//       setIsLoading(true);
-//       setTimeout(() => {
-//         exportModel();
-//         setIsLoading(false);
-//       }, 1000);
-//     }
-//   }, [levels, exportModel]);
-
-//   const handleClick = useCallback((event) => {
-//     event.preventDefault();
-
-//     if (!cameraRef.current || !sceneRef.current) {
-//       console.error("Camera or scene reference is missing");
-//       return;
-//     }
-
-//     // Normalize mouse coordinates
-//     const mouse = new THREE.Vector2();
-//     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-//     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-//     const raycaster = new THREE.Raycaster();
-//     raycaster.setFromCamera(mouse, cameraRef.current);
-
-//     const intersects = raycaster.intersectObjects(sceneRef.current.children, true);
-
-//     if (intersects.length > 0) {
-//       const clickedPosition = intersects[0].point;
-//       const xPosition = clickedPosition.x;
-//       const zPosition = clickedPosition.z;
-//       const yPosition = clickedPosition.y;
-
-//       console.log("Clicked X Position:", xPosition);
-//       console.log("Clicked Y Position:", yPosition);
-//       console.log("Clicked Z Position:", zPosition);
-
-//       const Grill =
-//         xPosition < 1.2 ? "Platform 01" :
-//           xPosition < 2.06 ? "Platform 02" :
-//             xPosition < 3.59 ? "Platform 03" :
-//               xPosition < 6.12 ? "Platform 04" : null;
-
-//       if (Grill) {
-//         console.log(`Selected ${Grill}`);
-//         toast.success(`Selected ${Grill}`);
-//         setSelectedPart(Grill);
-//         dispatch({ type: "SET_SELECTED_PART", payload: clickedPosition });
-//       } else {
-//         console.log("Clicked outside of defined platforms");
-//         toast.info("Clicked outside of defined platforms");
-//         setSelectedPart(null);
-//       }
-//     } else {
-//       console.log("No intersection found");
-//       toast.info("No intersection found. Try clicking on a visible part of the model.");
-//       setSelectedPart(null);
-//     }
-//   }, [dispatch, toast]);
-
-//   const ClickHandler = () => {
-//     const { camera, scene } = useThree();
-//     useEffect(() => {
-//       cameraRef.current = camera;
-//       sceneRef.current = scene;
-//     }, [camera, scene]);
-
-//     return null;
-//   };
-
-//   return (
-//     <div className="flex-1 w-screen flex-wrap md:h-screen flex flex-col items-center justify-center relative">
-//       {levels.length === 0 ? (
-//         <div className="text-gray-600 text-center">
-//           <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-//           <p>Please use the controls on the side to add levels to your model.</p>
-//         </div>
-//       ) : (
-//         <>
-//           <Canvas
-//             onClick={handleClick}
-//             shadows
-//             style={{ width: "100%", height: "100%" }}
-//             camera={{ position: [0, 0, 5], fov: 75 }}
-//           >
-//             <ClickHandler />
-//             <Suspense fallback={<LoadingIndicator />}>
-//               <spotLight position={[10, 10, 10]} intensity={1} castShadow />
-//               <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
-
-//               {levels.map((level, index) => (
-//                 <Level
-//                   key={`${level.url}-${index}-${Math.random()}`}
-//                   url={level.url}
-//                   position={level.position}
-//                   scale={[scale, scale, scale]}
-//                   rotation={level.rotation}
-//                 />
-//               ))}
-//                 <OrbitControls
-//                   enablePan={Boolean("Pan", true)}
-//                   enableZoom={Boolean("Zoom", true)}
-//                   enableRotate={Boolean("Rotate", true)}
-//                 />
-//               </Suspense>
-//           </Canvas>
-//           {isLoading && (
-//             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-//               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-//             </div>
-//           )}
-//           {selectedPart && (
-//             <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
-//               Selected Part: {selectedPart}
-//             </div>
-//           )}
-//         </>
-//       )}
-//     </div>
-//   );
+// // CHangung the Application View from VR to AR
+// export const toggleView = (view, dispatch) => {
+//     dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 // };
 
-// export default ModelViewer;
+// // ADDING TO CART FUNCTIONALITY
+// export const addToCart = async (
+//     checkout,
+//     state,
+//     variant_ID,
+//     dispatch,
+//     setCheckout
+// ) => {
+//     const { isInCart, isLoading, price, descripation } = state;
+//     if (!checkout) {
+//         console.error("Checkout object is null or undefined");
+//         return;
+//     }
+
+//     if (isInCart || isLoading) return;
+
+//     dispatch({ type: "SET_Loading" });
+//     console.log("Button Clicked");
+
+//     const variant_id = variant_ID;
+//     const variantId = `gid://shopify/ProductVariant/${variant_id}`;
+
+//     const lineItemsToAdd = [
+//         {
+//             variantId,
+//             quantity: 1, // Set quantity to 1
+//             customAttributes: [
+//                 {
+//                     key: "Price after Customization",
+//                     value: JSON.stringify(price),
+//                 },
+//                 {
+//                     key: "Customization Details",
+//                     value: JSON.stringify(descripation),
+//                 },
+//             ],
+//         },
+//     ];
+
+//     const retryWithBackoff = async (fn, retries = 5, delay = 1000) => {
+//         try {
+//             return await fn();
+//         } catch (error) {
+//             if (retries > 0 && error.message.includes("Throttled")) {
+//                 await new Promise((res) => setTimeout(res, delay));
+//                 return retryWithBackoff(fn, retries - 1, delay * 2);
+//             }
+//             throw error;
+//         }
+//     };
+
+//     // Create the client using environment variables
+//     const client = Client.buildClient({
+//         domain: "duralifthardware.com",
+//         storefrontAccessToken: process.env.REACT_APP_API_KEY,
+//     });
+//     console.log("process.env.REACT_APP_API_KEY", process.env.REACT_APP_API_KEY);
+
+//     try {
+//         const updatedCheckout = await retryWithBackoff(() =>
+//             client.checkout.addLineItems(checkout.id, lineItemsToAdd)
+//         );
+//         setCheckout(updatedCheckout);
+//         dispatch({ type: "SET_CART" });
+//         window.location.href = updatedCheckout.webUrl;
+//     } catch (error) {
+//         console.error("Failed to add to cart:", error);
+//     } finally {
+//         dispatch({ type: "SET_Loading" });
+//     }
+// };
+
+// // Calculating the Prcie of the model based on the selected type and length
+// export const Price = (selectedType, selectedLength, price, dispatch, value) => {
+//     const selectedValue = value;
+//     const additionalPrice = priceMap[selectedType]?.[selectedLength] || 0;
+//     const updatedPrice = price + additionalPrice;
+//     selectedValue.push(additionalPrice);
+//     dispatch({ type: "SET_PRICE", payload: updatedPrice });
+//     dispatch({ type: "SET_VALUE", payload: selectedValue });
+// };
+// // Makign the Descripation for the model to be displayed in the cart
+// export const convert = (value) => {
+//     const typeMap = {
+//         PSINGLE: "1X",
+//         PDOUBLE: "2X",
+//         PTRIPLE: "3X",
+//         PQUAD: "4X",
+//         PTRIPLE_L: "3X_L",
+//         PQUAD_L: "4X_L",
+//     };
+//     return typeMap[value] || "Invalid Type";
+// };
+
+// const createModelFromPSingle = (state, dispatch) => {
+//     const { selectedType, selectedLength, scale, rotation, type } = state;
+//     const psingleCount =
+//         selectedType === "PTRIPLE" || selectedType === "PTRIPLE_L"
+//             ? 3
+//             : selectedType === "PDOUBLE"
+//                 ? 2
+//                 : selectedType === "PQUAD" || selectedType === "PQUAD_L"
+//                     ? 4
+//                     : selectedType === "PSINGLE"
+//                         ? 1
+//                         : 0;
+//     dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
+//     const selecttype = [...type, selectedType];
+//     dispatch({ type: "ADD_TYPE", payload: selecttype });
+//     const selectedLevelUrl = levelUrls["PSINGLE"][selectedLength];
+//     const actualHeight = actualHeights[selectedLength] * scale;
+//     const modelLevels = [];
+
+//     for (let i = 0; i < psingleCount; i++) {
+//         let xvalue = 0;
+//         let zvalue = 0;
+//         const baseOffset = [0, 0.34, 0.67, 1];
+//         if (i < baseOffset.length) {
+//             xvalue = i * actualHeight + baseOffset[i];
+//         }
+//         if (
+//             (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") &&
+//             i === psingleCount - 1
+//         ) {
+//             zvalue = actualHeight + 0.26;
+//             xvalue = i > 0 ? modelLevels[i - 1].xOffset : 0;
+//         }
+
+//         // Create new level object
+//         const newLevel = {
+//             url: selectedLevelUrl,
+//             height: actualHeight,
+//             xOffset: xvalue,
+//             zOffset: zvalue,
+//             rotation: [0, 0, 0],
+//             groupType: selectedType,
+//         };
+
+//         // Add the new level to the modelLevels array
+//         modelLevels.push(newLevel);
+//         console.log("modelLevels", modelLevels)
+//     }
+
+//     return modelLevels;
+// };
+
+// export const addLevel = (state, dispatch, toast) => {
+//     const {
+//         selectedType,
+//         baseType,
+//         price,
+//         levels,
+//         scale,
+//         cumulativeHeight,
+//         platformsPerLevel,
+//         selectedLength,
+//         selectedPart,
+//         drop_down,
+//         value,
+//         rotation,
+//         levelIndex,
+//         platformName,
+//     } = state;
+
+//     if (!selectedType && !baseType) {
+//         toast.error(
+//             "Please select both the base type and model type before adding levels."
+//         );
+//         return;
+//     }
+
+//     dispatch({ type: "SET_LOADING" });
+
+//     const Dropdownlevel = drop_down + 1;
+//     dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
+
+//     // Assuming Price is a function that calculates the price
+//     Price(selectedType, selectedLength, price, dispatch, value);
+//     const newLevelIndex = levelIndex + 1;
+//     dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
+//     const details = {
+//         [`drop_down_level_${drop_down}`]: `${convert(
+//             selectedType
+//         )} PSINGLE ${selectedLength} INCH`,
+//     };
+//     dispatch({ type: "SET_DESCRIPTION", payload: details });
+
+//     const newModelLevels = createModelFromPSingle(state, dispatch);
+//     let newLevels = [...levels];
+//     let newCumulativeHeight = cumulativeHeight;
+//     console.log("selectedPart:", selectedPart);
+//     for (const modelLevel of newModelLevels) {
+//         for (let j = 0; j < platformsPerLevel; j++) {
+//             const PositionX = selectedPart !== 0 ? selectedPart + 1.45 : 0;
+//             console.log("selectedPart", selectedPart);
+//             const adjustedXPosition = PositionX + modelLevel.xOffset;
+//             const adjustedZPosition = modelLevel.zOffset;
+//             const newPosition = [
+//                 adjustedXPosition,
+//                 -newCumulativeHeight - modelLevel.height,
+//                 adjustedZPosition,
+//             ];
+
+//             const newLevel = {
+//                 id: `${Date.now()}-${modelLevel.groupType}-${j}`,
+//                 url: modelLevel.url,
+//                 position: newPosition,
+//                 height: modelLevel.height,
+//                 rotation: modelLevel.rotation,
+//                 groupType: modelLevel.groupType,
+//             };
+
+//             newLevels.push(newLevel);
+//         }
+//     }
+//     const selectedpart = 0;
+//     newCumulativeHeight += newModelLevels[0].height;
+//     dispatch({ type: "SET_LEVELS", payload: newLevels });
+//     dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
+//     dispatch({ type: "SET_LOADING" });
+//     dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
+//     dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+//     toast.success(`${selectedType} platform(s) added to the model`);
+// };
+
+// // Removing the levels from the model
+// export const removeLevel = (state, dispatch, toast) => {
+//     const {
+//         levels,
+//         cumulativeHeight,
+//         drop_down,
+//         descripation,
+//         value,
+//         price,
+//         initalPrice,
+//         selectedType,
+//         initialPrice,
+//         type,
+//         levelIndex,
+//     } = state;
+
+//     if (levels.length === 1) {
+//         toast.error("No levels to remove");
+//         dispatch({ type: "SET_PRICE", payload: initalPrice });
+//         return;
+//     }
+//     const index = levelIndex - 1;
+//     dispatch({ type: "SET_LEVEL", payload: index });
+//     const lastLevel = levels[levels.length - 1];
+//     const lastGroupType1 = type[type.length - 1];
+//     const type1 = [...type]; // Clone the type array
+//     type1.pop();
+
+//     // Determine how many platforms to remove based on the selected type
+//     const lastGroupType =
+//         lastGroupType1 === "PTRIPLE"
+//             ? 3
+//             : lastGroupType1 === "PDOUBLE"
+//                 ? 2
+//                 : lastGroupType1 === "PQUAD"
+//                     ? 4
+//                     : lastGroupType1 === "PTRIPLE_L"
+//                         ? 3
+//                         : lastGroupType1 === "PQUAD_L"
+//                             ? 4
+//                             : lastGroupType1 === "PSINGLE"
+//                                 ? 1
+//                                 : 0;
+
+//     // Adjust cumulative height
+//     dispatch({ type: "ADD_TYPE", payload: type1 });
+//     dispatch({
+//         type: "SET_CUMULATIVE_HEIGHT",
+//         payload: cumulativeHeight - lastLevel.height,
+//     });
+
+//     // Ensure not to remove more levels than exist
+//     const newLevels = levels.slice(0, Math.max(0, levels.length - lastGroupType));
+//     dispatch({ type: "SET_LEVELS", payload: newLevels });
+//     dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+
+//     // Remove the last dropdown description
+//     const updatedDescripation = { ...descripation };
+//     delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
+
+//     // Calculate new price based on removed levels
+//     const lastValue = value[value.length - 1];
+//     let newPrice = price === initialPrice ? 0 : price - lastValue;
+
+//     // Update value array by removing last entry
+//     const newValueArray = value.slice(0, -1);
+
+//     dispatch({ type: "SET_PRICE", payload: newPrice });
+//     dispatch({ type: "SET_VALUE", payload: newValueArray });
+//     dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
+//     dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
+
+//     toast.info("Removed the last level");
+// };
+
+// // Resetting all the settings to default
+// export const resetAll = (state, dispatch, toast) => {
+//     const { levels, initalPrice } = state;
+//     const newlevels = [];
+//     newlevels.push(levels[0]);
+//     console.log("newlevels", newlevels);
+//     const index = 0;
+//     dispatch({ type: "SET_PRICE", payload: initalPrice });
+//     dispatch({ type: "RESET_ALL", payload: newlevels });
+//     dispatch({ type: "SET_DROP_DOWN", payload: 1 });
+//     dispatch({ type: "SET_LEVEL", payload: index });
+//     dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+//     dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+//     toast.info("Reset all settings to default");
+// };
 
 
-const DetectionMesh = ({ position, size, onClick, index }) => {
-    const meshRef = useRef();
 
-    useFrame(({ raycaster, camera, mouse }) => {
-        if (meshRef.current) {
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(meshRef.current);
-            document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
-        }
-    });
 
-    return (
-        <mesh ref={meshRef} position={position} onClick={(e) => onClick(e, index)}>
-            <boxGeometry args={size} />
-            <meshBasicMaterial
-                transparent
-                opacity={0.01} // Make the mesh almost invisible
-                wireframe={true} // Optional: Enable wireframe mode
-                color={`hsl(${index * 90}, 100%, 50%)`} // Assign color based on index, but it won't be visible due to opacity
-            />
-        </mesh>
-    );
-};
-const Level = ({ url, position, scale, rotation, onClick }) => {
-    const { scene } = useGLTF(url);
-    const groupRef = useRef();
-    const { camera } = useThree();  // Access camera here
+export const addLevel = (state, dispatch, toast) => {
+    // ... (keep the existing checks and initializations)
+    const {
+        selectedType,
+        baseType,
+        price,
+        levels,
+        scale,
+        cumulativeHeight,
+        platformsPerLevel,
+        selectedLength,
+        selectedPart,
+        drop_down,
+        value,
+        rotation,
+        levelIndex,
+        platformName,
+    } = state;
 
-    const clonedScene = scene.clone();
-
-    const handleClick = useCallback((event, index) => {
-        event.stopPropagation();
-        const clickPosition = event.point;
-        onClick({
-            position: clickPosition,
-            cameraPosition: camera.position.clone(), // Now using the correct camera
-            normalVector: event.face.normal.clone(),
-            platformIndex: index + 1, // Index starts from 1
-        });
-    }, [camera, onClick]); // Include `camera` in the dependency array
-
-    clonedScene.traverse((node) => {
-        if (node.isMesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-            if (node.material) {
-                node.material.roughness = 0.5;
-                node.material.metalness = 0.5;
-            }
-        }
-    });
-
-    // Calculate bounding box of the model
-    const bbox = new THREE.Box3().setFromObject(clonedScene);
-    const modelSize = new THREE.Vector3();
-    bbox.getSize(modelSize);
-
-    // Define 4 platforms based on the size of the model
-    const detectionMeshes = [];
-    const platformWidth = modelSize.x / 4; // Each platform occupies 1/4th of the model's width
-    const meshSize = [platformWidth, modelSize.y, modelSize.z]; // Same size for all meshes
-
-    // Create 4 detection meshes
-    for (let i = 0; i < 4; i++) {
-        // Position each mesh at the center of its platform
-        const xPosition = bbox.min.x + (i + 0.5) * platformWidth;
-
-        detectionMeshes.push(
-            <DetectionMesh
-                key={`detection-mesh-${i}`}
-                position={[xPosition, 0, 0]} // Correctly calculate x position
-                size={meshSize} // Set the size based on the platform width
-                onClick={handleClick}
-                index={i} // Pass index to handleClick
-            />
+    if (!selectedType && !baseType) {
+        toast.error(
+            "Please select both the base type and model type before adding levels."
         );
+        return;
     }
 
-    return (
-        <group ref={groupRef} position={position} scale={scale} rotation={rotation}>
-            <primitive object={clonedScene} />
-            {detectionMeshes}
-        </group>
-    );
-};
-const ModelViewer = ({
-    scale,
-    levels,
-    dispatch,
-    toast,
-    psingleCount
-}) => {
-    const sceneRef = useRef(new THREE.Scene());
-    const cameraRef = useRef();
-    const [isLoading, setIsLoading] = useState(false);
-    const [selectedPart, setSelectedPart] = useState(null);
+    dispatch({ type: "SET_LOADING" });
 
-    // ... [exportModel function remains unchanged]
-    const exportModel = useCallback(() => {
-        if (!sceneRef.current) return;
-        console.log("Exporting model...");
+    const Dropdownlevel = drop_down + 1;
+    dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
 
-        const exporter = new GLTFExporter();
-        exporter.parse(
-            sceneRef.current,
-            (result) => {
-                const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                dispatch({ type: "SET_MODEL", payload: url });
-            },
-            { binary: true }
-        );
-    }, [dispatch]);
-    useEffect(() => {
-        if (levels.length > 0) {
-            setIsLoading(true);
-            setTimeout(() => {
-                exportModel();
-                setIsLoading(false);
-            }, 1000);
-        }
-    }, [levels, exportModel]);
+    // Assuming Price is a function that calculates the price
+    Price(selectedType, selectedLength, price, dispatch, value);
+    const newLevelIndex = levelIndex + 1;
+    dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
+    const details = {
+        [`drop_down_level_${drop_down}`]: `${convert(
+            selectedType
+        )} PSINGLE ${selectedLength} INCH`,
+    };
+    dispatch({ type: "SET_DESCRIPTION", payload: details });
 
-    const handleClick = useCallback((event) => {
-        event.preventDefault();
+    const newModelLevel = createModelFromPSingle(state, dispatch)[0];
+    let newLevels = [...levels];
+    let newCumulativeHeight = cumulativeHeight;
 
-        if (!cameraRef.current || !sceneRef.current) {
-            console.error("Camera or scene reference is missing");
-            return;
-        }
+    const PositionX = selectedPart !== 0 ? selectedPart + 1.45 : 0;
+    const adjustedXPosition = PositionX + newModelLevel.xOffset;
+    const adjustedZPosition = newModelLevel.zOffset;
+    const newPosition = [
+        adjustedXPosition,
+        -newCumulativeHeight - newModelLevel.height,
+        adjustedZPosition,
+    ];
 
-        const mouse = new THREE.Vector2();
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, cameraRef.current);
-
-        const intersects = raycaster.intersectObjects(sceneRef.current.children, true);
-
-        if (intersects.length > 0) {
-            const clickedPosition = intersects[0].point;
-            console.log("Clicked Position:", clickedPosition);
-
-            // Determine which part was clicked based on the x-position
-            const partIndex = Math.floor((clickedPosition.x + 3) / (6 / psingleCount));
-            const partName = `Platform ${String(partIndex).padStart(2, '0')}`;
-
-            console.log(`Selected ${partName}`);
-            toast.success(`Selected ${partName}`);
-            setSelectedPart(partName);
-            dispatch({ type: "SET_SELECTED_PART", payload: clickedPosition });
-        } else {
-            console.log("No intersection found");
-            toast.info("No intersection found. Try clicking on a visible part of the model.");
-            setSelectedPart(null);
-        }
-    }, [dispatch, toast, psingleCount]);
-
-    const ClickHandler = () => {
-        const { camera, scene } = useThree();
-        useEffect(() => {
-            cameraRef.current = camera;
-            sceneRef.current = scene;
-        }, [camera, scene]);
-
-        return null;
+    const newLevel = {
+        id: `${Date.now()}-${newModelLevel.groupType}`,
+        url: newModelLevel.url,
+        position: newPosition,
+        height: newModelLevel.height,
+        rotation: newModelLevel.rotation,
+        groupType: newModelLevel.groupType,
     };
 
-    return (
-        <div className="flex-1 w-screen flex-wrap md:h-screen flex flex-col items-center justify-center relative">
-            {levels.length === 0 ? (
-                <div className="text-gray-600 text-center">
-                    <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-                    <p>Please use the controls on the side to add levels to your model.</p>
-                </div>
-            ) : (
-                <>
-                    <Canvas
-                        onClick={handleClick}
-                        shadows
-                        style={{ width: "100%", height: "100%" }}
-                        camera={{ position: [0, 0, 5], fov: 75 }}
-                    >
-                        <ClickHandler />
-                        <Suspense fallback={<LoadingIndicator />}>
-                            <spotLight position={[10, 10, 10]} intensity={1} castShadow />
-                            <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
-
-                            {levels.map((level, index) => (
-                                <Level
-                                    key={`${level.url}-${index}-${Math.random()}`}
-                                    url={level.url}
-                                    position={level.position}
-                                    scale={[scale, scale, scale]}
-                                    rotation={level.rotation}
-                                    psingleCount={psingleCount}
-                                />
-                            ))}
-                            <OrbitControls
-                                enablePan={Boolean("Pan", true)}
-                                enableZoom={Boolean("Zoom", true)}
-                                enableRotate={Boolean("Rotate", true)}
-                            />
-                        </Suspense>
-                    </Canvas>
-                    {isLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-                        </div>
-                    )}
-                    {selectedPart && (
-                        <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
-                            Selected Part: {selectedPart}
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
-    );
+    newLevels.push(newLevel);
+    newCumulativeHeight += newModelLevel.height;
+    dispatch({ type: "SET_LEVELS", payload: newLevels });
+    dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
+    dispatch({ type: "SET_LOADING" });
+    dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
+    dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+    toast.success(`${selectedType} platform(s) added to the model`);
+    // ... (keep the rest of the function, updating state, etc.)
 };
-
-export default ModelViewer;
-
-
-
-import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
-import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
-
-// ... (Previous components remain unchanged)
-
-
-
-
-
-
-
-
-
-
-
-

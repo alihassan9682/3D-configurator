@@ -338,43 +338,30 @@ const createModelFromPSingle = (state, dispatch) => {
   dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
   const selecttype = [...type, selectedType];
   dispatch({ type: "ADD_TYPE", payload: selecttype });
-  const selectedLevelUrl = levelUrls["PSINGLE"][selectedLength];
+
+  // Construct the URL based on the combined PSingle count
+  const baseUrl = levelUrls[selectedType][selectedLength];
+  const combinedUrl = `${baseUrl}_${psingleCount}`; // Assuming your URL structure supports this
+
   const actualHeight = actualHeights[selectedLength] * scale;
-  const modelLevels = [];
 
-  for (let i = 0; i < psingleCount; i++) {
-    let xvalue = 0;
-    let zvalue = 0;
-    const baseOffset =
-      rotation === 0 ? [0, 0.34, 0.67, 1] : [0, 0.32, 0.61, 0.91];
-    if (i < baseOffset.length) {
-      xvalue = i * actualHeight + baseOffset[i];
-    }
-    if (
-      (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") &&
-      i === psingleCount - 1
-    ) {
-      zvalue = actualHeight + 0.26;
-      xvalue = i > 0 ? modelLevels[i - 1].xOffset : 0;
-    }
+  // Create a single level object
+  const newLevel = {
+    url: baseUrl,
+    height: actualHeight, // Keep the height of a single PSingle
+    xOffset: 0,
+    zOffset: 0,
+    groupType: selectedType,
+  };
 
-    // Create new level object
-    const newLevel = {
-      url: selectedLevelUrl,
-      height: actualHeight,
-      xOffset: xvalue,
-      zOffset: zvalue,
-      rotation: [0, 0, 0],
-      groupType: selectedType,
-    };
-
-    // Add the new level to the modelLevels array
-    modelLevels.push(newLevel);
+  // If it's an L-shaped type, adjust the zOffset
+  if (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") {
+    newLevel.zOffset = actualHeight + 0.26;
   }
 
-  return modelLevels;
+  console.log("modelLevel", [newLevel]);
+  return [newLevel];
 };
-
 export const addLevel = (state, dispatch, toast) => {
   const {
     selectedType,

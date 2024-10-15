@@ -4,7 +4,6 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 
-// ... (LoadingIndicator component remains unchanged)
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -13,6 +12,7 @@ const LoadingIndicator = () => {
     </mesh>
   );
 };
+
 const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) => {
   const meshRef = useRef();
 
@@ -31,12 +31,12 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) 
       onClick={(e) => onClick(e, levelIndex, platformNumber)}
     >
       <boxGeometry args={size} />
-      <meshBasicMaterial transparent opacity={0.01} wireframe={true} />
+      <meshBasicMaterial transparent opacity={0} wireframe={true} />
     </mesh>
   );
 };
 
-const Level = ({ url, position, scale, rotation, onClick, levelIndex, platformCount }) => {
+const Level = ({ url, position, scale, rotation, onClick, levelIndex, groupType, parentGroupType }) => {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
   const { camera } = useThree();
@@ -52,29 +52,29 @@ const Level = ({ url, position, scale, rotation, onClick, levelIndex, platformCo
       normalVector: event.face.normal.clone(),
       levelIndex,
       platformNumber,
+      groupType,
     });
-  }, [camera, onClick]);
-
-  // ... (clonedScene traversal remains unchanged)
+  }, [camera, onClick, groupType]);
 
   const bbox = new THREE.Box3().setFromObject(clonedScene);
   const modelSize = new THREE.Vector3();
   bbox.getSize(modelSize);
 
   const detectionMeshes = [];
+  const platformCount = getPlatformCount(groupType);
   const platformWidth = modelSize.x / platformCount;
-  const meshSize = [platformWidth, modelSize.y, modelSize.z];
+  const meshSize = [platformWidth - 0.3, modelSize.y, modelSize.z];
 
   for (let i = 0; i < platformCount; i++) {
     const xPosition = bbox.min.x + (i + 0.5) * platformWidth;
     detectionMeshes.push(
       <DetectionMesh
         key={`detection-mesh-${levelIndex}-${i}`}
-        position={[xPosition, 0, 0]}
+        position={[xPosition, modelSize.y - 10, -12]}
         size={meshSize}
         onClick={handleClick}
         levelIndex={levelIndex}
-        platformNumber={i + 1}  // Platform numbering starts from 1
+        platformNumber={i + 1}
       />
     );
   }
@@ -87,21 +87,12 @@ const Level = ({ url, position, scale, rotation, onClick, levelIndex, platformCo
   );
 };
 
-
-const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }) => {
+const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Nested array structure for levels and platforms
-  const levelStructure = [
-    [1, 2, 3, 4],  // Level 0 (base level) with 4 platforms
-    [1, 2, 3],     // Level 1 with 3 platforms
-    [1, 2],        // Level 2 with 2 platforms
-    [1]           
-  ]
-
-  // ... (exportModel function remains unchanged)
+  // Export model function
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
     console.log("Exporting model...");
@@ -117,6 +108,7 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
       { binary: true }
     );
   }, [dispatch]);
+
   useEffect(() => {
     if (levels.length > 0) {
       setIsLoading(true);
@@ -126,26 +118,20 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
       }, 1000);
     }
   }, [levels, exportModel]);
-  // ... (useEffect for exporting model remains unchanged)
 
-  const handleClick = useCallback(({ position, levelIndex, platformNumber }) => {
-    if (levelIndex < levelStructure.length && platformNumber <= levelStructure[levelIndex].length) {
-      const platformName = `Platform ${platformNumber}`;
-      console.log(`Selected ${platformName}`);
-      toast.success(`Selected ${platformName}`);
-      dispatch({ type: "SET_PLATFORM_NAME" ,payload: platformName })
-      // Use the exact x position from the click event
-      const exactX = position.x;
+  // Click handler for selecting platforms
+  const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
+    const platformName = `${groupType} Platform ${platformNumber}`;
+    console.log(`Selected ${platformName}`);
+    toast.success(`Selected ${platformName}`);
+    dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
 
-      console.log(`Exact click position (x): ${exactX}`);
-      dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-    } else {
-      console.log("Invalid platform selected");
-      toast.info("Invalid platform selected. Try clicking on a visible part of the model.");
-    }
-  }, [dispatch, toast, levelStructure]);
+    const exactX = position.x;
+    console.log(`Exact click position (x): ${exactX}`);
+    dispatch({ type: "SET_SELECTED_PART", payload: exactX });
+  }, [dispatch, toast]);
 
-  // ... (ClickHandler component remains unchanged)
+  // ClickHandler component
   const ClickHandler = () => {
     const { camera, scene } = useThree();
     useEffect(() => {
@@ -155,6 +141,7 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
 
     return null;
   };
+
   return (
     <div className="flex-1 w-screen flex-wrap md:h-screen flex flex-col items-center justify-center relative">
       {levels.length === 0 ? (
@@ -183,7 +170,8 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
                   rotation={level.rotation}
                   onClick={handleClick}
                   levelIndex={index}
-                  platformCount={levelStructure[index] ? levelStructure[index].length : 0}
+                  groupType={level.groupType}
+                  parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                 />
               ))}
               <OrbitControls
@@ -198,7 +186,7 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
             </div>
           )}
-            {platformName && (
+          {platformName && (
             <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
               Selected Part: {platformName}
             </div>
@@ -208,5 +196,23 @@ const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }
     </div>
   );
 };
+
+// Helper function to get platform count based on group type
+function getPlatformCount(groupType) {
+  switch (groupType) {
+    case "PSINGLE":
+      return 1;
+    case "PDOUBLE":
+      return 2;
+    case "PTRIPLE":
+    case "PTRIPLE_L":
+      return 3;
+    case "PQUAD":
+    case "PQUAD_L":
+      return 4;
+    default:
+      return 1;
+  }
+}
 
 export default ModelViewer;
