@@ -55,17 +55,6 @@ const Hero2 = () => {
             dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
             dispatch({ type: "SET_BASE_TYPE", payload: baseTypeFromId.value });
             dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
-            const psingleCount =
-                baseTypeFromId.value === "PTRIPLE" || baseTypeFromId.value === "PTRIPLE_L"
-                    ? 3
-                    : baseTypeFromId.value === "PDOUBLE"
-                        ? 2
-                        : baseTypeFromId.value === "PQUAD" || baseTypeFromId.value === "PQUAD_L"
-                            ? 4
-                            : baseTypeFromId.value === "PSINGLE"
-                                ? 1
-                                : 0;
-            dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
         } else {
@@ -80,12 +69,12 @@ const Hero2 = () => {
         dispatch({ type: "SET_SELECTED_TYPE", payload: e.target.value });
     };
 
-    const handleOnRotationChange = (e) => {
-        setRotationValue(e.target.value);
-        const selectedRotationValue = parseInt(e.target.value) * Math.PI / 180;
-         console.log(selectedRotationValue)
-        dispatch({ type: "SET_ROTATION", payload: selectedRotationValue })
-    }
+    // const handleOnRotationChange = (e) => {
+    //     setRotationValue(e.target.value);
+    //     const selectedRotationValue = parseInt(e.target.value) * Math.PI / 180;
+    //      console.log(selectedRotationValue)
+    //     dispatch({ type: "SET_ROTATION", payload: selectedRotationValue })
+    // }
  
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);
@@ -98,11 +87,7 @@ const Hero2 = () => {
     useEffect(() => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
-        console.log('psingleCount:', state.psingleCount);
-    }, [state.price, state.descripation, state.psingleCount])
-    useEffect(() => { 
-        console.log("updated roation ", state.rotation)
-    }, [state.rotation])
+    }, [state.price, state.descripation])
     return (
         <div className="flex flex-col md:flex-row h-screen lg:mb-3 ">
             <div className="w-full md:w-80 p-4 md:p-6  bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
@@ -278,7 +263,9 @@ const Hero2 = () => {
                     levels={state.levels}
                     dispatch={dispatch}
                     toast={toast}
-                    psingleCount={state.psingleCount}
+                    psingleCount={state.pSingle}
+                    levelIndex={state.levelIndex}
+                    platformName={state.platformName}
                 />
                 
             ) : state.activeView === "AR" ? (

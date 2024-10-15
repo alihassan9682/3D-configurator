@@ -4,78 +4,108 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 
-// Loading Indicator Component
-const LoadingIndicator = () => (
-  <mesh visible position={[0, 0, 0]}>
-    <sphereGeometry args={[1, 16, 16]} />
-    <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
-  </mesh>
-);
+// ... (LoadingIndicator component remains unchanged)
+const LoadingIndicator = () => {
+  return (
+    <mesh visible position={[0, 0, 0]}>
+      <sphereGeometry args={[1, 16, 16]} />
+      <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
+    </mesh>
+  );
+};
+const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) => {
+  const meshRef = useRef();
 
-// Level Component
-const Level = ({ url, position, scale, rotation, onClick }) => {
-  const { scene } = useGLTF(url);
-  const groupRef = useRef();
-  const { raycaster, mouse, camera } = useThree();
-
-  const clonedScene = scene.clone();
-
-  useFrame(() => {
-    if (groupRef.current) {
+  useFrame(({ raycaster, camera, mouse }) => {
+    if (meshRef.current) {
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(groupRef.current, true);
-      if (intersects.length > 0) {
-        document.body.style.cursor = 'pointer';
-      } else {
-        document.body.style.cursor = 'default';
-      }
-    }
-  });
-
-  const handleClick = useCallback((event) => {
-    event.stopPropagation();
-    if (groupRef.current) {
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(groupRef.current, true);
-      if (intersects.length > 0) {
-        const clickPosition = intersects[0].point;
-        onClick({
-          position: clickPosition,
-          cameraPosition: camera.position.clone(),
-          normalVector: intersects[0].face.normal.clone()
-        });
-      }
-    }
-  }, [raycaster, mouse, camera, onClick]);
-
-  clonedScene.traverse((node) => {
-    if (node.isMesh) {
-      node.castShadow = true;
-      node.receiveShadow = true;
-      if (node.material) {
-        node.material.roughness = 0.5;
-        node.material.metalness = 0.5;
-      }
+      const intersects = raycaster.intersectObject(meshRef.current);
+      document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
     }
   });
 
   return (
-    <group ref={groupRef} position={position} scale={scale} rotation={rotation} onClick={handleClick}>
+    <mesh
+      ref={meshRef}
+      position={position}
+      onClick={(e) => onClick(e, levelIndex, platformNumber)}
+    >
+      <boxGeometry args={size} />
+      <meshBasicMaterial transparent opacity={0.01} wireframe={true} />
+    </mesh>
+  );
+};
+
+const Level = ({ url, position, scale, rotation, onClick, levelIndex, platformCount }) => {
+  const { scene } = useGLTF(url);
+  const groupRef = useRef();
+  const { camera } = useThree();
+
+  const clonedScene = scene.clone();
+
+  const handleClick = useCallback((event, levelIndex, platformNumber) => {
+    event.stopPropagation();
+    const clickPosition = event.point;
+    onClick({
+      position: clickPosition,
+      cameraPosition: camera.position.clone(),
+      normalVector: event.face.normal.clone(),
+      levelIndex,
+      platformNumber,
+    });
+  }, [camera, onClick]);
+
+  // ... (clonedScene traversal remains unchanged)
+
+  const bbox = new THREE.Box3().setFromObject(clonedScene);
+  const modelSize = new THREE.Vector3();
+  bbox.getSize(modelSize);
+
+  const detectionMeshes = [];
+  const platformWidth = modelSize.x / platformCount;
+  const meshSize = [platformWidth, modelSize.y, modelSize.z];
+
+  for (let i = 0; i < platformCount; i++) {
+    const xPosition = bbox.min.x + (i + 0.5) * platformWidth;
+    detectionMeshes.push(
+      <DetectionMesh
+        key={`detection-mesh-${levelIndex}-${i}`}
+        position={[xPosition, 0, 0]}
+        size={meshSize}
+        onClick={handleClick}
+        levelIndex={levelIndex}
+        platformNumber={i + 1}  // Platform numbering starts from 1
+      />
+    );
+  }
+
+  return (
+    <group ref={groupRef} position={position} scale={scale} rotation={rotation}>
       <primitive object={clonedScene} />
+      {detectionMeshes}
     </group>
   );
 };
 
-// Main ModelViewer Component
-const ModelViewer = ({ scale, levels, dispatch, toast }) => {
+
+const ModelViewer = ({ scale, levels, dispatch, toast, levelIndex,platformName }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPart, setSelectedPart] = useState(null);
 
-  // GLTF Export function
+  // Nested array structure for levels and platforms
+  const levelStructure = [
+    [1, 2, 3, 4],  // Level 0 (base level) with 4 platforms
+    [1, 2, 3],     // Level 1 with 3 platforms
+    [1, 2],        // Level 2 with 2 platforms
+    [1]           
+  ]
+
+  // ... (exportModel function remains unchanged)
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
+    console.log("Exporting model...");
+
     const exporter = new GLTFExporter();
     exporter.parse(
       sceneRef.current,
@@ -87,7 +117,6 @@ const ModelViewer = ({ scale, levels, dispatch, toast }) => {
       { binary: true }
     );
   }, [dispatch]);
-
   useEffect(() => {
     if (levels.length > 0) {
       setIsLoading(true);
@@ -97,59 +126,26 @@ const ModelViewer = ({ scale, levels, dispatch, toast }) => {
       }, 1000);
     }
   }, [levels, exportModel]);
+  // ... (useEffect for exporting model remains unchanged)
 
-  const handleClick = useCallback((event) => {
-    event.preventDefault();
+  const handleClick = useCallback(({ position, levelIndex, platformNumber }) => {
+    if (levelIndex < levelStructure.length && platformNumber <= levelStructure[levelIndex].length) {
+      const platformName = `Platform ${platformNumber}`;
+      console.log(`Selected ${platformName}`);
+      toast.success(`Selected ${platformName}`);
+      dispatch({ type: "SET_PLATFORM_NAME" ,payload: platformName })
+      // Use the exact x position from the click event
+      const exactX = position.x;
 
-    if (!cameraRef.current || !sceneRef.current) {
-      console.error("Camera or scene reference is missing");
-      return;
-    }
-
-    // Normalize mouse coordinates
-    const mouse = new THREE.Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, cameraRef.current);
-
-    const intersects = raycaster.intersectObjects(sceneRef.current.children, true);
-
-    if (intersects.length > 0) {
-      const clickedPosition = intersects[0].point;
-      const xPosition = clickedPosition.x;
-      const zPosition = clickedPosition.z;
-      const yPosition = clickedPosition.y;
-
-      console.log("Clicked X Position:", xPosition);
-      console.log("Clicked Y Position:", yPosition);
-      console.log("Clicked Z Position:", zPosition);
-
-      const Grill =
-        xPosition < 1.2 ? "Platform 01" :
-          xPosition < 2.06 ? "Platform 02" :
-            xPosition < 3.59 ? "Platform 03" :
-              xPosition < 6.12 ? "Platform 04" : null;
-
-      if (Grill) {
-        console.log(`Selected ${Grill}`);
-        toast.success(`Selected ${Grill}`);
-        setSelectedPart(Grill);
-        dispatch({ type: "SET_SELECTED_PART", payload: clickedPosition });
-      } else {
-        console.log("Clicked outside of defined platforms");
-        toast.info("Clicked outside of defined platforms");
-        setSelectedPart(null);
-      }
+      console.log(`Exact click position (x): ${exactX}`);
+      dispatch({ type: "SET_SELECTED_PART", payload: exactX });
     } else {
-      console.log("No intersection found");
-      toast.info("No intersection found. Try clicking on a visible part of the model.");
-      setSelectedPart(null);
+      console.log("Invalid platform selected");
+      toast.info("Invalid platform selected. Try clicking on a visible part of the model.");
     }
-  }, [dispatch, toast]);
+  }, [dispatch, toast, levelStructure]);
 
-  // Hook to manage camera and scene references
+  // ... (ClickHandler component remains unchanged)
   const ClickHandler = () => {
     const { camera, scene } = useThree();
     useEffect(() => {
@@ -159,7 +155,6 @@ const ModelViewer = ({ scale, levels, dispatch, toast }) => {
 
     return null;
   };
-
   return (
     <div className="flex-1 w-screen flex-wrap md:h-screen flex flex-col items-center justify-center relative">
       {levels.length === 0 ? (
@@ -169,48 +164,43 @@ const ModelViewer = ({ scale, levels, dispatch, toast }) => {
         </div>
       ) : (
         <>
-            <Canvas
-              onClick={handleClick}
-              shadows
-              style={{ width: "100%", height: "100%" }}
-              camera={{ position: [0, 0, 5], fov: 75 }}
-            >
-              <ClickHandler />
-              <Suspense fallback={<LoadingIndicator />}>
-                <spotLight position={[10, 10, 10]} intensity={1} castShadow>
-                  <object3D position={[0, 0, -1]} />
-                </spotLight>
-                <directionalLight position={[10, 10, 10]} intensity={1} castShadow>
-                  <object3D position={[0, 0, -1]} />
-                </directionalLight>
-                {levels.map((level, index) => (
-                  <Level
-                    key={`${level.url}-${index}-${Math.random()}`}
-                    url={level.url}
-                    position={level.position}
-                    scale={[scale, scale, scale]}
-                    rotation={level.rotation}
-                  />
-                ))}
+          <Canvas
+            shadows
+            style={{ width: "100%", height: "100%" }}
+            camera={{ position: [0, 0, 5], fov: 75 }}
+          >
+            <ClickHandler />
+            <Suspense fallback={<LoadingIndicator />}>
+              <spotLight position={[10, 10, 10]} intensity={1} castShadow />
+              <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
 
-                <OrbitControls
-                  enablePan={Boolean("Pan", true)}
-                  enableZoom={Boolean("Zoom", true)}
-                  enableRotate={Boolean("Rotate", true)}
+              {levels.map((level, index) => (
+                <Level
+                  key={`${level.url}-${index}-${Math.random()}`}
+                  url={level.url}
+                  position={level.position}
+                  scale={[scale, scale, scale]}
+                  rotation={level.rotation}
+                  onClick={handleClick}
+                  levelIndex={index}
+                  platformCount={levelStructure[index] ? levelStructure[index].length : 0}
                 />
-              </Suspense>
-            </Canvas>
-
-
+              ))}
+              <OrbitControls
+                enablePan={true}
+                enableZoom={true}
+                enableRotate={true}
+              />
+            </Suspense>
+          </Canvas>
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
             </div>
           )}
-
-          {selectedPart && (
+            {platformName && (
             <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
-              Selected Part: {selectedPart}
+              Selected Part: {platformName}
             </div>
           )}
         </>

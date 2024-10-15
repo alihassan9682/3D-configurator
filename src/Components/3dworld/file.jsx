@@ -445,3 +445,25 @@ const ModelViewer = ({
 };
 
 export default ModelViewer;
+
+
+
+import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+import * as THREE from "three";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
+
+// ... (Previous components remain unchanged)
+
+
+
+
+
+
+
+
+
+
+
+

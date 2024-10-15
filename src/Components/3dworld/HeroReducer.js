@@ -17,15 +17,23 @@ export const initialState = {
   isLoading: false,
   isInCart: false,
   model: null,
-  selectedPart: {},
+  selectedPart: 0,
   initalPrice: 0,
   drop_down: 1,
   rotation: 0,
   type: [],
+  pSingle: 0,
+  levelIndex: 0,
+  platformName: "",
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
   switch (action.type) {
+    case "SET_LEVEL_INDEX":
+      return {
+        ...state,
+        levelIndex: action.payload,
+      };
     case "SET_BASE_TYPE":
       return {
         ...state,
@@ -36,6 +44,11 @@ export const heroReducer = (state, action) => {
         descripation: {
           base: action.payload,
         },
+      };
+    case "SET_PSINGLE_COUNT":
+      return {
+        ...state,
+        pSingle: action.payload,
       };
     case "ADD_TYPE":
       return {
@@ -51,6 +64,11 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         initalPrice: action.payload,
+      };
+    case "SET_PLATFORM_NAME":
+      return {
+        ...state,
+        platformName: action.payload,
       };
     case "SET_CART":
       return {
@@ -292,7 +310,6 @@ export const Price = (selectedType, selectedLength, price, dispatch, value) => {
   dispatch({ type: "SET_PRICE", payload: updatedPrice });
   dispatch({ type: "SET_VALUE", payload: selectedValue });
 };
-
 // Makign the Descripation for the model to be displayed in the cart
 export const convert = (value) => {
   const typeMap = {
@@ -318,7 +335,7 @@ const createModelFromPSingle = (state, dispatch) => {
       : selectedType === "PSINGLE"
       ? 1
       : 0;
-
+  dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
   const selecttype = [...type, selectedType];
   dispatch({ type: "ADD_TYPE", payload: selecttype });
   const selectedLevelUrl = levelUrls["PSINGLE"][selectedLength];
@@ -330,11 +347,9 @@ const createModelFromPSingle = (state, dispatch) => {
     let zvalue = 0;
     const baseOffset =
       rotation === 0 ? [0, 0.34, 0.67, 1] : [0, 0.32, 0.61, 0.91];
-
     if (i < baseOffset.length) {
       xvalue = i * actualHeight + baseOffset[i];
     }
-
     if (
       (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") &&
       i === psingleCount - 1
@@ -374,6 +389,8 @@ export const addLevel = (state, dispatch, toast) => {
     drop_down,
     value,
     rotation,
+    levelIndex,
+    platformName,
   } = state;
 
   if (!selectedType && !baseType) {
@@ -390,7 +407,8 @@ export const addLevel = (state, dispatch, toast) => {
 
   // Assuming Price is a function that calculates the price
   Price(selectedType, selectedLength, price, dispatch, value);
-
+  const newLevelIndex = levelIndex + 1;
+  dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
   const details = {
     [`drop_down_level_${drop_down}`]: `${convert(
       selectedType
@@ -401,25 +419,13 @@ export const addLevel = (state, dispatch, toast) => {
   const newModelLevels = createModelFromPSingle(state, dispatch);
   let newLevels = [...levels];
   let newCumulativeHeight = cumulativeHeight;
-
+  console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const xPosition =
-        selectedPart.x < 1.53
-          ? 0
-          : selectedPart.x < 3.06
-          ? 1.53
-          : selectedPart.x < 4.59
-          ? 3.06
-          : selectedPart.x < 6.13
-          ? 4.59
-          : 0;
-      console.log("selectedPart.z ", selectedPart.z);
-
-      const PositionZ =
-        selectedPart.z < 0 ? -1.53 : selectedPart.z > 1 ? 1.53 : 0;
-      const adjustedXPosition = xPosition + modelLevel.xOffset;
-      const adjustedZPosition = modelLevel.zOffset + PositionZ;
+      const PositionX = selectedPart !== 0 ? selectedPart + 1.45 : 0;
+      console.log("selectedPart", selectedPart);
+      const adjustedXPosition = PositionX + modelLevel.xOffset;
+      const adjustedZPosition = modelLevel.zOffset;
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
@@ -438,13 +444,13 @@ export const addLevel = (state, dispatch, toast) => {
       newLevels.push(newLevel);
     }
   }
-
-  // Increase cumulative height once per group
+  const selectedpart = 0;
   newCumulativeHeight += newModelLevels[0].height;
   dispatch({ type: "SET_LEVELS", payload: newLevels });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
-
+  dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
+  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
 
@@ -461,6 +467,7 @@ export const removeLevel = (state, dispatch, toast) => {
     selectedType,
     initialPrice,
     type,
+    levelIndex,
   } = state;
 
   if (levels.length === 1) {
@@ -468,7 +475,8 @@ export const removeLevel = (state, dispatch, toast) => {
     dispatch({ type: "SET_PRICE", payload: initalPrice });
     return;
   }
-
+  const index = levelIndex - 1;
+  dispatch({ type: "SET_LEVEL", payload: index });
   const lastLevel = levels[levels.length - 1];
   const lastGroupType1 = type[type.length - 1];
   const type1 = [...type]; // Clone the type array
@@ -500,6 +508,7 @@ export const removeLevel = (state, dispatch, toast) => {
   // Ensure not to remove more levels than exist
   const newLevels = levels.slice(0, Math.max(0, levels.length - lastGroupType));
   dispatch({ type: "SET_LEVELS", payload: newLevels });
+  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
 
   // Remove the last dropdown description
   const updatedDescripation = { ...descripation };
@@ -526,8 +535,12 @@ export const resetAll = (state, dispatch, toast) => {
   const newlevels = [];
   newlevels.push(levels[0]);
   console.log("newlevels", newlevels);
+  const index = 0;
   dispatch({ type: "SET_PRICE", payload: initalPrice });
   dispatch({ type: "RESET_ALL", payload: newlevels });
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
+  dispatch({ type: "SET_LEVEL", payload: index });
+  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   toast.info("Reset all settings to default");
 };
