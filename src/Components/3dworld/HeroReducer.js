@@ -411,7 +411,7 @@ export const addLevel = (state, dispatch, toast) => {
     for (let j = 0; j < platformsPerLevel; j++) {
       const PositionX = selectedPart !== 0 ? selectedPart + 1.65 : 0;
       console.log("selectedPart", selectedPart);
-      const adjustedXPosition = PositionX + modelLevel.xOffset + selectedPartZ;
+      const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition = modelLevel.zOffset;
       const newPosition = [
         adjustedXPosition,
