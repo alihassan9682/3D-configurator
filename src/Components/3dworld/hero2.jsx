@@ -85,13 +85,9 @@ const Hero2 = () => {
         }
     };
     useEffect(() => {
-        // console.log("updated descripation", state.descripation)
-        // console.log('Price:', state.price);
-        console.log('levelsice:', state.levels);
-        console.log('levelsice:', state.model);
-        
-
-    }, [state.levels, state.model])
+        console.log("updated descripation", state.descripation)
+        console.log('Price:', state.price);
+    }, [state.price,state.descripation, state.model])
     return (
         <div className="flex flex-col md:flex-row h-screen lg:mb-3 ">
             <div className="w-full md:w-80 p-4 md:p-6  bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">

@@ -192,6 +192,7 @@ export const handleBaseTypeChange = (
             url: defaultUrl,
             position: [0, -defaultHeight, 0],
             height: defaultHeight,
+            groupType: newBaseType,
           };
         }
         return lev;
@@ -204,13 +205,14 @@ export const handleBaseTypeChange = (
       const defaultLength = 24;
       const defaultUrl = levelUrls[newBaseType][defaultLength];
       const defaultHeight = actualHeights[defaultLength] * scale;
-      const newRoation = [0, rotation, 0];
+      // const newRoation = [0, rotation, 0];
       const newLevel = {
         id: `${Date.now()}`,
         url: defaultUrl,
         position: [0, -cumulativeHeight - defaultHeight, 0],
         height: defaultHeight,
-        rotation: newRoation,
+        groupType: newBaseType,
+        // rotation: newRoation,
       };
       console.log("newLevel", newLevel);
       dispatch({ type: "SET_LEVELS", payload: [newLevel] });
@@ -339,22 +341,17 @@ const createModelFromPSingle = (state, dispatch) => {
   const selecttype = [...type, selectedType];
   dispatch({ type: "ADD_TYPE", payload: selecttype });
 
-  // Construct the URL based on the combined PSingle count
   const baseUrl = levelUrls[selectedType][selectedLength];
-  const combinedUrl = `${baseUrl}_${psingleCount}`; // Assuming your URL structure supports this
+  const combinedUrl = `${baseUrl}_${psingleCount}`;
 
   const actualHeight = actualHeights[selectedLength] * scale;
-
-  // Create a single level object
   const newLevel = {
     url: baseUrl,
-    height: actualHeight, // Keep the height of a single PSingle
+    height: actualHeight, 
     xOffset: 0,
     zOffset: 0,
     groupType: selectedType,
   };
-
-  // If it's an L-shaped type, adjust the zOffset
   if (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") {
     newLevel.zOffset = actualHeight + 0.26;
   }
@@ -409,7 +406,7 @@ export const addLevel = (state, dispatch, toast) => {
   console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 1.45 : 0;
+      const PositionX = selectedPart !== 0 ? selectedPart + 2.15 : 0;
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition = modelLevel.zOffset;

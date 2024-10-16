@@ -80,7 +80,7 @@ const Level = ({ url, position, scale, rotation, onClick, levelIndex, groupType,
   }
 
   return (
-    <group ref={groupRef} position={position} scale={scale} rotation={rotation}>
+    <group ref={groupRef} position={position} scale={scale}>
       <primitive object={clonedScene} />
       {detectionMeshes}
     </group>
