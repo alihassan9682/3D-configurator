@@ -95,8 +95,6 @@ const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
   // Export model function
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
-    console.log("Exporting model...");
-
     const exporter = new GLTFExporter();
     exporter.parse(
       sceneRef.current,

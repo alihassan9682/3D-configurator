@@ -205,14 +205,12 @@ export const handleBaseTypeChange = (
       const defaultLength = 24;
       const defaultUrl = levelUrls[newBaseType][defaultLength];
       const defaultHeight = actualHeights[defaultLength] * scale;
-      // const newRoation = [0, rotation, 0];
       const newLevel = {
         id: `${Date.now()}`,
         url: defaultUrl,
         position: [0, -cumulativeHeight - defaultHeight, 0],
         height: defaultHeight,
         groupType: newBaseType,
-        // rotation: newRoation,
       };
       console.log("newLevel", newLevel);
       dispatch({ type: "SET_LEVELS", payload: [newLevel] });
@@ -406,7 +404,7 @@ export const addLevel = (state, dispatch, toast) => {
   console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 2.15 : 0;
+      const PositionX = selectedPart !== 0 ? selectedPart + 1.85 : 0;
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition = modelLevel.zOffset;
