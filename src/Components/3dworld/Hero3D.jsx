@@ -32,7 +32,7 @@ import { FaRuler } from "react-icons/fa";
 import Client from 'shopify-buy';
 import { useReducer, useEffect } from 'react';
 
-const Hero2 = () => {
+const Hero3D = () => {
     const { id } = useParams();
     const [state, dispatch] = useReducer(heroReducer, initialState);
     const [checkout, setCheckout] = React.useState(null);
@@ -87,7 +87,8 @@ const Hero2 = () => {
     useEffect(() => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
-    }, [state.price,state.descripation, state.model])
+        console.log('selectedPartZ:', state.selectedPartZ);
+    }, [state.price, state.descripation, state.model, state.selectedPartZ])
     return (
         <div className="flex flex-col md:flex-row h-screen lg:mb-3 ">
             <div className="w-full md:w-80 p-4 md:p-6  bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
@@ -279,4 +280,4 @@ const Hero2 = () => {
         </div >
     );
 }
-export default Hero2;
+export default Hero3D;

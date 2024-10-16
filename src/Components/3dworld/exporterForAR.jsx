@@ -36,7 +36,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) 
   );
 };
 
-const Level = ({ url, position, scale, rotation, onClick, levelIndex, groupType, parentGroupType }) => {
+const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType }) => {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
   const { camera } = useThree();
@@ -123,7 +123,11 @@ const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
     console.log(`Selected ${platformName}`);
     toast.success(`Selected ${platformName}`);
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-
+    if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
+      const exacZ = position.z;
+      console.log(`Exact click position (z): ${exacZ}`);
+      dispatch({ type: "SET_SELECTED_PART_Z", payload: exacZ });
+    }
     const exactX = position.x;
     console.log(`Exact click position (x): ${exactX}`);
     dispatch({ type: "SET_SELECTED_PART", payload: exactX });

@@ -137,6 +137,7 @@ export const conditionalOptions = {
     { value: "PTRIPLE", label: "3" },
     { value: "PTRIPLE_L", label: "3L" },
     { value: "PQUAD", label: "4" },
+    { value: "PQUAD_L", label: "4L" },
   ],
   PQUAD_L: [
     { value: "PSINGLE", label: "1" },
