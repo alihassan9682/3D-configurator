@@ -120,11 +120,11 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
     console.log(`Selected ${platformName}`);
     toast.success(`Selected ${platformName}`);
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-    if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
-      const exactZ = position.z;
-      console.log(`Exact click position (z): ${exactZ}`);
-      dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-    }
+    // if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
+    //   const exactZ = position.z;
+    //   console.log(`Exact click position (z): ${exactZ}`);
+    //   dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
+    // }
     const exactX = position.x;
     console.log(`Exact click position (x): ${exactX}`);
     dispatch({ type: "SET_SELECTED_PART", payload: exactX });
