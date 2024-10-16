@@ -14,9 +14,9 @@ function App() {
       <div className="flex flex-col min-h-screen w-screen font-montserrat sm:pl-0 bg-gradient-to-br from-gray-100 to-gray-300">
         <div className="flex-grow flex-wrap">
           <Routes>
-            <Route path="/" element={<Navigate to="/home/" />} />
+            <Route path="/" element={<Navigate to="/home/id" />} />
             <Route path="/home/:id" element={<Hero3D />} />
-            <Route path="*" element={<Navigate to="/home/" />} />
+            <Route path="*" element={<Navigate to="/home/id" />} />
           </Routes> 
         </div>
         <Footer />

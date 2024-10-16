@@ -25,7 +25,7 @@ export const initialState = {
   pSingle: 0,
   levelIndex: 0,
   platformName: "",
-  selectedPartZ:0,
+  selectedPartZ: 0,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -100,7 +100,7 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         selectedPartZ: action.payload,
-      }
+      };
     case "SET_MODEL":
       return {
         ...state,
@@ -351,7 +351,7 @@ const createModelFromPSingle = (state, dispatch) => {
   const actualHeight = actualHeights[selectedLength] * scale;
   const newLevel = {
     url: baseUrl,
-    height: actualHeight, 
+    height: actualHeight,
     xOffset: 0,
     zOffset: 0,
     groupType: selectedType,
@@ -359,7 +359,6 @@ const createModelFromPSingle = (state, dispatch) => {
   if (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") {
     newLevel.zOffset = actualHeight + 0.26;
   }
-
   console.log("modelLevel", [newLevel]);
   return [newLevel];
 };
@@ -383,10 +382,8 @@ export const addLevel = (state, dispatch, toast) => {
     selectedPartZ,
   } = state;
 
-  if (!selectedType && !baseType) {
-    toast.error(
-      "Please select both the base type and model type before adding levels."
-    );
+  if (!selectedType) {
+    toast.error("Please select model type before adding levels.");
     return;
   }
 
@@ -412,7 +409,7 @@ export const addLevel = (state, dispatch, toast) => {
   console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 1.76 : 0;
+      const PositionX = selectedPart !== 0 ? selectedPart + 1.65 : 0;
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset + selectedPartZ;
       const adjustedZPosition = modelLevel.zOffset;
@@ -440,6 +437,7 @@ export const addLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
   dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
+  dispatch({ type: "SET_SELECTED_PART_Z", payload: selectedpart });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
@@ -473,20 +471,20 @@ export const removeLevel = (state, dispatch, toast) => {
   type1.pop();
 
   // Determine how many platforms to remove based on the selected type
-  const lastGroupType = 1
-    // lastGroupType1 === "PTRIPLE"
-    //   ? 3
-    //   : lastGroupType1 === "PDOUBLE"
-    //   ? 2
-    //   : lastGroupType1 === "PQUAD"
-    //   ? 4
-    //   : lastGroupType1 === "PTRIPLE_L"
-    //   ? 3
-    //   : lastGroupType1 === "PQUAD_L"
-    //   ? 4
-    //   : lastGroupType1 === "PSINGLE"
-    //   ? 1
-    //   : 0;
+  const lastGroupType = 1;
+  // lastGroupType1 === "PTRIPLE"
+  //   ? 3
+  //   : lastGroupType1 === "PDOUBLE"
+  //   ? 2
+  //   : lastGroupType1 === "PQUAD"
+  //   ? 4
+  //   : lastGroupType1 === "PTRIPLE_L"
+  //   ? 3
+  //   : lastGroupType1 === "PQUAD_L"
+  //   ? 4
+  //   : lastGroupType1 === "PSINGLE"
+  //   ? 1
+  //   : 0;
 
   // Adjust cumulative height
   dispatch({ type: "ADD_TYPE", payload: type1 });
@@ -515,7 +513,8 @@ export const removeLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_VALUE", payload: newValueArray });
   dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
   dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
-
+  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+  dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   toast.info("Removed the last level");
 };
 // Resetting all the settings to default
@@ -531,5 +530,7 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_LEVEL", payload: index });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+  dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   toast.info("Reset all settings to default");
 };

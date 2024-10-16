@@ -3,7 +3,9 @@ import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
+import { toast } from 'react-toastify';
 
+// LoadingIndicator component
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -13,6 +15,7 @@ const LoadingIndicator = () => {
   );
 };
 
+// DetectionMesh component
 const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) => {
   const meshRef = useRef();
 
@@ -36,25 +39,20 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) 
   );
 };
 
+// Level component
 const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType }) => {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
-  const { camera } = useThree();
-
   const clonedScene = scene.clone();
 
-  const handleClick = useCallback((event, levelIndex, platformNumber) => {
-    event.stopPropagation();
-    const clickPosition = event.point;
+  const handleClick = useCallback((e, levelIndex, platformNumber) => {
     onClick({
-      position: clickPosition,
-      cameraPosition: camera.position.clone(),
-      normalVector: event.face.normal.clone(),
+      position: e.point,
       levelIndex,
       platformNumber,
-      groupType,
+      groupType
     });
-  }, [camera, onClick, groupType]);
+  }, [onClick, groupType]);
 
   const bbox = new THREE.Box3().setFromObject(clonedScene);
   const modelSize = new THREE.Vector3();
@@ -87,12 +85,12 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
   );
 };
 
-const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
+// ModelViewer component
+const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Export model function
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
     const exporter = new GLTFExporter();
@@ -117,30 +115,27 @@ const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
     }
   }, [levels, exportModel]);
 
-  // Click handler for selecting platforms
   const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
     const platformName = `${groupType} Platform ${platformNumber}`;
     console.log(`Selected ${platformName}`);
     toast.success(`Selected ${platformName}`);
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
     if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
-      const exacZ = position.z;
-      console.log(`Exact click position (z): ${exacZ}`);
-      dispatch({ type: "SET_SELECTED_PART_Z", payload: exacZ });
+      const exactZ = position.z;
+      console.log(`Exact click position (z): ${exactZ}`);
+      dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
     }
     const exactX = position.x;
     console.log(`Exact click position (x): ${exactX}`);
     dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-  }, [dispatch, toast]);
+  }, [dispatch]);
 
-  // ClickHandler component
   const ClickHandler = () => {
     const { camera, scene } = useThree();
     useEffect(() => {
       cameraRef.current = camera;
       sceneRef.current = scene;
     }, [camera, scene]);
-
     return null;
   };
 
@@ -162,7 +157,6 @@ const ModelViewer = ({ scale, levels, dispatch, toast, platformName }) => {
             <Suspense fallback={<LoadingIndicator />}>
               <spotLight position={[10, 10, 10]} intensity={1} castShadow />
               <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
-
               {levels.map((level, index) => (
                 <Level
                   key={`${level.url}-${index}-${Math.random()}`}
