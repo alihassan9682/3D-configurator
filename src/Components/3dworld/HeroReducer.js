@@ -409,7 +409,7 @@ export const addLevel = (state, dispatch, toast) => {
   console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 1.565 : 0;
+      const PositionX = selectedPart !== 0 ? selectedPart + 1.564 : 0;
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition =
@@ -419,7 +419,6 @@ export const addLevel = (state, dispatch, toast) => {
         -newCumulativeHeight - modelLevel.height,
         adjustedZPosition,
       ];
-
       const newLevel = {
         id: `${Date.now()}-${modelLevel.groupType}-${j}`,
         url: modelLevel.url,
