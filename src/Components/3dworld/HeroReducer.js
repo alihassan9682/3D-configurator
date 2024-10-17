@@ -413,12 +413,14 @@ export const addLevel = (state, dispatch, toast) => {
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition =
-        selectedPartZ !== 0 ? modelLevel.zOffset + selectedPartZ + 1.562 : 0;
+        selectedPartZ !== 0 ? selectedPartZ + 1.564: 0;
+      console.log("adjustedZPosition",adjustedZPosition);
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
         adjustedZPosition,
       ];
+      console.log("newPosition", newPosition);
       const newLevel = {
         id: `${Date.now()}-${modelLevel.groupType}-${j}`,
         url: modelLevel.url,
@@ -437,7 +439,6 @@ export const addLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
   dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
-  // dispatch({ type: "SET_SELECTED_PART_Z", payload: selectedpart });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
@@ -530,7 +531,6 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
   dispatch({ type: "SET_LEVEL", payload: index });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
-  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
