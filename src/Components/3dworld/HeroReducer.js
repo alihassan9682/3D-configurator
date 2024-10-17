@@ -409,11 +409,11 @@ export const addLevel = (state, dispatch, toast) => {
   console.log("selectedPart:", selectedPart);
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 1.65 : 0;
+      const PositionX = selectedPart !== 0 ? selectedPart + 1.565 : 0;
       console.log("selectedPart", selectedPart);
-      const adjustedXPosition = PositionX + modelLevel.xOffset + selectedPartZ;
+      const adjustedXPosition = PositionX + modelLevel.xOffset;
       const adjustedZPosition =
-        selectedType === "PTRIPLE_L" || "PQUAD_L" ? modelLevel.zOffset : 0;
+        selectedPartZ !== 0 ? modelLevel.zOffset + selectedPartZ + 1.562 : 0;
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
@@ -438,7 +438,7 @@ export const addLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
   dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
-  dispatch({ type: "SET_SELECTED_PART_Z", payload: selectedpart });
+  // dispatch({ type: "SET_SELECTED_PART_Z", payload: selectedpart });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
@@ -520,10 +520,11 @@ export const removeLevel = (state, dispatch, toast) => {
 };
 // Resetting all the settings to default
 export const resetAll = (state, dispatch, toast) => {
-  const { levels, initalPrice } = state;
+  const { levels, initalPrice, scale } = state;
   const newlevels = [];
   newlevels.push(levels[0]);
   console.log("newlevels", newlevels);
+  const defaultHeight = 24 * scale;
   const index = 0;
   dispatch({ type: "SET_PRICE", payload: initalPrice });
   dispatch({ type: "RESET_ALL", payload: newlevels });
@@ -533,5 +534,7 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
+  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+
   toast.info("Reset all settings to default");
 };

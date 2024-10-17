@@ -10,7 +10,7 @@ const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
       <sphereGeometry args={[1, 16, 16]} />
-      <meshStandardMaterial color="orange" transparent opacity={0.1} roughness={1} metalness={1} />
+      <meshStandardMaterial color="orange" transparent opacity={0} roughness={1} metalness={1} />
     </mesh>
   );
 };
@@ -120,11 +120,11 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
     console.log(`Selected ${platformName}`);
     toast.success(`Selected ${platformName}`);
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-    // if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
-    //   const exactZ = position.z;
-    //   console.log(`Exact click position (z): ${exactZ}`);
-    //   dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-    // }
+    if (groupType === "PTRIPLE_L" && platformNumber === 3 || groupType === "PQUAD_L" && platformNumber === 4) {
+      const exactZ = position.z;
+      console.log(`Exact click position (z): ${exactZ}`);
+      dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
+    }
     const exactX = position.x;
     console.log(`Exact click position (x): ${exactX}`);
     dispatch({ type: "SET_SELECTED_PART", payload: exactX });
