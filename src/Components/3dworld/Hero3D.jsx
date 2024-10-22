@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef,useReducer } from 'react';
 import {
     ModelViewer,
     ARView,
@@ -22,15 +22,16 @@ import {
     removeLevel,
     handleBaseTypeChange,
     addToCart,
-    MdRotate90DegreesCw
+    MdRotate90DegreesCw,
+    HiMenu
 } from './index';
+import Footer from "../Footer";
 import { useParams } from 'react-router-dom';
 import { FaDatabase } from "react-icons/fa6";
 import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
 import Client from 'shopify-buy';
-import { useReducer, useEffect } from 'react';
 
 const Hero3D = () => {
     const { id } = useParams();
@@ -38,6 +39,13 @@ const Hero3D = () => {
     const [checkout, setCheckout] = React.useState(null);
     const [rotationValue, setRotationValue] = React.useState(0);
     const [variant_ID, setVariantID] = React.useState(null);
+    const scrollToTopRef = React.useRef(null);
+    const scrollToARRef = React.useRef(null);
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [state.activeView]);
+
     useEffect(() => {
         const client = Client.buildClient({
             domain: 'duralifthardware.com',
@@ -46,7 +54,8 @@ const Hero3D = () => {
         client.checkout.create().then((checkout) => {
             setCheckout(checkout);
         })
-    },[])
+    }, [])
+
     useEffect(() => {
         const baseTypeFromId = baseTypeOptions.find(
             (option) => option.id === parseInt(id)
@@ -60,22 +69,16 @@ const Hero3D = () => {
         } else {
             toast.error("Invalid base type ID");
         }
-    }, [id]); 
-    
-    useEffect(()=>{
-        console.log("Selected Area",state.selectedPart)
-    },[state.selectedPart])
+    }, [id]);
+
+    useEffect(() => {
+        console.log("Selected Area", state.selectedPart)
+    }, [state.selectedPart])
+
     const handleTypeChange = (e) => {
         dispatch({ type: "SET_SELECTED_TYPE", payload: e.target.value });
     };
 
-    // const handleOnRotationChange = (e) => {
-    //     setRotationValue(e.target.value);
-    //     const selectedRotationValue = parseInt(e.target.value) * Math.PI / 180;
-    //      console.log(selectedRotationValue)
-    //     dispatch({ type: "SET_ROTATION", payload: selectedRotationValue })
-    // }
- 
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);
         if (state.levels.length === 0 && selectedLengthValue !== 24) {
@@ -84,21 +87,30 @@ const Hero3D = () => {
             dispatch({ type: "SET_SELECTED_LENGTH", payload: selectedLengthValue });
         }
     };
+
     useEffect(() => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
         console.log('selectedPartZ:', state.selectedPartZ);
     }, [state.price, state.descripation, state.model, state.selectedPartZ])
+
+    const handleARViewClick = () => {
+        toggleView("AR", dispatch);
+        if (window.innerWidth < 768) {
+            scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
-        <div className="flex flex-col md:flex-row h-screen lg:mb-3 ">
-            <div className="w-full md:w-80 p-4 md:p-6  bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
+        <div className="flex flex-col md:flex-row w-screen h-screen lg:mb-3 bg-white" ref={scrollToTopRef}>
+            <div className="w-full md:w-80 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
                 <div className="flex justify-center mb-4">
                     <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                 </div>
                 <div className="flex justify-center mb-2">
                     <div className="flex bg-gray-300 rounded-full p-1 shadow-inner">
                         <button
-                            onClick={() => toggleView("AR",dispatch)}
+                            onClick={handleARViewClick}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "AR"
                                 ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
@@ -136,7 +148,7 @@ const Hero3D = () => {
                 <div className="flex flex-col space-y-4 xl:space-y-2">
                     <div className="flex justify-end mt-4 gap-3">
                         <button
-                            onClick={() => addToCart(checkout,state,variant_ID,toast, dispatch,setCheckout)}
+                            onClick={() => addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)}
                             className="bg-green-500 text-white px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-green-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300"
                             disabled={state.isLoading || state.isInCart}
                         >
@@ -145,7 +157,7 @@ const Hero3D = () => {
                         </button>
 
                         <button
-                            onClick={()=>resetAll(state,dispatch,toast)}
+                            onClick={() => resetAll(state, dispatch, toast)}
                             className="bg-yellow-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition duration-300"
                         >
                             <GrPowerReset size={20} className="mr-2" />
@@ -191,34 +203,12 @@ const Hero3D = () => {
                                     ))
                                 }
                             </select>
-                            
+
                             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
                                 <FaLayerGroup size={20} />
                             </div>
                         </div>
                     </div>
-                    {/* <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                            Select the Rotation
-                        </label>
-                        <div className="relative">
-                            <select
-                                value={rotationValue}
-                                onChange={handleOnRotationChange}
-                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled={!state.baseType}
-                            >
-                                <option value={0}>0</option>
-                                <option value={450}>90</option>
-                                <option value={900}>180</option>
-                                <option value={1350}>270</option>
-                                <option value={1800}>360</option>
-                            </select>
-                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                <MdRotate90DegreesCw size={20} />
-                            </div>
-                        </div>
-                    </div> */}
 
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
@@ -241,43 +231,52 @@ const Hero3D = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-wrap justify-evenly md:justify-start space-x-4  mt-4 ">
+                <div className="flex flex-wrap justify-evenly md:justify-start space-x-4 mt-4 ">
                     <button
-                        onClick={() => addLevel(state, dispatch,toast)}
+                        onClick={() => addLevel(state, dispatch, toast)}
                         className="bg-blue-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300"
                     >
                         <MdAddCircleOutline size={20} className="mr-2" />
                         Add Level
                     </button>
                     <button
-                        onClick={() => removeLevel( state,dispatch,toast)}
+                        onClick={() => removeLevel(state, dispatch, toast)}
                         className="bg-red-500 text-white ml-4 px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-red-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-300"
                     >
                         <MdOutlineCancel size={20} className="mr-2" />
                         Remove
                     </button>
                 </div>
-            </div >
-            {state.activeView === "VR" ? (
-                <ModelViewer
-                    scale={state.scale}
-                    levels={state.levels}
-                    dispatch={dispatch}
-                    toast={toast}
-                    psingleCount={state.pSingle}
-                    levelIndex={state.levelIndex}
-                    platformName={state.platformName}
-                />
-                
-            ) : state.activeView === "AR" ? (
-                <ARView modal={state.model} />
-            ) : (
-                <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
-                    <p className="text-red-700">Select a view to start.</p>
-                </div>
-            )}
+            </div>
+
+            <div ref={scrollToARRef}>
+                {state.activeView === "VR" ? (
+                    <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
+                        <ModelViewer
+                            scale={state.scale}
+                            levels={state.levels}
+                            dispatch={dispatch}
+                            toast={toast}
+                            psingleCount={state.pSingle}
+                            levelIndex={state.levelIndex}
+                            platformName={state.platformName}
+                            scrollToTopRef={scrollToTopRef}
+                        />
+                    </div>
+                ) : state.activeView === "AR" ? (
+                    <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
+                        <ARView modal={state.model} />
+                    </div>
+                ) : (
+                    <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
+                        <p className="text-red-700">Select a view to start.</p>
+                    </div>
+                )}
+            </div>
             <ToastContainer />
-        </div >
+            <Footer className="w-full flex-shrink-0" />
+        </div>
     );
 }
+
 export default Hero3D;

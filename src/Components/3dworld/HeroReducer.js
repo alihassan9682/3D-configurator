@@ -26,6 +26,7 @@ export const initialState = {
   levelIndex: 0,
   platformName: "",
   selectedPartZ: 0,
+  top: true,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -114,6 +115,11 @@ export const heroReducer = (state, action) => {
           ...action.payload,
         },
       };
+    case "SET_TOP":
+      return {
+        ...state,
+        top : true
+      }
     case "SET_SELECTED_PART":
       return {
         ...state,
@@ -399,7 +405,7 @@ export const addLevel = (state, dispatch, toast) => {
   const details = {
     [`drop_down_level_${drop_down}`]: `${convert(
       selectedType
-    )} PSINGLE ${selectedLength} INCH`,
+    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH`,
   };
   dispatch({ type: "SET_DESCRIPTION", payload: details });
 
@@ -412,8 +418,7 @@ export const addLevel = (state, dispatch, toast) => {
       const PositionX = selectedPart !== 0 ? selectedPart + 1.564 : 0;
       console.log("selectedPart", selectedPart);
       const adjustedXPosition = PositionX + modelLevel.xOffset;
-      const adjustedZPosition =
-        selectedPartZ !== 0 ? selectedPartZ + 1.564: 0;
+      const adjustedZPosition = selectedPartZ !== 0 ? selectedPartZ + 1.564: 0;
       console.log("adjustedZPosition",adjustedZPosition);
       const newPosition = [
         adjustedXPosition,

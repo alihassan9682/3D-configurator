@@ -4,6 +4,7 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 import { toast } from 'react-toastify';
+import { FaArrowUp } from "react-icons/fa";
 
 // LoadingIndicator component
 const LoadingIndicator = () => {
@@ -86,7 +87,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
 };
 
 // ModelViewer component
-const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
+const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
@@ -139,8 +140,12 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
     return null;
   };
 
+  const handleScrollToTop = () => {
+    scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="flex-1 w-screen flex-wrap md:h-screen flex flex-col items-center justify-center relative">
+    <div className="flex flex-wrap h-screen w-screen flex-col items-center justify-center relative" ref={scrollToTopRef}>
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
           <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
@@ -152,6 +157,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
             shadows
             style={{ width: "100%", height: "100%" }}
             camera={{ position: [0, 0, 5], fov: 75 }}
+            className="w-full h-screen"
           >
             <ClickHandler />
             <Suspense fallback={<LoadingIndicator />}>
@@ -170,11 +176,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
                   parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                 />
               ))}
-              <OrbitControls
-                enablePan={true}
-                enableZoom={true}
-                enableRotate={true}
-              />
+              <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
             </Suspense>
           </Canvas>
           {isLoading && (
@@ -183,17 +185,23 @@ const ModelViewer = ({ scale, levels, dispatch, platformName }) => {
             </div>
           )}
           {platformName && (
-            <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
+            <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
               Selected Part: {platformName}
             </div>
           )}
+
+          <button
+            className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
+            onClick={handleScrollToTop}
+          >
+            <FaArrowUp className="text-2xl" />
+          </button>
         </>
       )}
     </div>
   );
 };
 
-// Helper function to get platform count based on group type
 function getPlatformCount(groupType) {
   switch (groupType) {
     case "PSINGLE":

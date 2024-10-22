@@ -9,6 +9,7 @@ import {
   addToCart,
   // actions,
 } from "./HeroReducer";
+import { HiMenu } from "react-icons/hi";
 import ModelViewer from "./exporterForAR";
 import ARView from "./ARView";
 import logo from "../../assets/logos/dura.webp";
@@ -57,4 +58,5 @@ export {
   MdRotate90DegreesCw,
   // actions,
   priceMap,
+  HiMenu,
 };
