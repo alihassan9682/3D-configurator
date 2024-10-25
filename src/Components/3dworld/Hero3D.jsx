@@ -102,7 +102,7 @@ const Hero3D = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row w-screen h-screen lg:mb-3 bg-white" ref={scrollToTopRef}>
+        <div className="flex flex-col md:flex-row w-screen h-screen lg:mb-3 bg-gray-200" ref={scrollToTopRef}>
             <div className="w-full md:w-80 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
                 <div className="flex justify-center mb-4">
                     <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
@@ -251,7 +251,7 @@ const Hero3D = () => {
 
             <div ref={scrollToARRef}>
                 {state.activeView === "VR" ? (
-                    <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
+                    <div className="flex-1 p-2 md:p-3 flex items-center justify-center h-full  shadow-inner rounded-3xl">
                         <ModelViewer
                             scale={state.scale}
                             levels={state.levels}

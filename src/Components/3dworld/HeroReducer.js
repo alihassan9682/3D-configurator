@@ -325,12 +325,18 @@ export const Price = (selectedType, selectedLength, price, dispatch, value) => {
 // Makign the Descripation for the model to be displayed in the cart
 export const convert = (value) => {
   const typeMap = {
-    PSINGLE: "1X",
-    PDOUBLE: "2X",
-    PTRIPLE: "3X",
-    PQUAD: "4X",
-    PTRIPLE_L: "3X_L",
-    PQUAD_L: "4X_L",
+    PSINGLE:
+      "1X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform",
+    PDOUBLE:
+      "1 x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform",
+    PTRIPLE:
+      "3X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+    PQUAD:
+      "4x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+    PTRIPLE_L:
+      "3X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+    PQUAD_L:
+      "4X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
   };
   return typeMap[value] || "Invalid Type";
 };

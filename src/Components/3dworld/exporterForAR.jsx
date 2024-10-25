@@ -3,7 +3,7 @@ import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { FaArrowUp } from "react-icons/fa";
 
 // LoadingIndicator component
@@ -24,7 +24,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) 
     if (meshRef.current) {
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObject(meshRef.current);
-      document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+      document.body.style.cursor = intersects.length > 0 ? "pointer" : "default";
     }
   });
 
@@ -46,14 +46,17 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
   const groupRef = useRef();
   const clonedScene = scene.clone();
 
-  const handleClick = useCallback((e, levelIndex, platformNumber) => {
-    onClick({
-      position: e.point,
-      levelIndex,
-      platformNumber,
-      groupType
-    });
-  }, [onClick, groupType]);
+  const handleClick = useCallback(
+    (e, levelIndex, platformNumber) => {
+      onClick({
+        position: e.point,
+        levelIndex,
+        platformNumber,
+        groupType,
+      });
+    },
+    [onClick, groupType]
+  );
 
   const bbox = new THREE.Box3().setFromObject(clonedScene);
   const modelSize = new THREE.Vector3();
@@ -116,20 +119,30 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
     }
   }, [levels, exportModel]);
 
-  const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
-    const platformName = `${groupType} Platform ${platformNumber}`;
-    console.log(`Selected ${platformName}`);
-    toast.success(`Selected ${platformName}`);
-    dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-    if (groupType === "PTRIPLE_L" && platformNumber === 3 || groupType === "PQUAD_L" && platformNumber === 4) {
-      const exactZ = position.z;
-      console.log(`Exact click position (z): ${exactZ}`);
-      dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-    }
-    const exactX = position.x;
-    console.log(`Exact click position (x): ${exactX}`);
-    dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-  }, [dispatch]);
+  // Updated handleClick logic for last platform behavior
+  const handleClick = useCallback(
+    ({ position, levelIndex, platformNumber, groupType }) => {
+      const platformName = `${groupType} Platform ${platformNumber}`;
+      console.log(`Selected ${platformName}`);
+      toast.success(`Selected ${platformName}`);
+
+      // Dispatch platform name
+      dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
+
+      // Check if it's the last platform of the group
+      const platformCount = getPlatformCount(groupType);
+        // Regular behavior
+        const exactX = position.x;
+        console.log(`Exact click position (x): ${exactX}`);
+        dispatch({ type: "SET_SELECTED_PART", payload: exactX });
+        if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
+          const exactZ = position.z;
+          // console.log(`Exact click position (z): ${exactZ}`);
+          dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
+        }
+    },
+    [dispatch]
+  );
 
   const ClickHandler = () => {
     const { camera, scene } = useThree();
@@ -139,13 +152,18 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
     }, [camera, scene]);
     return null;
   };
+  // useEffect(() => {
+  //   const bbox = new THREE.Box3().setFromObject(clonedScene);
+  //   const center = bbox.getCenter(new THREE.Vector3());
+  //   clonedScene.position.sub(center); // Center the model
+  // }, [clonedScene]);
 
   const handleScrollToTop = () => {
     scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <div className="flex flex-wrap h-screen w-screen flex-col items-center justify-center relative" ref={scrollToTopRef}>
+    <div className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative" ref={scrollToTopRef}>
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
           <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
@@ -155,13 +173,13 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
         <>
           <Canvas
             shadows
-            style={{ width: "100%", height: "100%" }}
-            camera={{ position: [0, 0, 5], fov: 75 }}
-            className="w-full h-screen"
+            // style={{ width: "100%", height: "100%" }}
+              className="w-full h-screen"
+              camera={{ position: [0, 2, 5], fov: 75 }}
           >
             <ClickHandler />
             <Suspense fallback={<LoadingIndicator />}>
-              <spotLight position={[10, 10, 10]} intensity={1} castShadow />
+              <spotLight position={[10, 10, 9]} intensity={1} castShadow />
               <directionalLight position={[10, 10, 10]} intensity={1} castShadow />
               {levels.map((level, index) => (
                 <Level
@@ -176,8 +194,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
                   parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                 />
               ))}
-              <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
-            </Suspense>
+                <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+              </Suspense>
           </Canvas>
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -202,6 +220,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
   );
 };
 
+// Helper function to get the platform count based on group type
 function getPlatformCount(groupType) {
   switch (groupType) {
     case "PSINGLE":
