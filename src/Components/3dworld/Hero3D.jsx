@@ -92,6 +92,7 @@ const Hero3D = () => {
         console.log("updated descripation", state.descripation)
         console.log('Price:', state.price);
         console.log('selectedPartZ:', state.selectedPartZ);
+        console.log('selectedPart:', state.selectedPart);
     }, [state.price, state.descripation, state.model, state.selectedPartZ])
 
     const handleARViewClick = () => {
@@ -256,11 +257,11 @@ const Hero3D = () => {
                             scale={state.scale}
                             levels={state.levels}
                             dispatch={dispatch}
-                            toast={toast}
                             psingleCount={state.pSingle}
                             levelIndex={state.levelIndex}
                             platformName={state.platformName}
                             scrollToTopRef={scrollToTopRef}
+                            selectedPart={state.selectedPart}
                         />
                     </div>
                 ) : state.activeView === "AR" ? (

@@ -27,6 +27,7 @@ export const initialState = {
   platformName: "",
   selectedPartZ: 0,
   top: true,
+  PositionX: [],
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -46,6 +47,11 @@ export const heroReducer = (state, action) => {
         descripation: {
           base: action.payload,
         },
+      };
+    case "Set_PositionX":
+      return {
+        ...state,
+        PositionX: action.payload,
       };
     case "SET_PSINGLE_COUNT":
       return {
@@ -118,8 +124,8 @@ export const heroReducer = (state, action) => {
     case "SET_TOP":
       return {
         ...state,
-        top : true
-      }
+        top: true,
+      };
     case "SET_SELECTED_PART":
       return {
         ...state,
@@ -392,6 +398,7 @@ export const addLevel = (state, dispatch, toast) => {
     levelIndex,
     platformName,
     selectedPartZ,
+    PositionX,
   } = state;
 
   if (!selectedType) {
@@ -400,14 +407,14 @@ export const addLevel = (state, dispatch, toast) => {
   }
 
   dispatch({ type: "SET_LOADING" });
-
   const Dropdownlevel = drop_down + 1;
   dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
 
-  // Assuming Price is a function that calculates the price
   Price(selectedType, selectedLength, price, dispatch, value);
+
   const newLevelIndex = levelIndex + 1;
   dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
+
   const details = {
     [`drop_down_level_${drop_down}`]: `${convert(
       selectedType
@@ -418,20 +425,34 @@ export const addLevel = (state, dispatch, toast) => {
   const newModelLevels = createModelFromPSingle(state, dispatch);
   let newLevels = [...levels];
   let newCumulativeHeight = cumulativeHeight;
-  console.log("selectedPart:", selectedPart);
+
+  // Get the last numeric X position
+  const lastNumericX =
+    PositionX.length > 0
+      ? typeof PositionX[PositionX.length - 1] === "number"
+        ? PositionX[PositionX.length - 1]
+        : parseFloat(PositionX[PositionX.length - 1])
+      : 0;
+
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      const PositionX = selectedPart !== 0 ? selectedPart + 1.564 : 0;
-      console.log("selectedPart", selectedPart);
-      const adjustedXPosition = PositionX + modelLevel.xOffset;
-      const adjustedZPosition = selectedPartZ !== 0 ? selectedPartZ + 1.564: 0;
-      console.log("adjustedZPosition",adjustedZPosition);
+      // Calculate new X position based on whether selectedPart is 0
+      const newPositionX =
+        selectedPart === 0
+          ? lastNumericX
+          : PositionX.length === 0
+          ? selectedPart
+          : selectedPart + lastNumericX;
+
+      const adjustedXPosition = newPositionX;
+      const adjustedZPosition = selectedPartZ !== 0 ? selectedPartZ + 1.564 : 0;
+
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
         adjustedZPosition,
       ];
-      console.log("newPosition", newPosition);
+
       const newLevel = {
         id: `${Date.now()}-${modelLevel.groupType}-${j}`,
         url: modelLevel.url,
@@ -440,16 +461,27 @@ export const addLevel = (state, dispatch, toast) => {
         rotation: modelLevel.rotation,
         groupType: modelLevel.groupType,
       };
-
       newLevels.push(newLevel);
     }
   }
-  const selectedpart = 0;
+
+  // Calculate the new X position to be stored while ensuring it remains numeric
+  const newXPosition =
+    selectedPart === 0
+      ? lastNumericX
+      : PositionX.length === 0
+      ? selectedPart
+      : selectedPart + lastNumericX;
+
+  // Create new PositionX array with the numeric value
+  const newPositionX = [...PositionX, newXPosition];
+
   newCumulativeHeight += newModelLevels[0].height;
+
   dispatch({ type: "SET_LEVELS", payload: newLevels });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
-  dispatch({ type: "SET_SELECTED_PART", payload: selectedpart });
+  dispatch({ type: "SET_SELECTED_PART", payload: newPositionX });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
@@ -468,6 +500,7 @@ export const removeLevel = (state, dispatch, toast) => {
     initialPrice,
     type,
     levelIndex,
+    PositionX,
   } = state;
 
   if (levels.length === 1) {
@@ -520,7 +553,8 @@ export const removeLevel = (state, dispatch, toast) => {
 
   // Update value array by removing last entry
   const newValueArray = value.slice(0, -1);
-
+  const newPostion = PositionX.slice(0, -1);
+  dispatch({ type: "Set_PositionX", payload: newPostion });
   dispatch({ type: "SET_PRICE", payload: newPrice });
   dispatch({ type: "SET_VALUE", payload: newValueArray });
   dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
@@ -545,6 +579,7 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+  dispatch({ type: "Set_PositionX", payload: [0] });
 
   toast.info("Reset all settings to default");
 };

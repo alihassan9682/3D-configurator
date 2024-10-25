@@ -90,7 +90,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
 };
 
 // ModelViewer component
-const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) => {
+const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart }) => {
   const sceneRef = useRef(new THREE.Scene());
   const cameraRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
@@ -128,18 +128,21 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef }) 
 
       // Dispatch platform name
       dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-
-      // Check if it's the last platform of the group
       const platformCount = getPlatformCount(groupType);
-        // Regular behavior
-        const exactX = position.x;
+      // Regular behavior
+      if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) { 
+        const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3||platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber=== 4 && groupType === "PQUAD_L" ? 3.06 : 0;
         console.log(`Exact click position (x): ${exactX}`);
         dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-        if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
-          const exactZ = position.z;
-          // console.log(`Exact click position (z): ${exactZ}`);
-          dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-        }
+        const exactZ = position.z;
+        // console.log(`Exact click position (z): ${exactZ}`);
+        dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
+      }
+      else {
+        const exactX = platformNumber === 1 ? 0 : platformNumber === 2 ? 1.53 : platformNumber === 3 ? 3.06 : 4.59;
+        console.log(`Exact click position (x): ${exactX}`);
+        dispatch({ type: "SET_SELECTED_PART", payload: exactX })
+      }
     },
     [dispatch]
   );
