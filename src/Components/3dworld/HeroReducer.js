@@ -442,7 +442,7 @@ export const addLevel = (state, dispatch, toast) => {
       dispatch({ type: "Set_PositionX", payload: NEWPostionX });
       dispatch({ type: "Set_Positionz", payload: NEWPostionz });
       const adjustedXPosition = newPositionX;
-      const adjustedZPosition = selectedPartZ ? newPositionZ : 0;
+      const adjustedZPosition = newPositionZ ? newPositionZ : 0;
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
