@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef,useReducer } from 'react';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
 import {
     ModelViewer,
     ARView,
@@ -70,11 +70,6 @@ const Hero3D = () => {
             toast.error("Invalid base type ID");
         }
     }, [id]);
-
-    useEffect(() => {
-        console.log("Selected Area", state.selectedPart)
-    }, [state.selectedPart])
-
     const handleTypeChange = (e) => {
         dispatch({ type: "SET_SELECTED_TYPE", payload: e.target.value });
     };
@@ -89,11 +84,11 @@ const Hero3D = () => {
     };
 
     useEffect(() => {
-        console.log("updated descripation", state.descripation)
-        console.log('Price:', state.price);
-        console.log('selectedPartZ:', state.selectedPartZ);
-        console.log('selectedPart:', state.selectedPart);
-    }, [state.price, state.descripation, state.model, state.selectedPartZ])
+        // console.log("updated descripation", state.descripation)
+        // console.log('Price:', state.price);
+        // console.log('selectedPartZ:', state.selectedPartZ);
+        // console.log('selectedPart:', state.selectedPart);
+    }, [state.descripation, state.selectedPart, state.price, state.selectedPartZ])
 
     const handleARViewClick = () => {
         toggleView("AR", dispatch);

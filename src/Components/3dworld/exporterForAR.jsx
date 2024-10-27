@@ -123,24 +123,21 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const handleClick = useCallback(
     ({ position, levelIndex, platformNumber, groupType }) => {
       const platformName = `${groupType} Platform ${platformNumber}`;
-      console.log(`Selected ${platformName}`);
       toast.success(`Selected ${platformName}`);
 
       // Dispatch platform name
       dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
       const platformCount = getPlatformCount(groupType);
       // Regular behavior
-      if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) { 
-        const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3||platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber=== 4 && groupType === "PQUAD_L" ? 3.06 : 0;
-        console.log(`Exact click position (x): ${exactX}`);
+      if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
+        const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3 || platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L" ? 3.06 : 0;
         dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-        const exactZ = position.z;
+        const exactZ = 1.53;
         // console.log(`Exact click position (z): ${exactZ}`);
         dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
       }
       else {
         const exactX = platformNumber === 1 ? 0 : platformNumber === 2 ? 1.53 : platformNumber === 3 ? 3.06 : 4.59;
-        console.log(`Exact click position (x): ${exactX}`);
         dispatch({ type: "SET_SELECTED_PART", payload: exactX })
       }
     },
@@ -177,8 +174,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           <Canvas
             shadows
             // style={{ width: "100%", height: "100%" }}
-              className="w-full h-screen"
-              camera={{ position: [0, 2, 5], fov: 75 }}
+            className="w-full h-screen"
+            camera={{ position: [0, 2, 5], fov: 75 }}
           >
             <ClickHandler />
             <Suspense fallback={<LoadingIndicator />}>
@@ -197,8 +194,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
                   parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                 />
               ))}
-                <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
-              </Suspense>
+              <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+            </Suspense>
           </Canvas>
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

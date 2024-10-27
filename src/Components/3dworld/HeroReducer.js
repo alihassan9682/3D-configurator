@@ -1,6 +1,6 @@
 import Client from "shopify-buy";
 
-import { actualHeights, levelUrls, priceMap } from "./index";
+import { actualHeights, levelUrls, priceMap, toast } from "./index";
 // Initial state of the application
 export const initialState = {
   scale: 0.05,
@@ -28,6 +28,7 @@ export const initialState = {
   selectedPartZ: 0,
   top: true,
   PositionX: [],
+  PositionZ: [],
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -52,6 +53,11 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         PositionX: action.payload,
+      };
+    case "Set_PositionZ":
+      return {
+        ...state,
+        PositionZ: action.payload,
       };
     case "SET_PSINGLE_COUNT":
       return {
@@ -230,7 +236,6 @@ export const handleBaseTypeChange = (
         height: defaultHeight,
         groupType: newBaseType,
       };
-      console.log("newLevel", newLevel);
       dispatch({ type: "SET_LEVELS", payload: [newLevel] });
       dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
       toast.success(
@@ -253,18 +258,17 @@ export const addToCart = async (
   state,
   variant_ID,
   dispatch,
-  setCheckout
+  setCheckout,
+  toast
 ) => {
   const { isInCart, isLoading, price, descripation } = state;
   if (!checkout) {
-    console.error("Checkout object is null or undefined");
     return;
   }
 
   if (isInCart || isLoading) return;
 
   dispatch({ type: "SET_Loading" });
-  console.log("Button Clicked");
 
   const variant_id = variant_ID;
   const variantId = `gid://shopify/ProductVariant/${variant_id}`;
@@ -303,8 +307,6 @@ export const addToCart = async (
     domain: "duralifthardware.com",
     storefrontAccessToken: process.env.REACT_APP_API_KEY,
   });
-  console.log("process.env.REACT_APP_API_KEY", process.env.REACT_APP_API_KEY);
-
   try {
     const updatedCheckout = await retryWithBackoff(() =>
       client.checkout.addLineItems(checkout.id, lineItemsToAdd)
@@ -313,7 +315,7 @@ export const addToCart = async (
     dispatch({ type: "SET_CART" });
     window.location.href = updatedCheckout.webUrl;
   } catch (error) {
-    console.error("Failed to add to cart:", error);
+    toast("Failed to add to cart:", error);
   } finally {
     dispatch({ type: "SET_Loading" });
   }
@@ -377,7 +379,6 @@ const createModelFromPSingle = (state, dispatch) => {
   if (selectedType === "PTRIPLE_L" || selectedType === "PQUAD_L") {
     newLevel.zOffset = actualHeight + 0.26;
   }
-  console.log("modelLevel", [newLevel]);
   return [newLevel];
 };
 
@@ -385,6 +386,7 @@ export const addLevel = (state, dispatch, toast) => {
   const {
     selectedType,
     baseType,
+    PositionZ,
     price,
     levels,
     scale,
@@ -400,59 +402,52 @@ export const addLevel = (state, dispatch, toast) => {
     selectedPartZ,
     PositionX,
   } = state;
-
   if (!selectedType) {
     toast.error("Please select model type before adding levels.");
     return;
   }
-
   dispatch({ type: "SET_LOADING" });
   const Dropdownlevel = drop_down + 1;
   dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
-
   Price(selectedType, selectedLength, price, dispatch, value);
-
   const newLevelIndex = levelIndex + 1;
   dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
-
   const details = {
     [`drop_down_level_${drop_down}`]: `${convert(
       selectedType
-    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH`,
+    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH,`,
   };
   dispatch({ type: "SET_DESCRIPTION", payload: details });
-
   const newModelLevels = createModelFromPSingle(state, dispatch);
   let newLevels = [...levels];
   let newCumulativeHeight = cumulativeHeight;
-
-  // Get the last numeric X position
-  const lastNumericX =
-    PositionX.length > 0
-      ? typeof PositionX[PositionX.length - 1] === "number"
-        ? PositionX[PositionX.length - 1]
-        : parseFloat(PositionX[PositionX.length - 1])
-      : 0;
-
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
-      // Calculate new X position based on whether selectedPart is 0
+      const lastIndex =
+        PositionX.length === 1 ? PositionX[0] : PositionX[PositionX.length - 1];
       const newPositionX =
-        selectedPart === 0
-          ? lastNumericX
-          : PositionX.length === 0
+        PositionX.length === 0
           ? selectedPart
-          : selectedPart + lastNumericX;
-
+          : Number(selectedPart) + lastIndex;
+      const lastIndexz =
+        PositionZ.length === 1 ? PositionZ[0] : PositionZ[PositionZ.length - 1];
+      const newPositionZ =
+        PositionZ.length === 0
+          ? selectedPartZ
+          : Number(selectedPartZ) + lastIndexz;
+      const NEWPostionX = PositionX;
+      const NEWPostionz = PositionZ;
+      NEWPostionX.push(newPositionX);
+      NEWPostionz.push(newPositionZ);
+      dispatch({ type: "Set_PositionX", payload: NEWPostionX });
+      dispatch({ type: "Set_Positionz", payload: NEWPostionz });
       const adjustedXPosition = newPositionX;
-      const adjustedZPosition = selectedPartZ !== 0 ? selectedPartZ + 1.564 : 0;
-
+      const adjustedZPosition = selectedPartZ ? newPositionZ : 0;
       const newPosition = [
         adjustedXPosition,
         -newCumulativeHeight - modelLevel.height,
         adjustedZPosition,
       ];
-
       const newLevel = {
         id: `${Date.now()}-${modelLevel.groupType}-${j}`,
         url: modelLevel.url,
@@ -465,24 +460,13 @@ export const addLevel = (state, dispatch, toast) => {
     }
   }
 
-  // Calculate the new X position to be stored while ensuring it remains numeric
-  const newXPosition =
-    selectedPart === 0
-      ? lastNumericX
-      : PositionX.length === 0
-      ? selectedPart
-      : selectedPart + lastNumericX;
-
-  // Create new PositionX array with the numeric value
-  const newPositionX = [...PositionX, newXPosition];
-
   newCumulativeHeight += newModelLevels[0].height;
-
   dispatch({ type: "SET_LEVELS", payload: newLevels });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
   dispatch({ type: "SET_LOADING" });
-  dispatch({ type: "SET_SELECTED_PART", payload: newPositionX });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+  dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   toast.success(`${selectedType} platform(s) added to the model`);
 };
 
@@ -501,6 +485,7 @@ export const removeLevel = (state, dispatch, toast) => {
     type,
     levelIndex,
     PositionX,
+    PositionZ,
   } = state;
 
   if (levels.length === 1) {
@@ -517,19 +502,6 @@ export const removeLevel = (state, dispatch, toast) => {
 
   // Determine how many platforms to remove based on the selected type
   const lastGroupType = 1;
-  // lastGroupType1 === "PTRIPLE"
-  //   ? 3
-  //   : lastGroupType1 === "PDOUBLE"
-  //   ? 2
-  //   : lastGroupType1 === "PQUAD"
-  //   ? 4
-  //   : lastGroupType1 === "PTRIPLE_L"
-  //   ? 3
-  //   : lastGroupType1 === "PQUAD_L"
-  //   ? 4
-  //   : lastGroupType1 === "PSINGLE"
-  //   ? 1
-  //   : 0;
 
   // Adjust cumulative height
   dispatch({ type: "ADD_TYPE", payload: type1 });
@@ -554,7 +526,9 @@ export const removeLevel = (state, dispatch, toast) => {
   // Update value array by removing last entry
   const newValueArray = value.slice(0, -1);
   const newPostion = PositionX.slice(0, -1);
+  const newPositionZ = PositionZ.slice(0, -1);
   dispatch({ type: "Set_PositionX", payload: newPostion });
+  dispatch({ type: "Set_PositionZ", payload: newPositionZ });
   dispatch({ type: "SET_PRICE", payload: newPrice });
   dispatch({ type: "SET_VALUE", payload: newValueArray });
   dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
@@ -568,7 +542,7 @@ export const resetAll = (state, dispatch, toast) => {
   const { levels, initalPrice, scale } = state;
   const newlevels = [];
   newlevels.push(levels[0]);
-  console.log("newlevels", newlevels);
+  // console.log("newlevels", newlevels);
   const defaultHeight = 24 * scale;
   const index = 0;
   dispatch({ type: "SET_PRICE", payload: initalPrice });
@@ -579,7 +553,8 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
-  dispatch({ type: "Set_PositionX", payload: [0] });
+  dispatch({ type: "Set_PositionX", payload: [] });
+  dispatch({ type: "Set_PositionZ", payload: [] });
 
   toast.info("Reset all settings to default");
 };
