@@ -155,7 +155,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const handleScrollToTop = () => {
     scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
   };
-
   return (
     <div className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative" ref={scrollToTopRef}>
       {levels.length === 0 ? (
