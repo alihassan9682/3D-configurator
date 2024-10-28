@@ -338,13 +338,13 @@ export const convert = (value) => {
     PDOUBLE:
       "1 x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform",
     PTRIPLE:
-      "3X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+      "3X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
     PQUAD:
-      "4x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+      "4x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
     PTRIPLE_L:
-      "3X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+      "3X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
     PQUAD_L:
-      "4X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform 24 inch Drop Down",
+      "4X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
   };
   return typeMap[value] || "Invalid Type";
 };
@@ -403,9 +403,13 @@ export const addLevel = (state, dispatch, toast) => {
     PositionX,
   } = state;
   if (!selectedType) {
-    toast.error("Please select model type before adding levels.");
+    toast.error("Please select model type  before adding levels.");
     return;
   }
+  // else if (!selectedPart) {
+  //   toast.error("Please select the platform position before adding levels.");
+  //   return;
+  // }
   dispatch({ type: "SET_LOADING" });
   const Dropdownlevel = drop_down + 1;
   dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
@@ -415,7 +419,7 @@ export const addLevel = (state, dispatch, toast) => {
   const details = {
     [`drop_down_level_${drop_down}`]: `${convert(
       selectedType
-    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH,`,
+    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
   };
   dispatch({ type: "SET_DESCRIPTION", payload: details });
   const newModelLevels = createModelFromPSingle(state, dispatch);
@@ -534,7 +538,9 @@ export const removeLevel = (state, dispatch, toast) => {
   dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
   dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
+  dispatch({ type: "SET_LOADING" });
   toast.info("Removed the last level");
 };
 // Resetting all the settings to default
@@ -555,6 +561,6 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
   dispatch({ type: "Set_PositionX", payload: [] });
   dispatch({ type: "Set_PositionZ", payload: [] });
-
+  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   toast.info("Reset all settings to default");
 };

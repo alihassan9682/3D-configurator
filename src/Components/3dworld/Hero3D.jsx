@@ -84,7 +84,7 @@ const Hero3D = () => {
     };
 
     useEffect(() => {
-        // console.log("updated descripation", state.descripation)
+        console.log("updated descripation", state.descripation)
         // console.log('Price:', state.price);
         // console.log('selectedPartZ:', state.selectedPartZ);
         // console.log('selectedPart:', state.selectedPart);
@@ -160,7 +160,6 @@ const Hero3D = () => {
                             Reset
                         </button>
                     </div>
-
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                             Base Type:
