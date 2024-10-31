@@ -14,9 +14,9 @@ function App() {
       <div className="flex  min-h-100vh w-full overflow-x-hidden font-montserrat sm:pl-0 bg-gradient-to-br from-gray-100 to-gray-300">
         <div className="flex-grow flex-wrap">
           <Routes>
-            <Route path="/" element={<Navigate to="/home/1" />} />
-            <Route path="/home/:id" element={<Hero3D />} />
-            <Route path="*" element={<Navigate to="/home/1" />} />
+            <Route path="/" element={<Navigate to="/home/" />} />
+            <Route path="/home/:id?" element={<Hero3D />} />
+            <Route path="*" element={<Navigate to="/home/" />} />
           </Routes>
         </div>
         <Footer className="hidden lg:block" />

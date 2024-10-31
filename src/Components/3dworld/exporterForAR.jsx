@@ -16,10 +16,8 @@ const LoadingIndicator = () => {
   );
 };
 
-// DetectionMesh component
-const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) => {
+const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, groupType }) => {
   const meshRef = useRef();
-
   useFrame(({ raycaster, camera, mouse }) => {
     if (meshRef.current) {
       raycaster.setFromCamera(mouse, camera);
@@ -28,24 +26,40 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber }) 
     }
   });
 
+  if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
+    (groupType === "PQUAD_L" && platformNumber === 4)) {
+    position[2] = 20;
+  } else {
+    position[2] = -12;
+  }
+  let adjustedSize = [...size];
+  if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
+    if ((groupType === "PTRIPLE_L" && (platformNumber === 2 || platformNumber === 3)) ||
+      (groupType === "PQUAD_L" && (platformNumber === 3 || platformNumber === 4))) {
+      // Adjust size for the last platform
+      adjustedSize[0] = 30;
+    } else {
+      // Keep original size for other platforms
+      adjustedSize[0] = size[0];
+    }
+  }
+
   return (
     <mesh
       ref={meshRef}
       position={position}
       onClick={(e) => onClick(e, levelIndex, platformNumber)}
     >
-      <boxGeometry args={size} />
-      <meshBasicMaterial transparent opacity={0} wireframe={true} />
+      <boxGeometry args={adjustedSize} />
+      <meshBasicMaterial transparent opacity={0} wireframe={true} visible={false} />
     </mesh>
   );
 };
 
-// Level component
 const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType }) => {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
   const clonedScene = scene.clone();
-
   const handleClick = useCallback(
     (e, levelIndex, platformNumber) => {
       onClick({
@@ -61,22 +75,27 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
   const bbox = new THREE.Box3().setFromObject(clonedScene);
   const modelSize = new THREE.Vector3();
   bbox.getSize(modelSize);
-
   const detectionMeshes = [];
   const platformCount = getPlatformCount(groupType);
-  const platformWidth = modelSize.x / platformCount;
-  const meshSize = [platformWidth - 0.3, modelSize.y, modelSize.z];
+
+  const spacing = 2;
+  const meshPadding = 5;
+  const totalWidth = modelSize.x;
+  const singleMeshWidth = (totalWidth - (spacing * (platformCount - 1))) / platformCount;
 
   for (let i = 0; i < platformCount; i++) {
-    const xPosition = bbox.min.x + (i + 0.5) * platformWidth;
+    const startX = bbox.min.x + (i * (singleMeshWidth + spacing));
+    const centerX = startX + (singleMeshWidth / 2);
+
     detectionMeshes.push(
       <DetectionMesh
         key={`detection-mesh-${levelIndex}-${i}`}
-        position={[xPosition, modelSize.y - 10, -12]}
-        size={meshSize}
+        position={[centerX, modelSize.y - 12, -12]}
+        size={[singleMeshWidth + meshPadding, modelSize.y - 4, 33]}
         onClick={handleClick}
         levelIndex={levelIndex}
         platformNumber={i + 1}
+        groupType={groupType}
       />
     );
   }

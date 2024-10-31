@@ -44,7 +44,6 @@ export const heroReducer = (state, action) => {
         baseType: action.payload,
         selectedType: "",
         selectedLength: 24,
-        platformsPerLevel: 1,
         descripation: {
           base: action.payload,
         },
@@ -178,13 +177,10 @@ export const heroReducer = (state, action) => {
     case "RESET_ALL":
       return {
         ...state,
-        scale: 0.05,
         activeView: "VR",
         selectedType: "",
         selectedLength: 24,
-        platformsPerLevel: 1,
-        descripation: { base: state.baseType },
-        levels: action.payload,
+        descripation: "",
       };
     default:
       return state;
@@ -200,7 +196,6 @@ export const handleBaseTypeChange = (
   dispatch,
   toast,
   cumulativeHeight,
-  rotation
 ) => {
   if (newBaseType) {
     let level = levels;
@@ -403,75 +398,128 @@ export const addLevel = (state, dispatch, toast) => {
     PositionX,
   } = state;
   if (!selectedType) {
-    toast.error("Please select model type  before adding levels.");
+    toast.error("Please select base  model and  type  before adding levels.");
     return;
-  }
-  // else if (!selectedPart) {
-  //   toast.error("Please select the platform position before adding levels.");
-  //   return;
-  // }
-  dispatch({ type: "SET_LOADING" });
-  const Dropdownlevel = drop_down + 1;
-  dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
-  Price(selectedType, selectedLength, price, dispatch, value);
-  const newLevelIndex = levelIndex + 1;
-  dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
-  const details = {
-    [`drop_down_level_${drop_down}`]: `${convert(
-      selectedType
-    )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
-  };
-  dispatch({ type: "SET_DESCRIPTION", payload: details });
-  const newModelLevels = createModelFromPSingle(state, dispatch);
-  let newLevels = [...levels];
-  let newCumulativeHeight = cumulativeHeight;
-  for (const modelLevel of newModelLevels) {
-    for (let j = 0; j < platformsPerLevel; j++) {
-      const lastIndex =
-        PositionX.length === 1 ? PositionX[0] : PositionX[PositionX.length - 1];
-      const newPositionX =
-        PositionX.length === 0
-          ? selectedPart
-          : Number(selectedPart) + lastIndex;
-      const lastIndexz =
-        PositionZ.length === 1 ? PositionZ[0] : PositionZ[PositionZ.length - 1];
-      const newPositionZ =
-        PositionZ.length === 0
-          ? selectedPartZ
-          : Number(selectedPartZ) + lastIndexz;
-      const NEWPostionX = PositionX;
-      const NEWPostionz = PositionZ;
-      NEWPostionX.push(newPositionX);
-      NEWPostionz.push(newPositionZ);
-      dispatch({ type: "Set_PositionX", payload: NEWPostionX });
-      dispatch({ type: "Set_Positionz", payload: NEWPostionz });
-      const adjustedXPosition = newPositionX;
-      const adjustedZPosition = newPositionZ ? newPositionZ : 0;
-      const newPosition = [
-        adjustedXPosition,
-        -newCumulativeHeight - modelLevel.height,
-        adjustedZPosition,
-      ];
-      const newLevel = {
-        id: `${Date.now()}-${modelLevel.groupType}-${j}`,
-        url: modelLevel.url,
-        position: newPosition,
-        height: modelLevel.height,
-        rotation: modelLevel.rotation,
-        groupType: modelLevel.groupType,
-      };
-      newLevels.push(newLevel);
+  } else if (levels.length === 0) {
+    dispatch({ type: "SET_LOADING" });
+    const newModelLevels = createModelFromPSingle(state, dispatch);
+    let newLevels = [...levels];
+    let newCumulativeHeight = cumulativeHeight;
+    for (const modelLevel of newModelLevels) {
+      for (let j = 0; j < platformsPerLevel; j++) {
+        const lastIndex =
+          PositionX.length === 1
+            ? PositionX[0]
+            : PositionX[PositionX.length - 1];
+        const newPositionX =
+          PositionX.length === 0
+            ? selectedPart
+            : Number(selectedPart) + lastIndex;
+        const lastIndexz =
+          PositionZ.length === 1
+            ? PositionZ[0]
+            : PositionZ[PositionZ.length - 1];
+        const newPositionZ =
+          PositionZ.length === 0
+            ? selectedPartZ
+            : Number(selectedPartZ) + lastIndexz;
+        const NEWPostionX = PositionX;
+        const NEWPostionz = PositionZ;
+        NEWPostionX.push(newPositionX);
+        NEWPostionz.push(newPositionZ);
+        dispatch({ type: "Set_PositionX", payload: NEWPostionX });
+        dispatch({ type: "Set_Positionz", payload: NEWPostionz });
+        const adjustedXPosition = newPositionX;
+        const adjustedZPosition = newPositionZ ? newPositionZ : 0;
+        const newPosition = [
+          adjustedXPosition,
+          -newCumulativeHeight - modelLevel.height,
+          adjustedZPosition,
+        ];
+        const newLevel = {
+          id: `${Date.now()}-${modelLevel.groupType}-${j}`,
+          url: modelLevel.url,
+          position: newPosition,
+          height: modelLevel.height,
+          rotation: modelLevel.rotation,
+          groupType: modelLevel.groupType,
+        };
+        newLevels.push(newLevel);
+      }
     }
-  }
 
-  newCumulativeHeight += newModelLevels[0].height;
-  dispatch({ type: "SET_LEVELS", payload: newLevels });
-  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
-  dispatch({ type: "SET_LOADING" });
-  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
-  dispatch({ type: "SET_SELECTED_PART", payload: 0 });
-  dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
-  toast.success(`${selectedType} platform(s) added to the model`);
+    newCumulativeHeight += newModelLevels[0].height;
+    dispatch({ type: "SET_LEVELS", payload: newLevels });
+    dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
+    dispatch({ type: "SET_LOADING" });
+  } else {
+    dispatch({ type: "SET_LOADING" });
+    const Dropdownlevel = drop_down + 1;
+    dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
+    Price(selectedType, selectedLength, price, dispatch, value);
+    const newLevelIndex = levelIndex + 1;
+    dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
+    const details = {
+      [`drop_down_level_${drop_down}`]: `${convert(
+        selectedType
+      )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
+    };
+    dispatch({ type: "SET_DESCRIPTION", payload: details });
+    const newModelLevels = createModelFromPSingle(state, dispatch);
+    let newLevels = [...levels];
+    let newCumulativeHeight = cumulativeHeight;
+    for (const modelLevel of newModelLevels) {
+      for (let j = 0; j < platformsPerLevel; j++) {
+        const lastIndex =
+          PositionX.length === 1
+            ? PositionX[0]
+            : PositionX[PositionX.length - 1];
+        const newPositionX =
+          PositionX.length === 0
+            ? selectedPart
+            : Number(selectedPart) + lastIndex;
+        const lastIndexz =
+          PositionZ.length === 1
+            ? PositionZ[0]
+            : PositionZ[PositionZ.length - 1];
+        const newPositionZ =
+          PositionZ.length === 0
+            ? selectedPartZ
+            : Number(selectedPartZ) + lastIndexz;
+        const NEWPostionX = PositionX;
+        const NEWPostionz = PositionZ;
+        NEWPostionX.push(newPositionX);
+        NEWPostionz.push(newPositionZ);
+        dispatch({ type: "Set_PositionX", payload: NEWPostionX });
+        dispatch({ type: "Set_Positionz", payload: NEWPostionz });
+        const adjustedXPosition = newPositionX;
+        const adjustedZPosition = newPositionZ ? newPositionZ : 0;
+        const newPosition = [
+          adjustedXPosition,
+          -newCumulativeHeight - modelLevel.height,
+          adjustedZPosition,
+        ];
+        const newLevel = {
+          id: `${Date.now()}-${modelLevel.groupType}-${j}`,
+          url: modelLevel.url,
+          position: newPosition,
+          height: modelLevel.height,
+          rotation: modelLevel.rotation,
+          groupType: modelLevel.groupType,
+        };
+        newLevels.push(newLevel);
+      }
+    }
+
+    newCumulativeHeight += newModelLevels[0].height;
+    dispatch({ type: "SET_LEVELS", payload: newLevels });
+    dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: newCumulativeHeight });
+    dispatch({ type: "SET_LOADING" });
+    dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+    dispatch({ type: "SET_SELECTED_PART", payload: 0 });
+    dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
+    toast.success(`${selectedType} platform(s) added to the model`);
+  }
 };
 
 // Removing the levels from the model
@@ -545,20 +593,20 @@ export const removeLevel = (state, dispatch, toast) => {
 };
 // Resetting all the settings to default
 export const resetAll = (state, dispatch, toast) => {
-  const { levels, initalPrice, scale } = state;
-  const newlevels = [];
-  newlevels.push(levels[0]);
+  const { initalPrice, scale ,levels} = state;
+  const newlevels = levels;
+  newlevels.splice(0, newlevels.length);
   // console.log("newlevels", newlevels);
-  const defaultHeight = 24 * scale;
-  const index = 0;
-  dispatch({ type: "SET_PRICE", payload: initalPrice });
-  dispatch({ type: "RESET_ALL", payload: newlevels });
+  dispatch({ type: "SET_PRICE", payload: 0 });
+  dispatch({ type: "RESET_ALL" });
+  dispatch({ type: "SET_MODEL", payload: null });
+  dispatch({ type: "SET_BASE_TYPE", payload: "" });
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
-  dispatch({ type: "SET_LEVEL", payload: index });
+  dispatch({ type: "SET_LEVEL", payload: newlevels });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
-  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+  dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: 0 });
   dispatch({ type: "Set_PositionX", payload: [] });
   dispatch({ type: "Set_PositionZ", payload: [] });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });

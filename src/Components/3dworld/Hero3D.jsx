@@ -32,6 +32,7 @@ import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
 import Client from 'shopify-buy';
+import { Input } from 'postcss';
 
 const Hero3D = () => {
     const { id } = useParams();
@@ -41,7 +42,7 @@ const Hero3D = () => {
     const [variant_ID, setVariantID] = React.useState(null);
     const scrollToTopRef = React.useRef(null);
     const scrollToARRef = React.useRef(null);
-
+    const [IdNull, setIdNull] = React.useState(false);
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, [state.activeView]);
@@ -67,11 +68,21 @@ const Hero3D = () => {
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
         } else {
+            setIdNull(true)
             toast.error("Invalid base type ID");
         }
     }, [id]);
     const handleTypeChange = (e) => {
         dispatch({ type: "SET_SELECTED_TYPE", payload: e.target.value });
+    };
+    const handleBaseTypeChange1 = (e) => {
+        dispatch({ type: "SET_BASE_TYPE", payload: e.target.value });
+        const baseTypeFromId = baseTypeOptions.find(
+            (option) => option.value === e.target.value
+        )
+        handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
+        dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
+        dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
     };
 
     const handleLengthChange = (e) => {
@@ -85,10 +96,11 @@ const Hero3D = () => {
 
     useEffect(() => {
         console.log("updated descripation", state.descripation)
+        console.log("updated price", state.price)
         // console.log('Price:', state.price);
         // console.log('selectedPartZ:', state.selectedPartZ);
         // console.log('selectedPart:', state.selectedPart);
-    }, [state.descripation, state.selectedPart, state.price, state.selectedPartZ])
+    }, [state.descripation, state.baseType])
 
     const handleARViewClick = () => {
         toggleView("AR", dispatch);
@@ -162,22 +174,37 @@ const Hero3D = () => {
                     </div>
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
-                            Base Type:
+                            Select Platform Type:
                         </label>
                         <div className="relative">
-                            <input
-                                type="text"
+                            {IdNull ? <select
                                 value={state.baseType}
-                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled
-                                placeholder={state.baseType}
-                            />
+                                onChange={handleBaseTypeChange1}
+                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                disabled={state.baseType}
+                                placeholder='Select Base Type'
+                            >
+                                <option value="" disabled>Select Base Type</option>
+                                {baseTypeOptions.map((options, index) => (
+                                    <option key={index} value={options.value}>
+                                        {options.label}
+                                    </option>
+                                ))}
+                            </select> :
+                                <input
+                                    type="text"
+                                    value={state.baseType}
+                                    className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    disabled
+                                    placeholder={state.baseType}
+                                />
+                            }
+
                             <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                <FaDatabase size={20} />
+                                <FaLayerGroup size={20} />
                             </div>
                         </div>
                     </div>
-
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-medium mb-2">
                             Select Number of Platforms:

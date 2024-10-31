@@ -59,16 +59,11 @@ export const levelUrls = {
 
 
 export const baseTypeOptions = [
-  {
-    id: 1,
-    value: "",
-    label: "Select Base Type",
-  },
-  {
-    id: 2,
-    value: "PSINGLE",
-    label: "PSINGLE",
-  },
+
+  // {
+  //   value: "PSINGLE",
+  //   label: "PSINGLE",
+  // },
   {
     id: 8542404804827,
     value: "PDOUBLE",
