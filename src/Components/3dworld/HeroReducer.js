@@ -29,6 +29,7 @@ export const initialState = {
   top: true,
   PositionX: [],
   PositionZ: [],
+  modelSnapshot:null,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -83,6 +84,11 @@ export const heroReducer = (state, action) => {
         ...state,
         platformName: action.payload,
       };
+    case "SET_MODEL_SNAPSHOT":
+      return {
+        ...state,
+        modelSnapshot: action.payload,
+      }
     case "SET_CART":
       return {
         ...state,
@@ -464,7 +470,7 @@ export const addLevel = (state, dispatch, toast) => {
         selectedType
       )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
     };
-    dispatch({ type: "SET_DESCRIPTION", payload: details });
+    // dispatch({ type: "SET_DESCRIPTION", payload: details });
     const newModelLevels = createModelFromPSingle(state, dispatch);
     let newLevels = [...levels];
     let newCumulativeHeight = cumulativeHeight;
@@ -562,20 +568,16 @@ export const removeLevel = (state, dispatch, toast) => {
     payload: cumulativeHeight - lastLevel.height,
   });
 
-  // Ensure not to remove more levels than exist
   const newLevels = levels.slice(0, Math.max(0, levels.length - lastGroupType));
   dispatch({ type: "SET_LEVELS", payload: newLevels });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
 
-  // Remove the last dropdown description
   const updatedDescripation = { ...descripation };
   delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
 
-  // Calculate new price based on removed levels
   const lastValue = value[value.length - 1];
   let newPrice = price === initialPrice ? 0 : price - lastValue;
 
-  // Update value array by removing last entry
   const newValueArray = value.slice(0, -1);
   const newPostion = PositionX.slice(0, -1);
   const newPositionZ = PositionZ.slice(0, -1);
@@ -610,5 +612,6 @@ export const resetAll = (state, dispatch, toast) => {
   dispatch({ type: "Set_PositionX", payload: [] });
   dispatch({ type: "Set_PositionZ", payload: [] });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+  dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
   toast.info("Reset all settings to default");
 };

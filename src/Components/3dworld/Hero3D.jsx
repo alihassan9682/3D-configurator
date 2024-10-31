@@ -3,6 +3,7 @@ import {
     ModelViewer,
     ARView,
     logo,
+    convert,
     TbAugmentedReality,
     TbView360Number,
     ToastContainer,
@@ -84,6 +85,23 @@ const Hero3D = () => {
         dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
     };
+    const updatedDiscriptaion = () => {
+        if (state.levels.length === 1) {
+            return null
+        }
+        else if (state.modelSnapshot) {
+            const updatedDescription = {
+                [`drop_down_level_${state.drop_down}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform`,
+                modelSnapshot: state.modelSnapshot,
+            };
+            console.log(updatedDescription); 
+            dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
+        }
+    }
+    
+    useEffect(() => {
+        updatedDiscriptaion();
+    }, [state.modelSnapshot]);
 
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);

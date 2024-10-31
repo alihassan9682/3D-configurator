@@ -7,6 +7,7 @@ import {
   removeLevel,
   handleBaseTypeChange,
   addToCart,
+  convert,
   // actions,
 } from "./HeroReducer";
 import { HiMenu } from "react-icons/hi";
@@ -34,6 +35,7 @@ export {
   ModelViewer,
   ARView,
   logo,
+  convert,
   TbAugmentedReality,
   TbView360Number,
   ToastContainer,

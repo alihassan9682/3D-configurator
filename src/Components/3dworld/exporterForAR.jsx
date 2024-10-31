@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import { toast } from "react-toastify";
 import { FaArrowUp } from "react-icons/fa";
 
-// LoadingIndicator component
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -108,51 +107,41 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
   );
 };
 
-// ModelViewer component
 const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart }) => {
   const sceneRef = useRef(new THREE.Scene());
-  const cameraRef = useRef();
+  const canvasRef = useRef(null);
+  const cameraRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [snapshotUrl, setSnapshotUrl] = useState(null);
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
+
+    // Export GLTF Model
     const exporter = new GLTFExporter();
     exporter.parse(
       sceneRef.current,
       (result) => {
         const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        dispatch({ type: "SET_MODEL", payload: url });
+        const modelUrl = URL.createObjectURL(blob);
+        dispatch({ type: "SET_MODEL", payload: modelUrl });
+
+        // Capture Snapshot
+        captureModelSnapshot();
       },
       { binary: true }
     );
   }, [dispatch]);
-
-  useEffect(() => {
-    if (levels.length > 0) {
-      setIsLoading(true);
-      setTimeout(() => {
-        exportModel();
-        setIsLoading(false);
-      }, 1000);
-    }
-  }, [levels, exportModel]);
-
-  // Updated handleClick logic for last platform behavior
   const handleClick = useCallback(
     ({ position, levelIndex, platformNumber, groupType }) => {
       const platformName = `${groupType} Platform ${platformNumber}`;
       toast.success(`Selected ${platformName}`);
       dispatch({ type: "SET_SELECTED_PART", payload: platformNumber });
-      // Dispatch platform name
       dispatch({ type: "SET_PLATFORM_NAME", payload: platformNumber });
       const platformCount = getPlatformCount(groupType);
-      // Regular behavior
       if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
         const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3 || platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L" ? 3.06 : 0;
         dispatch({ type: "SET_SELECTED_PART", payload: exactX });
         const exactZ = 1.53;
-        // console.log(`Exact click position (z): ${exactZ}`);
         dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
       }
       else {
@@ -174,72 +163,103 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const handleScrollToTop = () => {
     scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
   };
+
+  const captureModelSnapshot = useCallback(() => {
+    if (!canvasRef.current) return;
+    console.log("captureModelSnapshot")
+    const canvas = canvasRef.current.querySelector('canvas');
+    if (!canvas) return;
+
+    const snapshotDataUrl = canvas.toDataURL('image/png');
+    console.log("snapshotDataUrl", snapshotDataUrl)
+    setSnapshotUrl(snapshotDataUrl);
+    dispatch({
+      type: "SET_MODEL_SNAPSHOT",
+      payload: snapshotDataUrl
+    });
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (levels.length > 0) {
+      setIsLoading(true);
+      setTimeout(() => {
+        exportModel();
+        setIsLoading(false);
+      }, 1000);
+    }
+  }, [levels, exportModel]);
+
   return (
-    <div className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative" ref={scrollToTopRef}>
-      {levels.length === 0 ? (
-        <div className="text-gray-600 text-center">
-          <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-          <p>Please use the controls on the side to add levels to your model.</p>
-        </div>
-      ) : (
-        <>
-          <Canvas
-            shadows
-            className="w-full h-screen"
-            camera={{ position: [0, 2, 5], fov: 75 }}
-          >
-            <ClickHandler />
-            <Suspense fallback={<LoadingIndicator />}>
-              {/* SpotLight for main focused lighting */}
-              <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
+    <div
+      ref={canvasRef}
+      className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative"
+    >            {levels.length === 0 ? (
+      <div className="text-gray-600 text-center">
+        <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
+        <p>Please use the controls on the side to add levels to your model.</p>
+      </div>
+    ) : (
+      <>
+        <Canvas
+          gl={{ preserveDrawingBuffer: true }} // This helps retain the canvas content for snapshots
+          shadows
+          className="w-full h-screen"
+          camera={{ position: [0, 2, 5], fov: 75 }}
+        >
+          <ClickHandler />
+          <Suspense fallback={<LoadingIndicator />}>
+            <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
+            <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+            <pointLight position={[0, 5, 5]} intensity={0.8} />
 
-              {/* Additional directional light for ambient light */}
-              <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+            {levels.map((level, index) => (
+              <Level
+                key={`${level.url}-${index}-${Math.random()}`}
+                url={level.url}
+                position={level.position}
+                scale={[scale, scale, scale]}
+                rotation={level.rotation}
+                onClick={handleClick}
+                levelIndex={index}
+                groupType={level.groupType}
+                parentGroupType={index > 0 ? levels[index - 1].groupType : null}
+              />
+            ))}
+            <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+          </Suspense>
+        </Canvas>
 
-              {/* Optional point light for soft illumination from the side */}
-              <pointLight position={[0, 5, 5]} intensity={0.8} />
-
-              {levels.map((level, index) => (
-                <Level
-                  key={`${level.url}-${index}-${Math.random()}`}
-                  url={level.url}
-                  position={level.position}
-                  scale={[scale, scale, scale]}
-                  rotation={level.rotation}
-                  onClick={handleClick}
-                  levelIndex={index}
-                  groupType={level.groupType}
-                  parentGroupType={index > 0 ? levels[index - 1].groupType : null}
-                />
-              ))}
-              <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
-            </Suspense>
-          </Canvas>
-
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-            </div>
-          )}
-          {platformName && (
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
+          </div>
+        )}
+        {platformName && (
+          <>
             <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
               Selected Part: Platform No {platformName}
             </div>
-          )}
+            <p className="text-gray-600 mb-2">Captured Snapshot:</p>
+            <img src={snapshotUrl} alt="Captured model snapshot" className="w-32 h-32 object-cover" />
+          </>
+        )}
 
-          <button
-            className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
-            onClick={handleScrollToTop}
-          >
-            <FaArrowUp className="text-2xl" />
-          </button>
-        </>
-      )}
+        <button
+          className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
+          onClick={handleScrollToTop}
+        >
+          <FaArrowUp className="text-2xl" />
+        </button>
+        {snapshotUrl && (
+          <div className="absolute top-4 right-4 bg-white p-4 rounded shadow">
+
+          </div>
+        )}
+      </>
+    )}
     </div>
   );
 };
-
-// Helper function to get the platform count based on group type
 function getPlatformCount(groupType) {
   switch (groupType) {
     case "PSINGLE":
@@ -256,5 +276,4 @@ function getPlatformCount(groupType) {
       return 1;
   }
 }
-
 export default ModelViewer;
