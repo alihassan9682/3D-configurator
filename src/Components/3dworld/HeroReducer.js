@@ -262,9 +262,9 @@ export const addToCart = async (
   setCheckout,
   toast
 ) => {
-  const { isInCart, isLoading, price, descripation } = state;
-  if (!checkout) {
-    return;
+  const { isInCart, isLoading, price, descripation, baseType } = state;
+  if (!checkout || !baseType) {
+    toast.error("No checkout  found");
   }
 
   if (isInCart || isLoading) return;
@@ -529,7 +529,8 @@ export const addLevel = (state, dispatch, toast) => {
 };
 
 // Removing the levels from the model
-export const removeLevel = (state, dispatch, toast) => {
+export const removeLevel = (state, dispatch, toast,  setVariantID
+) => {
   const {
     levels,
     cumulativeHeight,
@@ -553,6 +554,8 @@ export const removeLevel = (state, dispatch, toast) => {
   // Reset type to base if there's only one level left
   if (levels.length === 1) {
     dispatch({ type: "SET_BASE_TYPE", payload: "" });
+      setVariantID(null);
+
   }
 
   // Update level index to remove the last level
@@ -602,10 +605,11 @@ export const removeLevel = (state, dispatch, toast) => {
 };
 
 // Resetting all the settings to default
-export const resetAll = (state, dispatch, toast) => {
+export const resetAll = (state, dispatch, toast, setVariantID) => {
   const { initalPrice, scale, levels } = state;
   const newlevels = levels;
   newlevels.splice(0, newlevels.length);
+  setVariantID(null)
   // console.log("newlevels", newlevels);
   dispatch({ type: "SET_PRICE", payload: 0 });
   dispatch({ type: "RESET_ALL" });

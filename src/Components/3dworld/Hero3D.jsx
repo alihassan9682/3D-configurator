@@ -84,6 +84,7 @@ const Hero3D = () => {
         handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
         dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
+        setVariantID(baseTypeFromId.varaintID);
     };
     const updatedDiscriptaion = () => {
         if (state.levels.length === 1) {
@@ -93,7 +94,7 @@ const Hero3D = () => {
             const updatedDescription = {
                 [`drop_down_level_${state.drop_down - 1}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform \n(Model Snapshot: ${state.modelSnapshot}`,
             };
-            console.log(updatedDescription); 
+            console.log(updatedDescription);
             dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
         }
     }
@@ -119,7 +120,7 @@ const Hero3D = () => {
     }, [state.descripation, state.baseType])
 
     const handleARViewClick = () => {
-        if (state.baseType === "") { 
+        if (state.baseType === "") {
             toast.error("Please select a base type to start.");
             return;
         }
@@ -185,7 +186,7 @@ const Hero3D = () => {
                         </button>
 
                         <button
-                            onClick={() => resetAll(state, dispatch, toast)}
+                            onClick={() => resetAll(state, dispatch, toast, setVariantID)}
                             className="bg-yellow-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition duration-300"
                         >
                             <GrPowerReset size={20} className="mr-2" />
@@ -282,7 +283,7 @@ const Hero3D = () => {
                         Add Level
                     </button>
                     <button
-                        onClick={() => removeLevel(state, dispatch, toast)}
+                        onClick={() => removeLevel(state, dispatch, toast, setVariantID)}
                         className="bg-red-500 text-white ml-4 px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-red-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-300"
                     >
                         <MdOutlineCancel size={20} className="mr-2" />
