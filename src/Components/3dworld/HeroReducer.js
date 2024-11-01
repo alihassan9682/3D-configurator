@@ -29,7 +29,7 @@ export const initialState = {
   top: true,
   PositionX: [],
   PositionZ: [],
-  modelSnapshot:null,
+  modelSnapshot: null,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -88,7 +88,7 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         modelSnapshot: action.payload,
-      }
+      };
     case "SET_CART":
       return {
         ...state,
@@ -201,7 +201,7 @@ export const handleBaseTypeChange = (
   scale,
   dispatch,
   toast,
-  cumulativeHeight,
+  cumulativeHeight
 ) => {
   if (newBaseType) {
     let level = levels;
@@ -537,8 +537,6 @@ export const removeLevel = (state, dispatch, toast) => {
     descripation,
     value,
     price,
-    initalPrice,
-    selectedType,
     initialPrice,
     type,
     levelIndex,
@@ -546,56 +544,66 @@ export const removeLevel = (state, dispatch, toast) => {
     PositionZ,
   } = state;
 
-  if (levels.length === 1) {
+  // Check if there are levels to remove; if not, show an error toast
+  if (levels.length === 0) {
     toast.error("No levels to remove");
-    dispatch({ type: "SET_PRICE", payload: initalPrice });
     return;
   }
-  const index = levelIndex - 1;
-  dispatch({ type: "SET_LEVEL", payload: index });
+
+  // Reset type to base if there's only one level left
+  if (levels.length === 1) {
+    dispatch({ type: "SET_BASE_TYPE", payload: "" });
+  }
+
+  // Update level index to remove the last level
+  const newLevelIndex = levelIndex - 1;
+  dispatch({ type: "SET_LEVEL", payload: newLevelIndex });
+
+  // Prepare to remove the last level and update cumulative height
   const lastLevel = levels[levels.length - 1];
-  const lastGroupType1 = type[type.length - 1];
-  const type1 = [...type]; // Clone the type array
-  type1.pop();
-
-  // Determine how many platforms to remove based on the selected type
-  const lastGroupType = 1;
-
-  // Adjust cumulative height
-  dispatch({ type: "ADD_TYPE", payload: type1 });
+  const lastGroupType = type.slice(0, -1); // Remove last item from type array
+  dispatch({ type: "ADD_TYPE", payload: lastGroupType });
   dispatch({
     type: "SET_CUMULATIVE_HEIGHT",
     payload: cumulativeHeight - lastLevel.height,
   });
 
-  const newLevels = levels.slice(0, Math.max(0, levels.length - lastGroupType));
+  // Update levels array by removing the last level
+  const newLevels = levels.slice(0, -1);
   dispatch({ type: "SET_LEVELS", payload: newLevels });
-  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
 
+  // Update descripation by removing the entry for the last dropdown level
   const updatedDescripation = { ...descripation };
   delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
+  dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
 
+  // Update price and value arrays after removing the last level
   const lastValue = value[value.length - 1];
-  let newPrice = price === initialPrice ? 0 : price - lastValue;
-
+  const newPrice = price === initialPrice ? 0 : price - lastValue;
   const newValueArray = value.slice(0, -1);
-  const newPostion = PositionX.slice(0, -1);
-  const newPositionZ = PositionZ.slice(0, -1);
-  dispatch({ type: "Set_PositionX", payload: newPostion });
-  dispatch({ type: "Set_PositionZ", payload: newPositionZ });
   dispatch({ type: "SET_PRICE", payload: newPrice });
   dispatch({ type: "SET_VALUE", payload: newValueArray });
-  dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
+
+  // Update positions by removing the last elements from PositionX and PositionZ
+  const newPositionX = PositionX.slice(0, -1);
+  const newPositionZ = PositionZ.slice(0, -1);
+  dispatch({ type: "Set_PositionX", payload: newPositionX });
+  dispatch({ type: "Set_PositionZ", payload: newPositionZ });
+
+  // Update drop-down count and reset other related states
   dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_LOADING" });
+
+  // Show toast message on successful removal
   toast.info("Removed the last level");
 };
+
 // Resetting all the settings to default
 export const resetAll = (state, dispatch, toast) => {
-  const { initalPrice, scale ,levels} = state;
+  const { initalPrice, scale, levels } = state;
   const newlevels = levels;
   newlevels.splice(0, newlevels.length);
   // console.log("newlevels", newlevels);

@@ -91,14 +91,12 @@ const Hero3D = () => {
         }
         else if (state.modelSnapshot) {
             const updatedDescription = {
-                [`drop_down_level_${state.drop_down}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform`,
-                modelSnapshot: state.modelSnapshot,
+                [`drop_down_level_${state.drop_down - 1}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform \n(Model Snapshot: ${state.modelSnapshot}`,
             };
             console.log(updatedDescription); 
             dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
         }
     }
-    
     useEffect(() => {
         updatedDiscriptaion();
     }, [state.modelSnapshot]);
@@ -121,6 +119,10 @@ const Hero3D = () => {
     }, [state.descripation, state.baseType])
 
     const handleARViewClick = () => {
+        if (state.baseType === "") { 
+            toast.error("Please select a base type to start.");
+            return;
+        }
         toggleView("AR", dispatch);
         if (window.innerWidth < 768) {
             scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });

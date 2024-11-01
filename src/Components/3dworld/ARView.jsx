@@ -25,9 +25,10 @@ const ARComponent = ({ modal }) => {
               vr-mode-ui="enabled: false" 
               device-orientation-permission-ui="enabled: false" 
               style="width: 100vw; height: 100vh;"
+              embedded
             >
               <a-assets>
-                <a-asset-item id="model-0" src="${modal}" />
+                <a-asset-item id="model-0" src="${modal}"></a-asset-item>
               </a-assets>
 
               <!-- Lighting -->
@@ -35,7 +36,7 @@ const ARComponent = ({ modal }) => {
               <a-light type="directional" color="#ffffff" intensity="1" position="1 2 3"></a-light>
 
               <!-- Camera -->
-              <a-camera position="0 0 5" look-controls="enabled: True"></a-camera>
+              <a-camera position="0 0 5" look-controls="enabled: true"></a-camera>
 
               <!-- Model -->
               <a-entity mindar-image-target="targetIndex: 0">
@@ -46,8 +47,42 @@ const ARComponent = ({ modal }) => {
                   rotation="0 0 0">
                 </a-gltf-model>
               </a-entity>
-
             </a-scene>
+
+            <!-- Error handling script -->
+            <script>
+              // Error message element
+              const errorMessage = document.createElement('div');
+              errorMessage.style.position = 'absolute';
+              errorMessage.style.top = '50%';
+              errorMessage.style.left = '50%';
+              errorMessage.style.transform = 'translate(-50%, -50%)';
+              errorMessage.style.padding = '20px';
+              errorMessage.style.color = '#ff0000';
+              errorMessage.style.fontSize = '18px';
+              errorMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+              errorMessage.style.display = 'none';
+              errorMessage.textContent = 'Error: Model could not be loaded.';
+              document.body.appendChild(errorMessage);
+
+              // Timeout for model loading
+              const timeout = setTimeout(() => {
+                const modelEntity = document.querySelector('a-gltf-model');
+                if (!modelEntity || !modelEntity.hasLoaded) {
+                  errorMessage.style.display = 'block';
+                }
+              }, 5000); // 5 seconds timeout for model loading
+              
+              // Clear timeout if the model loads successfully
+              document.querySelector('#model-0').addEventListener('loaded', () => {
+                clearTimeout(timeout);
+              });
+              
+              // If the model fails to load, display an error message
+              document.querySelector('#model-0').addEventListener('error', () => {
+                errorMessage.style.display = 'block';
+              });
+            </script>
           </body>
         </html>`}
         style={{
@@ -59,7 +94,7 @@ const ARComponent = ({ modal }) => {
           border: "none",
         }}
         title="Augmented Reality Viewer"
-        />
+      />
     </div>
   );
 };

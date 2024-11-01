@@ -112,7 +112,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [snapshotUrl, setSnapshotUrl] = useState(null);
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
 
@@ -172,7 +171,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
     const snapshotDataUrl = canvas.toDataURL('image/png');
     console.log("snapshotDataUrl", snapshotDataUrl)
-    setSnapshotUrl(snapshotDataUrl);
     dispatch({
       type: "SET_MODEL_SNAPSHOT",
       payload: snapshotDataUrl
@@ -239,8 +237,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
               Selected Part: Platform No {platformName}
             </div>
-            <p className="text-gray-600 mb-2">Captured Snapshot:</p>
-            <img src={snapshotUrl} alt="Captured model snapshot" className="w-32 h-32 object-cover" />
+           
           </>
         )}
 
@@ -250,11 +247,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         >
           <FaArrowUp className="text-2xl" />
         </button>
-        {snapshotUrl && (
-          <div className="absolute top-4 right-4 bg-white p-4 rounded shadow">
-
-          </div>
-        )}
       </>
     )}
     </div>
