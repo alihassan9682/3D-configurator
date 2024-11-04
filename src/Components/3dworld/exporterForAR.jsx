@@ -127,14 +127,25 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       { binary: true }
     );
   }, [dispatch]);
-  const exportModelForIOS = useCallback( () => {
-    if (!sceneRef.current) return;
     const exporter = new USDZExporter();
-        const arrayBuffer = exporter.parse(sceneRef);
-        const blob = new Blob([arrayBuffer], { type: 'model/vnd.usdz+zip' });
-        const modelUrl = URL.createObjectURL(blob);
-        dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
-},[dispatch])
+
+    // Function to export the scene or model to USDZ format
+    async function exportUSDZ() {
+      try {
+          const usdzArrayBuffer = await exporter.parse(sceneRef);
+          const blob = new Blob([usdzArrayBuffer], { type: 'model/vnd.usdz+zip' });
+          const modelUrl = URL.createObjectURL(blob);
+          
+          dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
+          
+          setTimeout(() => URL.revokeObjectURL(modelUrl), 10000); 
+      } catch (error) {
+          console.error("USDZ export error:", error);
+      }
+  }
+  
+  
+
   const handleClick = useCallback(
     ({ position, levelIndex, platformNumber, groupType }) => {
       const platformName = `${groupType} Platform ${platformNumber}`;
@@ -186,11 +197,11 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       setIsLoading(true);
       setTimeout(() => {
         exportModel();
-        exportModelForIOS();
+        exportUSDZ();
         setIsLoading(false);
       }, 1000);
     }
-  }, [levels, exportModel, exportModelForIOS]);
+  }, [levels, exportModel, exportUSDZ]);
 
   return (
     <div

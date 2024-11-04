@@ -177,7 +177,7 @@ const Hero3D = () => {
                 <button
                         onClick={() => {
                             const link = document.createElement('a');
-                            link.href = state.modelIos;  // The model URL
+                            link.href = state.model;  // The model URL
                             link.download = 'model.usdz';  // Set the filename for download
                             document.body.appendChild(link);
                             link.click();
