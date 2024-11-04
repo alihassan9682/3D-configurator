@@ -181,7 +181,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
   const captureModelSnapshot = useCallback(() => {
     if (!canvasRef.current) return;
-    console.log("captureModelSnapshot")
+    // console.log("captureModelSnapshot")
     const canvas = canvasRef.current.querySelector('canvas');
     if (!canvas) return;
 
@@ -201,7 +201,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         setIsLoading(false);
       }, 1000);
     }
-  }, [levels, exportModel, exportUSDZ]);
+  }, [levels, exportModel]);
 
   return (
     <div
