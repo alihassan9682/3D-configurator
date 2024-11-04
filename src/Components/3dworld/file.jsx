@@ -1,260 +1,368 @@
-import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
-import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
-import { toast } from "react-toastify";
-import { FaArrowUp } from "react-icons/fa";
+import React, { useEffect, useRef } from "react";
+import IMG from "./targets.mind";
 
-// LoadingIndicator component
-const LoadingIndicator = () => {
-    return (
-        <mesh visible position={[0, 0, 0]}>
-            <sphereGeometry args={[1, 16, 16]} />
-            <meshStandardMaterial color="orange" transparent opacity={0} roughness={1} metalness={1} />
-        </mesh>
-    );
-};
+const ARComponent = ({ model }) => {
+    const iframeRef = useRef(null);
 
-const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, groupType }) => {
-    const meshRef = useRef();
-    useFrame(({ raycaster, camera, mouse }) => {
-        if (meshRef.current) {
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(meshRef.current);
-            document.body.style.cursor = intersects.length > 0 ? "pointer" : "default";
-        }
-    });
+    const debugHTML = `
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+        <style>
+          #debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            z-index: 9999;
+            max-width: 400px;
+            display: block;
+          }
+          #debug-panel div {
+            margin: 5px 0;
+            word-wrap: break-word;
+          }
+          .error-text {
+            color: #ff6b6b;
+          }
+          .success-text {
+            color: #69db7c;
+          }
+        </style>
+      </head>
+      <body style="margin: 0; overflow: hidden;">
+        <div id="debug-panel">
+          <div id="model-status">Model Status: Initializing...</div>
+          <div id="model-size">Model Size: Waiting...</div>
+          <div id="device-info">Device Info: Checking...</div>
+          <div id="load-attempts">Load Attempts: 0/3</div>
+          <div id="error-details">Error Details: None</div>
+          <div id="model-url">Model URL: Checking...</div>
+          <div id="webgl-info">WebGL: Checking...</div>
+        </div>
 
-    if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
-        (groupType === "PQUAD_L" && platformNumber === 4)) {
-        position[2] = 20;
-    } else {
-        position[2] = -12;
-    }
-    let adjustedSize = [...size];
-    if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
-        if ((groupType === "PTRIPLE_L" && (platformNumber === 2 || platformNumber === 3)) ||
-            (groupType === "PQUAD_L" && (platformNumber === 3 || platformNumber === 4))) {
-            // Adjust size for the last platform
-            adjustedSize[0] = 30;
-        } else {
-            // Keep original size for other platforms
-            adjustedSize[0] = size[0];
-        }
-    }
-
-    return (
-        <mesh
-            ref={meshRef}
-            position={position}
-            onClick={(e) => onClick(e, levelIndex, platformNumber)}
+        <a-scene
+          mindar-image="imageTargetSrc:${IMG};"
+          vr-mode-ui="enabled: false"
+          device-orientation-permission-ui="enabled: false"
+          renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true;"
+          style="width: 100vw; height: 100vh;"
+          embedded
         >
-            <boxGeometry args={adjustedSize} />
-            <meshBasicMaterial transparent opacity={0} wireframe={true} visible={false} />
-        </mesh>
-    );
-};
+          <a-assets timeout="30000">
+            <a-asset-item id="model-0" src="${model}" response-type="arraybuffer"></a-asset-item>
+          </a-assets>
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType }) => {
-    const { scene } = useGLTF(url);
-    const groupRef = useRef();
-    const clonedScene = scene.clone();
-    const handleClick = useCallback(
-        (e, levelIndex, platformNumber) => {
-            onClick({
-                position: e.point,
-                levelIndex,
-                platformNumber,
-                groupType,
+          <a-light type="ambient" color="#ffffff" intensity="1"></a-light>
+          <a-light type="directional" color="#ffffff" intensity="1" position="1 2 3"></a-light>
+          
+          <a-camera position="0 0 5" look-controls="enabled: true">
+            <a-entity
+              position="0 0 -1"
+              geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+              material="color: white; shader: flat"
+              cursor="fuse: false"
+            ></a-entity>
+          </a-camera>
+
+          <a-entity mindar-image-target="targetIndex: 0">
+            <a-gltf-model
+              id="ar-model"
+              src="#model-0"
+              position="0 0 0"
+              scale="0.5 0.5 0.5"
+              rotation="0 0 0"
+            ></a-gltf-model>
+          </a-entity>
+        </a-scene>
+
+        <script>
+          // Constants
+          const MAX_LOAD_ATTEMPTS = 3;
+          const RETRY_DELAY = 2000;
+          const MAX_MODEL_DIMENSION = 2;
+          const MIN_MODEL_DIMENSION = 0.1;
+          
+          // Debug Elements
+          const statusElement = document.getElementById('model-status');
+          const sizeElement = document.getElementById('model-size');
+          const deviceInfoElement = document.getElementById('device-info');
+          const attemptsElement = document.getElementById('load-attempts');
+          const errorElement = document.getElementById('error-details');
+          const webglInfoElement = document.getElementById('webgl-info');
+          // Check WebGL Support
+          function checkWebGLSupport() {
+            try {
+              const canvas = document.createElement('canvas');
+              const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+              const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+              const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+              webglInfoElement.textContent = 'WebGL: Supported - ' + renderer;
+              return true;
+            } catch(e) {
+              webglInfoElement.textContent = 'WebGL: Not Supported';
+              return false;
+            }
+          }
+
+          // Device information
+          const deviceInfo = {
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            vendor: navigator.vendor,
+            memory: navigator.deviceMemory || 'unknown',
+            hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+            webGL: checkWebGLSupport()
+          };
+          
+          deviceInfoElement.textContent = 
+            'Device: ' + deviceInfo.platform + ' | ' +
+            'Browser: ' + deviceInfo.vendor;
+
+          // Model loading and size calculation
+          const modelEntity = document.querySelector('#ar-model');
+          const assetItem = document.querySelector('#model-0');
+          let loadAttempts = 0;
+          let modelCheckInterval;
+
+          function isModelReady(model) {
+            if (!model) return false;
+            let isReady = true;
+            model.traverse((node) => {
+              if (node.isMesh) {
+                if (!node.geometry || !node.geometry.attributes.position) {
+                  isReady = false;
+                }
+              }
             });
-        },
-        [onClick, groupType]
-    );
+            return isReady;
+          }
 
-    const bbox = new THREE.Box3().setFromObject(clonedScene);
-    const modelSize = new THREE.Vector3();
-    bbox.getSize(modelSize);
-    const detectionMeshes = [];
-    const platformCount = getPlatformCount(groupType);
+          function calculateModelSize(model) {
+            if (!model) throw new Error('Model not available');
 
-    const spacing = 2;
-    const meshPadding = 5;
-    const totalWidth = modelSize.x;
-    const singleMeshWidth = (totalWidth - (spacing * (platformCount - 1))) / platformCount;
+            model.updateMatrixWorld(true);
+            
+            let meshes = [];
+            model.traverse((node) => {
+              if (node.isMesh) {
+                meshes.push(node);
+              }
+            });
 
-    for (let i = 0; i < platformCount; i++) {
-        const startX = bbox.min.x + (i * (singleMeshWidth + spacing));
-        const centerX = startX + (singleMeshWidth / 2);
+            if (meshes.length === 0) {
+              throw new Error('No meshes found in model');
+            }
 
-        detectionMeshes.push(
-            <DetectionMesh
-                key={`detection-mesh-${levelIndex}-${i}`}
-                position={[centerX, modelSize.y - 12, -12]}
-                size={[singleMeshWidth + meshPadding, modelSize.y - 4, 33]}
-                onClick={handleClick}
-                levelIndex={levelIndex}
-                platformNumber={i + 1}
-                groupType={groupType}
-            />
-        );
-    }
+            const box = new THREE.Box3();
+            meshes.forEach(mesh => {
+              mesh.geometry.computeBoundingBox();
+              const meshBox = mesh.geometry.boundingBox.clone();
+              meshBox.applyMatrix4(mesh.matrixWorld);
+              box.union(meshBox);
+            });
 
-    return (
-        <group ref={groupRef} position={position} scale={scale}>
-            <primitive object={clonedScene} />
-            {detectionMeshes}
-        </group>
-    );
-};
+            const size = new THREE.Vector3();
+            box.getSize(size);
 
-// ModelViewer component
-const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart }) => {
-    const sceneRef = useRef(new THREE.Scene());
-    const cameraRef = useRef();
-    const [isLoading, setIsLoading] = useState(false);
+            return {
+              box: box,
+              size: size,
+              meshCount: meshes.length
+            };
+          }
 
-    const exportModel = useCallback(() => {
-        if (!sceneRef.current) return;
-        const exporter = new GLTFExporter();
-        exporter.parse(
-            sceneRef.current,
-            (result) => {
-                const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                dispatch({ type: "SET_MODEL", payload: url });
-            },
-            { binary: true }
-        );
-    }, [dispatch]);
+          function updateLoadAttempts() {
+            attemptsElement.textContent = \`Load Attempts: \${loadAttempts}/\${MAX_LOAD_ATTEMPTS}\`;
+          }
+
+          function logError(error, type = 'error') {
+            console.error('Detailed error:', error);
+            errorElement.textContent = 'Error Details: ' + (error.message || error.type || 'Unknown error');
+            errorElement.className = type === 'error' ? 'error-text' : '';
+          }
+
+          function handleModelLoad(evt) {
+            try {
+              const model = evt.detail.model;
+              if (!model) throw new Error('Model details not available');
+
+              const modelData = calculateModelSize(model);
+              const size = modelData.size;
+
+              if (size.x === 0 && size.y === 0 && size.z === 0) {
+                throw new Error('Model dimensions are zero');
+              }
+
+              // Update UI
+              statusElement.textContent = 'Model Status: Loaded Successfully';
+              statusElement.className = 'success-text';
+              sizeElement.textContent = \`Model Size: W: \${size.x.toFixed(2)} H: \${size.y.toFixed(2)} D: \${size.z.toFixed(2)}\`;
+
+              // Log model details
+              console.log('Model details:', {
+                meshCount: modelData.meshCount,
+                dimensions: {
+                  width: size.x,
+                  height: size.y,
+                  depth: size.z
+                },
+                position: model.position,
+                scale: model.scale
+              });
+
+              // Auto-scale model if needed
+              const maxDimension = Math.max(size.x, size.y, size.z);
+              if (maxDimension > MAX_MODEL_DIMENSION || maxDimension < MIN_MODEL_DIMENSION) {
+                const targetSize = maxDimension > MAX_MODEL_DIMENSION ? MAX_MODEL_DIMENSION : 1;
+                const scale = targetSize / maxDimension;
+                modelEntity.setAttribute('scale', \`\${scale} \${scale} \${scale}\`);
+                console.log('Model auto-scaled to:', scale);
+              }
+
+              // Add visual bounding box for debugging
+              const boxHelper = new THREE.BoxHelper(model, 0xffff00);
+              model.parent.add(boxHelper);
+
+            } catch (error) {
+              console.error('Size calculation error:', error);
+              logError(error);
+              statusElement.textContent = 'Model Status: Size Calculation Error';
+              
+              // Fallback to default scale
+              const defaultScale = 0.5;
+              modelEntity.setAttribute('scale', \`\${defaultScale} \${defaultScale} \${defaultScale}\`);
+              sizeElement.textContent = 'Model Size: Using default scale (0.5)';
+            }
+          }
+
+          async function handleModelError(evt) {
+            loadAttempts++;
+            updateLoadAttempts();
+            
+            const error = evt.detail.error || evt.detail;
+            logError(error);
+            
+            statusElement.textContent = \`Model Status: Load Failed - Attempt \${loadAttempts}\`;
+            
+            if (loadAttempts < MAX_LOAD_ATTEMPTS) {
+              console.log(\`Retrying model load... Attempt \${loadAttempts + 1}\`);
+              
+              // Full cleanup and retry
+              setTimeout(() => {
+                modelEntity.removeAttribute('src');
+                modelEntity.removeAttribute('gltf-model');
+                
+                // Force a repaint
+                void modelEntity.offsetHeight;
+                
+                setTimeout(() => {
+                  modelEntity.setAttribute('src', '#model-0');
+                }, RETRY_DELAY);
+              }, RETRY_DELAY);
+            } else {
+              statusElement.textContent = \`Model Status: Failed after \${MAX_LOAD_ATTEMPTS} attempts\`;
+              errorElement.textContent = 'Error Details: Max attempts reached. Try refreshing the page.';
+            }
+          }
+
+          // Event Listeners
+          modelEntity.addEventListener('model-loaded', (evt) => {
+            // Clear any existing interval
+            if (modelCheckInterval) clearInterval(modelCheckInterval);
+            
+            // Start checking for model readiness
+            modelCheckInterval = setInterval(() => {
+              const model = evt.detail.model;
+              if (model && isModelReady(model)) {
+                clearInterval(modelCheckInterval);
+                handleModelLoad(evt);
+              }
+            }, 100);
+
+            // Timeout after 5 seconds
+            setTimeout(() => {
+              if (modelCheckInterval) {
+                clearInterval(modelCheckInterval);
+                if (!isModelReady(evt.detail.model)) {
+                  logError(new Error('Model failed to initialize properly'));
+                  statusElement.textContent = 'Model Status: Failed to initialize';
+                }
+              }
+            }, 5000);
+          });
+
+          modelEntity.addEventListener('model-error', handleModelError);
+          
+          // Asset loading error handling
+          assetItem.addEventListener('error', (error) => {
+            logError(error);
+            errorElement.textContent = 'Error Details: Asset failed to load';
+          });
+
+          // Scene event handlers
+          const scene = document.querySelector('a-scene');
+          
+          scene.addEventListener('renderstart', () => {
+            console.log('AR Scene started rendering');
+          });
+
+          scene.addEventListener('camera-init', () => {
+            console.log('Camera initialized');
+            statusElement.textContent = 'Camera Status: Initialized';
+          });
+
+          scene.addEventListener('camera-error', (error) => {
+            logError(error);
+            statusElement.textContent = 'Camera Error: See Details';
+          });
+
+          // Initial setup
+          updateLoadAttempts();
+          checkWebGLSupport();
+        </script>
+      </body>
+    </html>
+  `;
 
     useEffect(() => {
-        if (levels.length > 0) {
-            setIsLoading(true);
-            setTimeout(() => {
-                exportModel();
-                setIsLoading(false);
-            }, 1000);
+        if (iframeRef.current) {
+            const iframe = iframeRef.current;
+            iframe.addEventListener('load', () => {
+                console.log('iframe loaded');
+            });
         }
-    }, [levels, exportModel]);
+    }, []);
 
-    // Updated handleClick logic for last platform behavior
-    const handleClick = useCallback(
-        ({ position, levelIndex, platformNumber, groupType }) => {
-            const platformName = `${groupType} Platform ${platformNumber}`;
-            toast.success(`Selected ${platformName}`);
-            dispatch({ type: "SET_SELECTED_PART", payload: platformNumber });
-            // Dispatch platform name
-            dispatch({ type: "SET_PLATFORM_NAME", payload: platformNumber });
-            const platformCount = getPlatformCount(groupType);
-            // Regular behavior
-            if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
-                const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3 || platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L" ? 3.06 : 0;
-                dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-                const exactZ = 1.53;
-                // console.log(`Exact click position (z): ${exactZ}`);
-                dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-            }
-            else {
-                const exactX = platformNumber === 1 ? 0 : platformNumber === 2 ? 1.53 : platformNumber === 3 ? 3.06 : 4.59;
-                dispatch({ type: "SET_SELECTED_PART", payload: exactX })
-            }
-        },
-        [dispatch]
-    );
-
-    const ClickHandler = () => {
-        const { camera, scene } = useThree();
-        useEffect(() => {
-            cameraRef.current = camera;
-            sceneRef.current = scene;
-        }, [camera, scene]);
-        return null;
-    };
-    const handleScrollToTop = () => {
-        scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
-    };
     return (
-        <div className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative" ref={scrollToTopRef}>
-            {levels.length === 0 ? (
-                <div className="text-gray-600 text-center">
-                    <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-                    <p>Please use the controls on the side to add levels to your model.</p>
-                </div>
-            ) : (
-                <>
-                    <Canvas
-                        shadows
-                        className="w-full h-screen"
-                        camera={{ position: [0, 2, 5], fov: 75 }}
-                    >
-                        <ClickHandler />
-                        <Suspense fallback={<LoadingIndicator />}>
-                            {/* SpotLight for main focused lighting */}
-                            <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
-
-                            {/* Additional directional light for ambient light */}
-                            <directionalLight position={[-10, 10, -10]} intensity={0.5} />
-
-                            {/* Optional point light for soft illumination from the side */}
-                            <pointLight position={[0, 5, 5]} intensity={0.8} />
-
-                            {levels.map((level, index) => (
-                                <Level
-                                    key={`${level.url}-${index}-${Math.random()}`}
-                                    url={level.url}
-                                    position={level.position}
-                                    scale={[scale, scale, scale]}
-                                    rotation={level.rotation}
-                                    onClick={handleClick}
-                                    levelIndex={index}
-                                    groupType={level.groupType}
-                                    parentGroupType={index > 0 ? levels[index - 1].groupType : null}
-                                />
-                            ))}
-                            <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
-                        </Suspense>
-                    </Canvas>
-
-                    {isLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-                        </div>
-                    )}
-                    {platformName && (
-                        <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
-                            Selected Part: Platform No {platformName}
-                        </div>
-                    )}
-
-                    <button
-                        className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
-                        onClick={handleScrollToTop}
-                    >
-                        <FaArrowUp className="text-2xl" />
-                    </button>
-                </>
-            )}
+        <div style={{
+            position: "relative",
+            width: "100vw",
+            height: "100vh",
+            margin: 0,
+            padding: 0,
+        }}>
+            <iframe
+                ref={iframeRef}
+                srcDoc={debugHTML}
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                }}
+                title="Augmented Reality Viewer"
+            />
         </div>
     );
 };
 
-// Helper function to get the platform count based on group type
-function getPlatformCount(groupType) {
-    switch (groupType) {
-        case "PSINGLE":
-            return 1;
-        case "PDOUBLE":
-            return 2;
-        case "PTRIPLE":
-        case "PTRIPLE_L":
-            return 3;
-        case "PQUAD":
-        case "PQUAD_L":
-            return 4;
-        default:
-            return 1;
-    }
-}
-
-export default ModelViewer;
+export default ARComponent;

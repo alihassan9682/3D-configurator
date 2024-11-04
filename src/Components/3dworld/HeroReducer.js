@@ -30,6 +30,7 @@ export const initialState = {
   PositionX: [],
   PositionZ: [],
   modelSnapshot: null,
+  modelIos: null,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -124,6 +125,11 @@ export const heroReducer = (state, action) => {
         ...state,
         model: action.payload,
       };
+      case "SET_MODEL_IOS":
+        return {
+          ...state,
+          modelIos: action.payload,
+        };
     case "SET_DESCRIPTION":
       return {
         ...state,

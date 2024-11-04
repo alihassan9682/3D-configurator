@@ -33,7 +33,7 @@ import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
 import Client from 'shopify-buy';
-import { Input } from 'postcss';
+import { MdOutlineFileDownload } from "react-icons/md";
 
 const Hero3D = () => {
     const { id } = useParams();
@@ -117,7 +117,9 @@ const Hero3D = () => {
         // console.log('Price:', state.price);
         // console.log('selectedPartZ:', state.selectedPartZ);
         // console.log('selectedPart:', state.selectedPart);
-    }, [state.descripation, state.baseType])
+        // console.log("MOdel" , state.model)
+        // console.log("MOdel" , state.modelIos)
+    }, [state.descripation, state.baseType,state.model,state.modelIos])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -171,6 +173,23 @@ const Hero3D = () => {
                         </button>
                     </div>
                 </div>
+                <div className='flex justify-center items-center my-2'>
+                <button
+                        onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = state.modelIos;  // The model URL
+                            link.download = 'model.usdz';  // Set the filename for download
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }}                        
+                        className="bg-gray-300 px-2 flex justify-center  py-3 text-sm rounded-full shadow-md md:hidden hover:bg-gray-4400 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
+                        disabled={!state.model || !state.baseType }
+                    >
+                        <MdOutlineFileDownload size={20} className="mr-2" />
+                        Download Model 
+                    </button>
+                    </div>
                 <h2 className="text-2xl md:text-2xl mb-4 text-gray-900 text-center md:text-left font-semibold">
                     Model Configurator
                 </h2>
@@ -308,7 +327,7 @@ const Hero3D = () => {
                     </div>
                 ) : state.activeView === "AR" ? (
                     <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
-                        <ARView modal={state.model} />
+                        <ARView model={state.model} />
                     </div>
                 ) : (
                     <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">

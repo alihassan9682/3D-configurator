@@ -5,7 +5,7 @@ import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { toast } from "react-toastify";
 import { FaArrowUp } from "react-icons/fa";
-
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -114,7 +114,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const [isLoading, setIsLoading] = useState(false);
   const exportModel = useCallback(() => {
     if (!sceneRef.current) return;
-
     // Export GLTF Model
     const exporter = new GLTFExporter();
     exporter.parse(
@@ -123,13 +122,19 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
         const modelUrl = URL.createObjectURL(blob);
         dispatch({ type: "SET_MODEL", payload: modelUrl });
-
-        // Capture Snapshot
         captureModelSnapshot();
       },
       { binary: true }
     );
   }, [dispatch]);
+  const exportModelForIOS = useCallback( () => {
+    if (!sceneRef.current) return;
+    const exporter = new USDZExporter();
+        const arrayBuffer = exporter.parse(sceneRef);
+        const blob = new Blob([arrayBuffer], { type: 'model/vnd.usdz+zip' });
+        const modelUrl = URL.createObjectURL(blob);
+        dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
+},[dispatch])
   const handleClick = useCallback(
     ({ position, levelIndex, platformNumber, groupType }) => {
       const platformName = `${groupType} Platform ${platformNumber}`;
@@ -170,7 +175,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     if (!canvas) return;
 
     const snapshotDataUrl = canvas.toDataURL('image/png');
-    console.log("snapshotDataUrl", snapshotDataUrl)
     dispatch({
       type: "SET_MODEL_SNAPSHOT",
       payload: snapshotDataUrl
@@ -182,10 +186,11 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       setIsLoading(true);
       setTimeout(() => {
         exportModel();
+        exportModelForIOS();
         setIsLoading(false);
       }, 1000);
     }
-  }, [levels, exportModel]);
+  }, [levels, exportModel, exportModelForIOS]);
 
   return (
     <div
