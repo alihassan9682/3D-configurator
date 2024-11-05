@@ -84,6 +84,7 @@ const Hero3D = () => {
         handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
         dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
+        console.log("VaraintID", baseTypeFromId.varaintID)
         setVariantID(baseTypeFromId.varaintID);
     };
     const updatedDiscriptaion = () => {
@@ -92,7 +93,7 @@ const Hero3D = () => {
         }
         else if (state.modelSnapshot) {
             const updatedDescription = {
-                [`drop_down_level_${state.drop_down - 1}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform \n(Model Snapshot: ${state.modelSnapshot}`,
+                [`drop_down_level_${state.drop_down - 1}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform`,
             };
             // console.log(updatedDescription);
             dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
@@ -110,7 +111,9 @@ const Hero3D = () => {
             dispatch({ type: "SET_SELECTED_LENGTH", payload: selectedLengthValue });
         }
     };
-
+const addTOCart =()=>{
+        variant_ID === null ?toast.error("Please select a base type to start."): addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)
+}
     useEffect(() => {
         // console.log("updated descripation", state.descripation)
         // console.log("updated price", state.price)
@@ -119,7 +122,9 @@ const Hero3D = () => {
         // console.log('selectedPart:', state.selectedPart);
         // console.log("MOdel" , state.model)
         // console.log("MOdel" , state.modelIos)
-    }, [state.descripation, state.baseType,state.model,state.modelIos])
+        // console.log("VarantID",variant_ID)
+        // console.log("IdNull",IdNull)
+    }, [state.descripation, state.baseType,state.model,state.modelIos,variant_ID,IdNull])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -196,16 +201,16 @@ const Hero3D = () => {
                 <div className="flex flex-col space-y-4 xl:space-y-2">
                     <div className="flex justify-end mt-4 gap-3">
                         <button
-                            onClick={() => addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)}
+                            onClick={() => addTOCart()}
                             className="bg-green-500 text-white px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-green-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300"
-                            disabled={state.isLoading || state.isInCart}
+                            disabled={state.isLoading || state.isInCart }
                         >
                             <FaCartFlatbed size={20} className="mr-2" />
                             {state.isInCart ? "Added to Cart" : "Add to Cart"}
                         </button>
 
                         <button
-                            onClick={() => resetAll(state, dispatch, toast, setVariantID)}
+                            onClick={() => resetAll(state, dispatch, toast, setVariantID,setIdNull)}
                             className="bg-yellow-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition duration-300"
                         >
                             <GrPowerReset size={20} className="mr-2" />
@@ -302,7 +307,7 @@ const Hero3D = () => {
                         Add Level
                     </button>
                     <button
-                        onClick={() => removeLevel(state, dispatch, toast, setVariantID)}
+                        onClick={() => removeLevel(state, dispatch, toast, setVariantID,setIdNull)}
                         className="bg-red-500 text-white ml-4 px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-red-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-300"
                     >
                         <MdOutlineCancel size={20} className="mr-2" />

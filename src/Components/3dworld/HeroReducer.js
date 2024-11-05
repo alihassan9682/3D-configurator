@@ -279,7 +279,7 @@ export const addToCart = async (
 
   const variant_id = variant_ID;
   const variantId = `gid://shopify/ProductVariant/${variant_id}`;
-
+  console.log("variantId", variantId);
   const lineItemsToAdd = [
     {
       variantId,
@@ -323,6 +323,7 @@ export const addToCart = async (
     window.location.href = updatedCheckout.webUrl;
   } catch (error) {
     toast("Failed to add to cart:", error);
+    console.log("Failed to add to cart:", error);
   } finally {
     dispatch({ type: "SET_Loading" });
   }
@@ -535,7 +536,7 @@ export const addLevel = (state, dispatch, toast) => {
 };
 
 // Removing the levels from the model
-export const removeLevel = (state, dispatch, toast, setVariantID) => {
+export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
   const {
     levels,
     cumulativeHeight,
@@ -560,6 +561,7 @@ export const removeLevel = (state, dispatch, toast, setVariantID) => {
   if (levels.length === 1) {
     dispatch({ type: "SET_BASE_TYPE", payload: "" });
     setVariantID(null);
+    setIdNull(true)
   }
 
   // Update level index to remove the last level
@@ -609,11 +611,12 @@ export const removeLevel = (state, dispatch, toast, setVariantID) => {
 };
 
 // Resetting all the settings to default
-export const resetAll = (state, dispatch, toast, setVariantID) => {
+export const resetAll = (state, dispatch, toast, setVariantID,setIdNull) => {
   const { initalPrice, scale, levels } = state;
   const newlevels = levels;
   newlevels.splice(0, newlevels.length);
   setVariantID(null);
+  setIdNull(true)
   // console.log("newlevels", newlevels);
   dispatch({ type: "SET_PRICE", payload: 0 });
   dispatch({ type: "RESET_ALL" });
