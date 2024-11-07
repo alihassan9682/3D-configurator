@@ -44,6 +44,7 @@ const Hero3D = () => {
     const scrollToTopRef = React.useRef(null);
     const scrollToARRef = React.useRef(null);
     const [IdNull, setIdNull] = React.useState(false);
+    const [mesh, setMesh] = React.useState(true);
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, [state.activeView]);
@@ -84,24 +85,31 @@ const Hero3D = () => {
         handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
         dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
-        console.log("VaraintID", baseTypeFromId.varaintID)
         setVariantID(baseTypeFromId.varaintID);
     };
     const updatedDiscriptaion = () => {
-        if (state.levels.length === 1) {
-            return null
-        }
-        else if (state.modelSnapshot) {
+        if (state.levels.length === 1) return null;
+
+
+        const imgurl = "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg";
+        const Position = state.platformName || 1; // Default to 1 if platformName is empty
+
             const updatedDescription = {
-                [`drop_down_level_${state.drop_down - 1}`]: `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${state.selectedLength} INCH Drop Down, add below ${state.platformName} No platform`,
+                [`drop_down_level_${state.drop_down - 1}`]:
+                    `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
+                // Uncomment to add image link
+                // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
             };
-            // console.log(updatedDescription);
+
+        console.log("Updated Description:", updatedDescription);
             dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
-        }
-    }
+    };
+
     useEffect(() => {
-        updatedDiscriptaion();
-    }, [state.modelSnapshot]);
+        if (state.platformName) {
+            updatedDiscriptaion();
+        }
+    }, [state.modelSnapshot, state.platformName]); // Triggers only when modelSnapshot or platformName changes
 
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);
@@ -124,6 +132,7 @@ const addTOCart =()=>{
         // console.log("MOdel" , state.modelIos)
         // console.log("VarantID",variant_ID)
         // console.log("IdNull",IdNull)
+        console.log("Platform Name", state.platformName)
     }, [state.descripation, state.baseType,state.model,state.modelIos,variant_ID,IdNull])
 
     const handleARViewClick = () => {
@@ -131,6 +140,7 @@ const addTOCart =()=>{
             toast.error("Please select a base type to start.");
             return;
         }
+        setMesh(false);
         toggleView("AR", dispatch);
         if (window.innerWidth < 768) {
             scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -161,7 +171,10 @@ const addTOCart =()=>{
                             </div>
                         </button>
                         <button
-                            onClick={() => toggleView("VR", dispatch)}
+                            onClick={() => {
+                                setMesh(!mesh)
+                                toggleView("VR", dispatch)
+                            }}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "VR"
                                 ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
@@ -328,6 +341,7 @@ const addTOCart =()=>{
                             platformName={state.platformName}
                             scrollToTopRef={scrollToTopRef}
                             selectedPart={state.selectedPart}
+                            isMesh={mesh}
                         />
                     </div>
                 ) : state.activeView === "AR" ? (

@@ -192,7 +192,6 @@ export const heroReducer = (state, action) => {
         activeView: "VR",
         selectedType: "",
         selectedLength: 24,
-        descripation: "",
       };
     default:
       return state;
@@ -557,18 +556,15 @@ export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
     return;
   }
 
-  // Reset type to base if there's only one level left
   if (levels.length === 1) {
     dispatch({ type: "SET_BASE_TYPE", payload: "" });
     setVariantID(null);
     setIdNull(true)
   }
 
-  // Update level index to remove the last level
   const newLevelIndex = levelIndex - 1;
   dispatch({ type: "SET_LEVEL", payload: newLevelIndex });
 
-  // Prepare to remove the last level and update cumulative height
   const lastLevel = levels[levels.length - 1];
   const lastGroupType = type.slice(0, -1); // Remove last item from type array
   dispatch({ type: "ADD_TYPE", payload: lastGroupType });
@@ -581,36 +577,30 @@ export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
   const newLevels = levels.slice(0, -1);
   dispatch({ type: "SET_LEVELS", payload: newLevels });
 
-  // Update descripation by removing the entry for the last dropdown level
   const updatedDescripation = { ...descripation };
   delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
   dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
 
-  // Update price and value arrays after removing the last level
   const lastValue = value[value.length - 1];
   const newPrice = price === initialPrice ? 0 : price - lastValue;
   const newValueArray = value.slice(0, -1);
   dispatch({ type: "SET_PRICE", payload: newPrice });
   dispatch({ type: "SET_VALUE", payload: newValueArray });
 
-  // Update positions by removing the last elements from PositionX and PositionZ
   const newPositionX = PositionX.slice(0, -1);
   const newPositionZ = PositionZ.slice(0, -1);
   dispatch({ type: "Set_PositionX", payload: newPositionX });
   dispatch({ type: "Set_PositionZ", payload: newPositionZ });
 
-  // Update drop-down count and reset other related states
   dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_LOADING" });
 
-  // Show toast message on successful removal
   toast.info("Removed the last level");
 };
 
-// Resetting all the settings to default
 export const resetAll = (state, dispatch, toast, setVariantID,setIdNull) => {
   const { initalPrice, scale, levels } = state;
   const newlevels = levels;
@@ -632,5 +622,6 @@ export const resetAll = (state, dispatch, toast, setVariantID,setIdNull) => {
   dispatch({ type: "Set_PositionZ", payload: [] });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
+  dispatch({type:"REMOVE_DESCRIPTION",payload:{base:""}})
   toast.info("Reset all settings to default");
 };

@@ -6,6 +6,7 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import { toast } from "react-toastify";
 import { FaArrowUp } from "react-icons/fa";
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
+
 const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
@@ -31,14 +32,13 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   } else {
     position[2] = -12;
   }
+
   let adjustedSize = [...size];
   if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
     if ((groupType === "PTRIPLE_L" && (platformNumber === 2 || platformNumber === 3)) ||
       (groupType === "PQUAD_L" && (platformNumber === 3 || platformNumber === 4))) {
-      // Adjust size for the last platform
       adjustedSize[0] = 30;
     } else {
-      // Keep original size for other platforms
       adjustedSize[0] = size[0];
     }
   }
@@ -55,10 +55,11 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   );
 };
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType }) => {
+const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGroupType, isMesh }) => {
   const { scene } = useGLTF(url);
   const groupRef = useRef();
   const clonedScene = scene.clone();
+
   const handleClick = useCallback(
     (e, levelIndex, platformNumber) => {
       onClick({
@@ -102,70 +103,18 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, parentGro
   return (
     <group ref={groupRef} position={position} scale={scale}>
       <primitive object={clonedScene} />
-      {detectionMeshes}
+      {isMesh ? detectionMeshes : null}
     </group>
   );
 };
 
-const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart }) => {
+const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart, isMesh }) => {
   const sceneRef = useRef(new THREE.Scene());
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
-  const exportModel = useCallback(() => {
-    if (!sceneRef.current) return;
-    // Export GLTF Model
-    const exporter = new GLTFExporter();
-    exporter.parse(
-      sceneRef.current,
-      (result) => {
-        const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-        const modelUrl = URL.createObjectURL(blob);
-        dispatch({ type: "SET_MODEL", payload: modelUrl });
-        captureModelSnapshot();
-      },
-      { binary: true }
-    );
-  }, [dispatch]);
-    const exporter = new USDZExporter();
-
-    // Function to export the scene or model to USDZ format
-    async function exportUSDZ() {
-      try {
-          const usdzArrayBuffer = await exporter.parse(sceneRef);
-          const blob = new Blob([usdzArrayBuffer], { type: 'model/vnd.usdz+zip' });
-          const modelUrl = URL.createObjectURL(blob);
-          
-          dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
-          
-          setTimeout(() => URL.revokeObjectURL(modelUrl), 10000); 
-      } catch (error) {
-          console.error("USDZ export error:", error);
-      }
-  }
-  
-  
-
-  const handleClick = useCallback(
-    ({ position, levelIndex, platformNumber, groupType }) => {
-      const platformName = `${groupType} Platform ${platformNumber}`;
-      toast.success(`Selected ${platformName}`);
-      dispatch({ type: "SET_SELECTED_PART", payload: platformNumber });
-      dispatch({ type: "SET_PLATFORM_NAME", payload: platformNumber });
-      const platformCount = getPlatformCount(groupType);
-      if ((groupType === "PTRIPLE_L" && platformNumber === 3) || (groupType === "PQUAD_L" && platformNumber === 4)) {
-        const exactX = platformNumber === 1 ? 0 : groupType === "PTRIPLE_L" && platformNumber === 3 || platformNumber === 2 ? 1.53 : platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L" ? 3.06 : 0;
-        dispatch({ type: "SET_SELECTED_PART", payload: exactX });
-        const exactZ = 1.53;
-        dispatch({ type: "SET_SELECTED_PART_Z", payload: exactZ });
-      }
-      else {
-        const exactX = platformNumber === 1 ? 0 : platformNumber === 2 ? 1.53 : platformNumber === 3 ? 3.06 : 4.59;
-        dispatch({ type: "SET_SELECTED_PART", payload: exactX })
-      }
-    },
-    [dispatch]
-  );
+  const [localSelectedPart, setLocalSelectedPart] = useState(null);
+  const [localPlatformName, setLocalPlatformName] = useState('');
 
   const ClickHandler = () => {
     const { camera, scene } = useThree();
@@ -175,13 +124,73 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }, [camera, scene]);
     return null;
   };
-  const handleScrollToTop = () => {
-    scrollToTopRef.current.scrollIntoView({ behavior: "smooth" });
-  };
+
+  const exportModel = useCallback(() => {
+    if (!sceneRef.current) return;
+
+    const exporter = new GLTFExporter();
+    exporter.parse(
+      sceneRef.current,
+      (result) => {
+        const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
+        const modelUrl = URL.createObjectURL(blob);
+        dispatch({ type: "SET_MODEL", payload: modelUrl });
+
+        // Dispatch selected part information only during export
+        if (localSelectedPart) {
+          dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
+          dispatch({ type: "SET_SELECTED_PART", payload: localSelectedPart.exactX });
+          if (localSelectedPart.exactZ) {
+            dispatch({ type: "SET_SELECTED_PART_Z", payload: localSelectedPart.exactZ });
+          }
+        }
+
+        captureModelSnapshot();
+      },
+      { binary: true }
+    );
+  }, [dispatch, localSelectedPart, localPlatformName]);
+
+  const exportUSDZ = useCallback(async () => {
+    if (!sceneRef.current) return;
+
+    const exporter = new USDZExporter();
+    try {
+      const usdzArrayBuffer = await exporter.parse(sceneRef.current);
+      const blob = new Blob([usdzArrayBuffer], { type: 'model/vnd.usdz+zip' });
+      const modelUrl = URL.createObjectURL(blob);
+      dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
+      setTimeout(() => URL.revokeObjectURL(modelUrl), 10000);
+    } catch (error) {
+      console.error("USDZ export error:", error);
+    }
+  }, [dispatch]);
+
+  const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
+    const platformName = `${groupType} Platform ${platformNumber}`;
+    toast.success(`Selected ${platformName}`);
+    setLocalPlatformName(platformName);
+
+    let selectionData = {};
+    if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
+      (groupType === "PQUAD_L" && platformNumber === 4)) {
+      const exactX = platformNumber === 1 ? 0 :
+        (groupType === "PTRIPLE_L" && platformNumber === 3) || platformNumber === 2 ? 1.53 :
+          (platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L") ? 3.06 : 0;
+      const exactZ = 1.53;
+      selectionData = { exactX, exactZ };
+    } else {
+      const exactX = platformNumber === 1 ? 0 :
+        platformNumber === 2 ? 1.53 :
+          platformNumber === 3 ? 3.06 : 4.59;
+      selectionData = { exactX };
+    }
+
+    setLocalSelectedPart(selectionData);
+  }, []);
 
   const captureModelSnapshot = useCallback(() => {
     if (!canvasRef.current) return;
-    // console.log("captureModelSnapshot")
     const canvas = canvasRef.current.querySelector('canvas');
     if (!canvas) return;
 
@@ -201,73 +210,74 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         setIsLoading(false);
       }, 1000);
     }
-  }, [levels, exportModel]);
+  }, [levels, exportModel, exportUSDZ]);
 
   return (
     <div
       ref={canvasRef}
       className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative"
-    >            {levels.length === 0 ? (
-      <div className="text-gray-600 text-center">
-        <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-        <p>Please use the controls on the side to add levels to your model.</p>
-      </div>
-    ) : (
-      <>
-        <Canvas
-          gl={{ preserveDrawingBuffer: true }} // This helps retain the canvas content for snapshots
-          shadows
-          className="w-full h-screen"
-          camera={{ position: [0, 2, 5], fov: 75 }}
-        >
-          <ClickHandler />
-          <Suspense fallback={<LoadingIndicator />}>
-            <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
-            <directionalLight position={[-10, 10, -10]} intensity={0.5} />
-            <pointLight position={[0, 5, 5]} intensity={0.8} />
+    >
+      {levels.length === 0 ? (
+        <div className="text-gray-600 text-center">
+          <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
+          <p>Please use the controls on the side to add levels to your model.</p>
+        </div>
+      ) : (
+        <>
+          <Canvas
+              gl={{ preserveDrawingBuffer: true }}
+              shadows
+              className="w-full h-screen"
+              camera={{ position: [0, 2, 5], fov: 75 }}
+            >
+              <ClickHandler />
+              <Suspense fallback={<LoadingIndicator />}>
+                <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
+                <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+                <pointLight position={[0, 5, 5]} intensity={0.8} />
 
-            {levels.map((level, index) => (
-              <Level
-                key={`${level.url}-${index}-${Math.random()}`}
-                url={level.url}
-                position={level.position}
-                scale={[scale, scale, scale]}
-                rotation={level.rotation}
-                onClick={handleClick}
-                levelIndex={index}
-                groupType={level.groupType}
-                parentGroupType={index > 0 ? levels[index - 1].groupType : null}
-              />
-            ))}
-            <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
-          </Suspense>
-        </Canvas>
+                {levels.map((level, index) => (
+                  <Level
+                    key={`${level.url}-${index}-${Math.random()}`}
+                    url={level.url}
+                    position={level.position}
+                    scale={[scale, scale, scale]}
+                    rotation={level.rotation}
+                    onClick={handleClick}
+                    levelIndex={index}
+                    groupType={level.groupType}
+                    parentGroupType={index > 0 ? levels[index - 1].groupType : null}
+                    isMesh={isMesh}
+                  />
+                ))}
+                <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+              </Suspense>
+            </Canvas>
 
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-          </div>
-        )}
-        {platformName && (
-          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
+              </div>
+            )}
+
+            {localPlatformName && (
             <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
-              Selected Part: Platform No {platformName}
-            </div>
-           
-          </>
-        )}
+                Selected Part: {localPlatformName}
+              </div>
+            )}
 
-        <button
-          className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
-          onClick={handleScrollToTop}
-        >
-          <FaArrowUp className="text-2xl" />
-        </button>
-      </>
-    )}
+            <button
+              className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
+            onClick={() => scrollToTopRef.current.scrollIntoView({ behavior: "smooth" })}
+          >
+            <FaArrowUp className="text-2xl" />
+          </button>
+        </>
+      )}
     </div>
   );
 };
+
 function getPlatformCount(groupType) {
   switch (groupType) {
     case "PSINGLE":
@@ -284,4 +294,5 @@ function getPlatformCount(groupType) {
       return 1;
   }
 }
+
 export default ModelViewer;
