@@ -156,7 +156,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
     const exporter = new USDZExporter();
     try {
-      const usdzArrayBuffer = await exporter.parse(sceneRef.current);
+      const usdzArrayBuffer = exporter.parse(sceneRef.current);
       const blob = new Blob([usdzArrayBuffer], { type: 'model/vnd.usdz+zip' });
       const modelUrl = URL.createObjectURL(blob);
       dispatch({ type: "SET_MODEL_IOS", payload: modelUrl });
@@ -176,7 +176,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       (groupType === "PQUAD_L" && platformNumber === 4)) {
       const exactX = platformNumber === 1 ? 0 :
         (groupType === "PTRIPLE_L" && platformNumber === 3) || platformNumber === 2 ? 1.53 :
-          (platformNumber === 3 || platformNumber === 4 && groupType === "PQUAD_L") ? 3.06 : 0;
+          ((platformNumber === 3 || platformNumber === 4 )&& groupType === "PQUAD_L") ? 3.06 : 0;
       const exactZ = 1.53;
       selectionData = { exactX, exactZ };
     } else {
@@ -225,49 +225,49 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       ) : (
         <>
           <Canvas
-              gl={{ preserveDrawingBuffer: true }}
-              shadows
-              className="w-full h-screen"
-              camera={{ position: [0, 2, 5], fov: 75 }}
-            >
-              <ClickHandler />
-              <Suspense fallback={<LoadingIndicator />}>
-                <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
-                <directionalLight position={[-10, 10, -10]} intensity={0.5} />
-                <pointLight position={[0, 5, 5]} intensity={0.8} />
+            gl={{ preserveDrawingBuffer: true }}
+            shadows
+            className="w-full h-screen"
+            camera={{ position: [0, 2, 5], fov: 75 }}
+          >
+            <ClickHandler />
+            <Suspense fallback={<LoadingIndicator />}>
+              <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
+              <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+              <pointLight position={[0, 5, 5]} intensity={0.8} />
 
-                {levels.map((level, index) => (
-                  <Level
-                    key={`${level.url}-${index}-${Math.random()}`}
-                    url={level.url}
-                    position={level.position}
-                    scale={[scale, scale, scale]}
-                    rotation={level.rotation}
-                    onClick={handleClick}
-                    levelIndex={index}
-                    groupType={level.groupType}
-                    parentGroupType={index > 0 ? levels[index - 1].groupType : null}
-                    isMesh={isMesh}
-                  />
-                ))}
-                <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
-              </Suspense>
-            </Canvas>
+              {levels.map((level, index) => (
+                <Level
+                  key={`${level.url}-${index}-${Math.random()}`}
+                  url={level.url}
+                  position={level.position}
+                  scale={[scale, scale, scale]}
+                  rotation={level.rotation}
+                  onClick={handleClick}
+                  levelIndex={index}
+                  groupType={level.groupType}
+                  parentGroupType={index > 0 ? levels[index - 1].groupType : null}
+                  isMesh={isMesh}
+                />
+              ))}
+              <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+            </Suspense>
+          </Canvas>
 
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
-              </div>
-            )}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-white"></div>
+            </div>
+          )}
 
-            {localPlatformName && (
+          {localPlatformName && (
             <div className="absolute bottom-4 left-4 bg-gray-200 p-2 rounded shadow flex gap-3">
-                Selected Part: {localPlatformName}
-              </div>
-            )}
+              Selected Part: {localPlatformName}
+            </div>
+          )}
 
-            <button
-              className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
+          <button
+            className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
             onClick={() => scrollToTopRef.current.scrollIntoView({ behavior: "smooth" })}
           >
             <FaArrowUp className="text-2xl" />

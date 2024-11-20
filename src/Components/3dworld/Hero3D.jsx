@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import {
     ModelViewer,
     ARView,
@@ -23,12 +23,9 @@ import {
     removeLevel,
     handleBaseTypeChange,
     addToCart,
-    MdRotate90DegreesCw,
-    HiMenu
 } from './index';
 import Footer from "../Footer";
 import { useParams } from 'react-router-dom';
-import { FaDatabase } from "react-icons/fa6";
 import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
@@ -71,7 +68,6 @@ const Hero3D = () => {
             setVariantID(baseTypeFromId.varaintID);
         } else {
             setIdNull(true)
-            toast.error("Invalid base type ID");
         }
     }, [id]);
     const handleTypeChange = (e) => {
@@ -89,26 +85,20 @@ const Hero3D = () => {
     };
     const updatedDiscriptaion = () => {
         if (state.levels.length === 1) return null;
-
-
-        const imgurl = "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg";
         const Position = state.platformName || 1; // Default to 1 if platformName is empty
-
-            const updatedDescription = {
-                [`drop_down_level_${state.drop_down - 1}`]:
-                    `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
-                // Uncomment to add image link
-                // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
-            };
+        const updatedDescription = {
+            [`drop_down_level_${state.drop_down - 1}`]:
+                `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
+            // Uncomment to add image link
+            // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
+        };
 
         console.log("Updated Description:", updatedDescription);
-            dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
+        dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
     };
 
     useEffect(() => {
-        if (state.platformName) {
             updatedDiscriptaion();
-        }
     }, [state.modelSnapshot, state.platformName]); // Triggers only when modelSnapshot or platformName changes
 
     const handleLengthChange = (e) => {
@@ -119,9 +109,9 @@ const Hero3D = () => {
             dispatch({ type: "SET_SELECTED_LENGTH", payload: selectedLengthValue });
         }
     };
-const addTOCart =()=>{
-        variant_ID === null ?toast.error("Please select a base type to start."): addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)
-}
+    const addTOCart = () => {
+        variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)
+    }
     useEffect(() => {
         // console.log("updated descripation", state.descripation)
         // console.log("updated price", state.price)
@@ -132,8 +122,8 @@ const addTOCart =()=>{
         // console.log("MOdel" , state.modelIos)
         // console.log("VarantID",variant_ID)
         // console.log("IdNull",IdNull)
-        console.log("Platform Name", state.platformName)
-    }, [state.descripation, state.baseType,state.model,state.modelIos,variant_ID,IdNull])
+        // console.log("Platform Name", state.platformName)
+    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -192,7 +182,7 @@ const addTOCart =()=>{
                     </div>
                 </div>
                 <div className='flex justify-center items-center my-2'>
-                <button
+                    <button
                         onClick={() => {
                             const link = document.createElement('a');
                             link.href = state.model;  // The model URL
@@ -200,14 +190,14 @@ const addTOCart =()=>{
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
-                        }}                        
+                        }}
                         className="bg-gray-300 px-2 flex justify-center  py-3 text-sm rounded-full shadow-md md:hidden hover:bg-gray-4400 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
-                        disabled={!state.model || !state.baseType }
+                        disabled={!state.model || !state.baseType}
                     >
                         <MdOutlineFileDownload size={20} className="mr-2" />
-                        Download Model 
+                        Download Model
                     </button>
-                    </div>
+                </div>
                 <h2 className="text-2xl md:text-2xl mb-4 text-gray-900 text-center md:text-left font-semibold">
                     Model Configurator
                 </h2>
@@ -216,14 +206,14 @@ const addTOCart =()=>{
                         <button
                             onClick={() => addTOCart()}
                             className="bg-green-500 text-white px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-green-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300"
-                            disabled={state.isLoading || state.isInCart }
+                            disabled={state.isLoading || state.isInCart}
                         >
                             <FaCartFlatbed size={20} className="mr-2" />
                             {state.isInCart ? "Added to Cart" : "Add to Cart"}
                         </button>
 
                         <button
-                            onClick={() => resetAll(state, dispatch, toast, setVariantID,setIdNull)}
+                            onClick={() => resetAll(state, dispatch, toast, setVariantID, setIdNull)}
                             className="bg-yellow-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-yellow-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transition duration-300"
                         >
                             <GrPowerReset size={20} className="mr-2" />
@@ -320,7 +310,7 @@ const addTOCart =()=>{
                         Add Level
                     </button>
                     <button
-                        onClick={() => removeLevel(state, dispatch, toast, setVariantID,setIdNull)}
+                        onClick={() => removeLevel(state, dispatch, toast, setVariantID, setIdNull)}
                         className="bg-red-500 text-white ml-4 px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-red-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-300"
                     >
                         <MdOutlineCancel size={20} className="mr-2" />

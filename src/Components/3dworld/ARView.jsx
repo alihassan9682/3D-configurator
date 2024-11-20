@@ -3,7 +3,6 @@ import IMG from "./targets.mind";
 
 const ARView = ({ model }) => {
   const iframeRef = useRef(null);
-  console.log("Model", model);
 
   const debugHTML = `
     <html>
@@ -32,7 +31,6 @@ const ARView = ({ model }) => {
       <body style="margin: 0; overflow: hidden;">
         <div id="debug-panel">
           <div id="model-status">Model Status: Initializing...</div>
-          <div id="model-size">Model Size: Waiting...</div>
           <div id="device-info">Device Info: Checking...</div>
           <div id="load-attempts">Load Attempts: 0/3</div>
           <div id="error-details">Error Details: None</div>
@@ -144,7 +142,21 @@ const ARView = ({ model }) => {
           // Initial Setup
           updateLoadAttempts();
           checkWebGLSupport();
+           // Add this to the script section to handle the WebGL context loss
+  window.addEventListener('webglcontextlost', function (event) {
+    event.preventDefault();
+    console.log('WebGL Context Lost');
+    // You can attempt to restore the context here, or reload the page
+  }, false);
+
+  window.addEventListener('webglcontextrestored', function () {
+    console.log('WebGL Context Restored');
+    // You may want to reload your scene or reinitialize resources after restoration
+  }, false);
         </script>
+ 
+
+
       </body>
     </html>
   `;

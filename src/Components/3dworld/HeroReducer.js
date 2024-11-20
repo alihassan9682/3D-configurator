@@ -1,6 +1,6 @@
 import Client from "shopify-buy";
 
-import { actualHeights, levelUrls, priceMap, toast } from "./index";
+import { actualHeights, levelUrls, priceMap } from "./index";
 // Initial state of the application
 export const initialState = {
   scale: 0.05,
@@ -125,11 +125,11 @@ export const heroReducer = (state, action) => {
         ...state,
         model: action.payload,
       };
-      case "SET_MODEL_IOS":
-        return {
-          ...state,
-          modelIos: action.payload,
-        };
+    case "SET_MODEL_IOS":
+      return {
+        ...state,
+        modelIos: action.payload,
+      };
     case "SET_DESCRIPTION":
       return {
         ...state,
@@ -269,30 +269,47 @@ export const addToCart = async (
 ) => {
   const { isInCart, isLoading, price, descripation, baseType } = state;
   if (!checkout || !baseType) {
-    toast.error("No checkout  found");
+    toast.error("No checkout found");
+    return;
   }
 
   if (isInCart || isLoading) return;
 
   dispatch({ type: "SET_Loading" });
 
-  const variant_id = variant_ID;
-  const variantId = `gid://shopify/ProductVariant/${variant_id}`;
-  console.log("variantId", variantId);
+  const variantId = `gid://shopify/ProductVariant/${variant_ID}`;
+  const MAX_ATTRIBUTE_LENGTH = 255;
+
+  // Function to split long strings into chunks
+  const splitString = (str, maxLength) => {
+    const result = [];
+    for (let i = 0; i < str.length; i += maxLength) {
+      result.push(str.slice(i, i + maxLength));
+    }
+    return result;
+  };
+
+  // Split the description into smaller parts
+  const descriptionChunks = splitString(
+    JSON.stringify(descripation),
+    MAX_ATTRIBUTE_LENGTH
+  );
+
+  // Prepare custom attributes with chunked descriptions
+  const customAttributes = [
+    { key: "Price after Customization", value: JSON.stringify(price) },
+    { key: "Base Type", value: baseType },
+    ...descriptionChunks.map((chunk, index) => ({
+      key: `Description_Part${index + 1}`,
+      value: chunk,
+    })),
+  ];
+
   const lineItemsToAdd = [
     {
       variantId,
-      quantity: 1, // Set quantity to 1
-      customAttributes: [
-        {
-          key: "Price after Customization",
-          value: JSON.stringify(price),
-        },
-        {
-          key: "Customization Details",
-          value: JSON.stringify(descripation),
-        },
-      ],
+      quantity: 1,
+      customAttributes,
     },
   ];
 
@@ -308,11 +325,11 @@ export const addToCart = async (
     }
   };
 
-  // Create the client using environment variables
   const client = Client.buildClient({
     domain: "duralifthardware.com",
     storefrontAccessToken: process.env.REACT_APP_API_KEY,
   });
+
   try {
     const updatedCheckout = await retryWithBackoff(() =>
       client.checkout.addLineItems(checkout.id, lineItemsToAdd)
@@ -321,8 +338,12 @@ export const addToCart = async (
     dispatch({ type: "SET_CART" });
     window.location.href = updatedCheckout.webUrl;
   } catch (error) {
-    toast("Failed to add to cart:", error);
-    console.log("Failed to add to cart:", error);
+    if (error.message.includes("Throttled")) {
+      toast.error("Too many requests. Please try again later.");
+    } else {
+      toast.error(`Failed to add to cart: ${error.message}`);
+    }
+    console.error("Failed to add to cart:", error);
   } finally {
     dispatch({ type: "SET_Loading" });
   }
@@ -357,7 +378,7 @@ export const convert = (value) => {
 };
 
 const createModelFromPSingle = (state, dispatch) => {
-  const { selectedType, selectedLength, scale, rotation, type } = state;
+  const { selectedType, selectedLength, scale, type } = state;
   const psingleCount =
     selectedType === "PTRIPLE" || selectedType === "PTRIPLE_L"
       ? 3
@@ -373,7 +394,7 @@ const createModelFromPSingle = (state, dispatch) => {
   dispatch({ type: "ADD_TYPE", payload: selecttype });
 
   const baseUrl = levelUrls[selectedType][selectedLength];
-  const combinedUrl = `${baseUrl}_${psingleCount}`;
+  // const combinedUrl = `${baseUrl}_${psingleCount}`;
 
   const actualHeight = actualHeights[selectedLength] * scale;
   const newLevel = {
@@ -392,20 +413,16 @@ const createModelFromPSingle = (state, dispatch) => {
 export const addLevel = (state, dispatch, toast) => {
   const {
     selectedType,
-    baseType,
     PositionZ,
     price,
     levels,
-    scale,
     cumulativeHeight,
     platformsPerLevel,
     selectedLength,
     selectedPart,
     drop_down,
     value,
-    rotation,
     levelIndex,
-    platformName,
     selectedPartZ,
     PositionX,
   } = state;
@@ -471,11 +488,11 @@ export const addLevel = (state, dispatch, toast) => {
     Price(selectedType, selectedLength, price, dispatch, value);
     const newLevelIndex = levelIndex + 1;
     dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
-    const details = {
-      [`drop_down_level_${drop_down}`]: `${convert(
-        selectedType
-      )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
-    };
+    // const details = {
+    //   [`drop_down_level_${drop_down}`]: `${convert(
+    //     selectedType
+    //   )} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform PSINGLE ${selectedLength} INCH Drop Down, add below ${platformName} No platform`,
+    // };
     // dispatch({ type: "SET_DESCRIPTION", payload: details });
     const newModelLevels = createModelFromPSingle(state, dispatch);
     let newLevels = [...levels];
@@ -535,7 +552,13 @@ export const addLevel = (state, dispatch, toast) => {
 };
 
 // Removing the levels from the model
-export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
+export const removeLevel = (
+  state,
+  dispatch,
+  toast,
+  setVariantID,
+  setIdNull
+) => {
   const {
     levels,
     cumulativeHeight,
@@ -559,7 +582,7 @@ export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
   if (levels.length === 1) {
     dispatch({ type: "SET_BASE_TYPE", payload: "" });
     setVariantID(null);
-    setIdNull(true)
+    setIdNull(true);
   }
 
   const newLevelIndex = levelIndex - 1;
@@ -601,12 +624,12 @@ export const removeLevel = (state, dispatch, toast, setVariantID,setIdNull) => {
   toast.info("Removed the last level");
 };
 
-export const resetAll = (state, dispatch, toast, setVariantID,setIdNull) => {
-  const { initalPrice, scale, levels } = state;
+export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
+  const { levels } = state;
   const newlevels = levels;
   newlevels.splice(0, newlevels.length);
   setVariantID(null);
-  setIdNull(true)
+  setIdNull(true);
   // console.log("newlevels", newlevels);
   dispatch({ type: "SET_PRICE", payload: 0 });
   dispatch({ type: "RESET_ALL" });
@@ -622,6 +645,6 @@ export const resetAll = (state, dispatch, toast, setVariantID,setIdNull) => {
   dispatch({ type: "Set_PositionZ", payload: [] });
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
-  dispatch({type:"REMOVE_DESCRIPTION",payload:{base:""}})
+  dispatch({ type: "REMOVE_DESCRIPTION", payload: { base: "" } });
   toast.info("Reset all settings to default");
 };

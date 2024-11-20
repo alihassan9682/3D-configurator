@@ -1,0 +1,35 @@
+{
+  "files": {
+    "main.css": "/static/css/main.f058bf78.css",
+    "main.js": "/static/js/main.f15377ab.js",
+    "static/js/453.ad7f9563.chunk.js": "/static/js/453.ad7f9563.chunk.js",
+    "static/media/PQL12.glb": "/static/media/PQL12.44dd35b22ffce69e4074.glb",
+    "static/media/PQL24.glb": "/static/media/PQL24.e6c9b3a087da845e1351.glb",
+    "static/media/PQL6.glb": "/static/media/PQL6.b3dc205e0f86127d307a.glb",
+    "static/media/PQ12.glb": "/static/media/PQ12.af554962aaf332ad89c9.glb",
+    "static/media/PQ24.glb": "/static/media/PQ24.193493a092ae28707302.glb",
+    "static/media/PQ6.glb": "/static/media/PQ6.d82d7d6c20d8644ea96f.glb",
+    "static/media/PT12.glb": "/static/media/PT12.046c0894f2f9d447fcc7.glb",
+    "static/media/PT24.glb": "/static/media/PT24.1e58f20238371f6cc075.glb",
+    "static/media/PT6.glb": "/static/media/PT6.1f796207ddd590c04f19.glb",
+    "static/media/PTL6.glb": "/static/media/PTL6.b30bc752bb73d7722414.glb",
+    "static/media/PTL12.glb": "/static/media/PTL12.cd8477e0afc0b0aaa3ff.glb",
+    "static/media/PTL24.glb": "/static/media/PTL24.31d4e12dc1f62418774b.glb",
+    "static/media/PD12.glb": "/static/media/PD12.dd1208da8751d80859c8.glb",
+    "static/media/PD24.glb": "/static/media/PD24.1019846d366f2f01c332.glb",
+    "static/media/PD6.glb": "/static/media/PD6.f9a050ea66c86714e1c7.glb",
+    "static/media/PS12.glb": "/static/media/PS12.2c7780eb226b4bf6bd9a.glb",
+    "static/media/PS24.glb": "/static/media/PS24.84a621161471215ff9ad.glb",
+    "static/media/PS6.glb": "/static/media/PS6.864ab24ecdcdcb089af4.glb",
+    "static/media/targets.mind": "/static/media/targets.a2ab88334dd6dbe4b037.mind",
+    "static/media/dura.webp": "/static/media/dura.7b405c44025b95416dfd.webp",
+    "index.html": "/index.html",
+    "main.f058bf78.css.map": "/static/css/main.f058bf78.css.map",
+    "main.f15377ab.js.map": "/static/js/main.f15377ab.js.map",
+    "453.ad7f9563.chunk.js.map": "/static/js/453.ad7f9563.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f058bf78.css",
+    "static/js/main.f15377ab.js"
+  ]
+}
