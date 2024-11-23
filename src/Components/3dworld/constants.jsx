@@ -24,6 +24,7 @@ export const actualHeights = {
   24: 24,
 };
 
+
 export const levelUrls = {
   PSINGLE: {
     6: PS6,
@@ -56,8 +57,6 @@ export const levelUrls = {
     24: PQL24,
   },
 };
-
-
 export const baseTypeOptions = [
 
   // {

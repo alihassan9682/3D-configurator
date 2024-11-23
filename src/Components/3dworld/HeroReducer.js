@@ -634,6 +634,7 @@ export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
   dispatch({ type: "SET_PRICE", payload: 0 });
   dispatch({ type: "RESET_ALL" });
   dispatch({ type: "SET_MODEL", payload: null });
+  dispatch({ type: "SET_MODEL_IOS", payload: null });
   dispatch({ type: "SET_BASE_TYPE", payload: "" });
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
   dispatch({ type: "SET_LEVEL", payload: newlevels });

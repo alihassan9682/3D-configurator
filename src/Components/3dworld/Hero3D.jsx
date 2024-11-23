@@ -93,12 +93,12 @@ const Hero3D = () => {
             // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
         };
 
-        console.log("Updated Description:", updatedDescription);
+        // console.log("Updated Description:", updatedDescription);
         dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
     };
 
     useEffect(() => {
-            updatedDiscriptaion();
+        updatedDiscriptaion();
     }, [state.modelSnapshot, state.platformName]); // Triggers only when modelSnapshot or platformName changes
 
     const handleLengthChange = (e) => {
@@ -123,7 +123,8 @@ const Hero3D = () => {
         // console.log("VarantID",variant_ID)
         // console.log("IdNull",IdNull)
         // console.log("Platform Name", state.platformName)
-    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull])
+        // console.log("Levels", state.levels)
+    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull, state.levels])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -184,12 +185,25 @@ const Hero3D = () => {
                 <div className='flex justify-center items-center my-2'>
                     <button
                         onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = state.model;  // The model URL
-                            link.download = 'model.usdz';  // Set the filename for download
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            if (!state.modelIos) {
+                                console.error('No model URL available');
+                                return;
+                            }
+
+                            try {
+                                const link = document.createElement('a');
+                                console.log("Link", state.modelIos)
+                                const url = URL.createObjectURL(state.modelIos);
+                                console.log("URL", url)
+                                link.href = url;
+                                link.download = 'model.usdz';
+                                link.style.display = 'none';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } catch (error) {
+                                console.error('Download error:', error);
+                            }
                         }}
                         className="bg-gray-300 px-2 flex justify-center  py-3 text-sm rounded-full shadow-md md:hidden hover:bg-gray-4400 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
                         disabled={!state.model || !state.baseType}
@@ -332,7 +346,9 @@ const Hero3D = () => {
                             scrollToTopRef={scrollToTopRef}
                             selectedPart={state.selectedPart}
                             isMesh={mesh}
+                            setMesh={setMesh}
                         />
+
                     </div>
                 ) : state.activeView === "AR" ? (
                     <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
