@@ -17,17 +17,17 @@ class ErrorBoundary extends Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-                    <div className="p-6 border border-red-500 rounded-lg bg-gray-800 shadow-lg max-w-md w-full">
-                        <h1 className="text-2xl font-bold text-red-400 mb-4 flex items-center">
+                <div className="flex items-center justify-center min-h-screen bg-primary text-onPrimary">
+                    <div className="p-6 border border-accent rounded-lg bg-surface shadow-lg max-w-md w-full">
+                        <h1 className="text-2xl font-bold text-accent mb-4 flex items-center">
                             <span className="mr-2">⚠️</span> Oops! Something went wrong
                         </h1>
-                        <p className="text-sm text-gray-300 mb-6">
-                            More info about this error goes here. Try refreshing the page or check back later.
+                        <p className="text-sm text-secondary mb-6">
+                            We encountered an unexpected error. Please refresh the page or try again later.
                         </p>
                         <div className="flex space-x-4">
                             <button
-                                className="flex-1 py-2 px-4 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600 transition duration-300"
+                                className="flex-1 py-2 px-4 text-sm font-semibold text-onAccent bg-accent rounded-lg hover:bg-accentHover transition duration-300"
                                 onClick={() => window.location.reload()}
                             >
                                 Refresh Page

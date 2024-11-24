@@ -192,7 +192,6 @@ const Hero3D = () => {
 
                             try {
                                 const link = document.createElement('a');
-                                console.log("Link", state.modelIos)
                                 const url = URL.createObjectURL(state.modelIos);
                                 console.log("URL", url)
                                 link.href = url;
@@ -201,6 +200,7 @@ const Hero3D = () => {
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
+                                setTimeout(() => URL.revokeObjectURL(url), 10000);
                             } catch (error) {
                                 console.error('Download error:', error);
                             }
