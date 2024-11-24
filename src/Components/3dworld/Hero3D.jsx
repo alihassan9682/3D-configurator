@@ -66,6 +66,12 @@ const Hero3D = () => {
             dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
+            const item = {
+                variantId: baseTypeFromId.varaintID,
+                quantity: 1,
+            }
+            const lineItemsToAdd = [item];
+            dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
         } else {
             setIdNull(true)
         }
@@ -82,6 +88,12 @@ const Hero3D = () => {
         dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
         setVariantID(baseTypeFromId.varaintID);
+        const item = {
+            variantId: baseTypeFromId.varaintID,
+            quantity: 1,
+        }
+        const lineItemsToAdd = [item];
+        dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
     };
     const updatedDiscriptaion = () => {
         if (state.levels.length === 1) return null;
@@ -124,7 +136,8 @@ const Hero3D = () => {
         // console.log("IdNull",IdNull)
         // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
-    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull, state.levels])
+        console.log("Line Item", state.lineItem)
+    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull, state.levels, state.lineItem])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -189,7 +202,6 @@ const Hero3D = () => {
                                 console.error('No model URL available');
                                 return;
                             }
-
                             try {
                                 const link = document.createElement('a');
                                 const url = URL.createObjectURL(state.modelIos);

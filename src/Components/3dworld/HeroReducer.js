@@ -1,6 +1,6 @@
 import Client from "shopify-buy";
 
-import { actualHeights, levelUrls, priceMap } from "./index";
+import { actualHeights, levelUrls, priceMap, baseTypeOptions } from "./index";
 // Initial state of the application
 export const initialState = {
   scale: 0.05,
@@ -31,6 +31,7 @@ export const initialState = {
   PositionZ: [],
   modelSnapshot: null,
   modelIos: null,
+  lineItem: [],
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -161,6 +162,12 @@ export const heroReducer = (state, action) => {
         ...state,
         levels: action.payload,
       };
+
+    case "SET_LINEITEM":
+      return {
+        ...state,
+        lineItem: action.payload,
+      };
     case "SET_CUMULATIVE_HEIGHT":
       return {
         ...state,
@@ -258,7 +265,6 @@ export const toggleView = (view, dispatch) => {
   dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 };
 
-// ADDING TO CART FUNCTIONALITY
 export const addToCart = async (
   checkout,
   state,
@@ -267,17 +273,21 @@ export const addToCart = async (
   dispatch,
   setCheckout
 ) => {
-  const { isInCart, isLoading, price, descripation, baseType } = state;
+  const { isInCart, isLoading, price, descripation, baseType, lineItem } =
+    state;
+
   if (!checkout || !baseType) {
     toast.error("No checkout found");
     return;
   }
+  if (!lineItem || lineItem.length === 0) {
+    toast.error("No items to add to cart");
+    return;
+  }
 
   if (isInCart || isLoading) return;
-
   dispatch({ type: "SET_Loading" });
 
-  const variantId = `gid://shopify/ProductVariant/${variant_ID}`;
   const MAX_ATTRIBUTE_LENGTH = 255;
 
   // Function to split long strings into chunks
@@ -295,8 +305,8 @@ export const addToCart = async (
     MAX_ATTRIBUTE_LENGTH
   );
 
-  // Prepare custom attributes with chunked descriptions
-  const customAttributes = [
+  // Common custom attributes for all line items
+  const commonCustomAttributes = [
     { key: "Price after Customization", value: JSON.stringify(price) },
     { key: "Base Type", value: baseType },
     ...descriptionChunks.map((chunk, index) => ({
@@ -305,13 +315,12 @@ export const addToCart = async (
     })),
   ];
 
-  const lineItemsToAdd = [
-    {
-      variantId,
-      quantity: 1,
-      customAttributes,
-    },
-  ];
+  // Prepare line items from the lineItem array
+  const lineItemsToAdd = lineItem.map((item) => ({
+    variantId: `gid://shopify/ProductVariant/${item.variantID}`,
+    quantity: item.quantity,
+    customAttributes: commonCustomAttributes,
+  }));
 
   const retryWithBackoff = async (fn, retries = 5, delay = 1000) => {
     try {
@@ -331,9 +340,11 @@ export const addToCart = async (
   });
 
   try {
+    // Add all line items to cart
     const updatedCheckout = await retryWithBackoff(() =>
       client.checkout.addLineItems(checkout.id, lineItemsToAdd)
     );
+
     setCheckout(updatedCheckout);
     dispatch({ type: "SET_CART" });
     window.location.href = updatedCheckout.webUrl;
@@ -425,12 +436,34 @@ export const addLevel = (state, dispatch, toast) => {
     levelIndex,
     selectedPartZ,
     PositionX,
+    lineItem,
   } = state;
   if (!selectedType) {
     toast.error("Please select base  model and  type  before adding levels.");
     return;
   } else if (levels.length === 0) {
     dispatch({ type: "SET_LOADING" });
+    const newlineItems = [...lineItem];
+    const item = baseTypeOptions.find((item) => item.value === selectedType);
+    const variantID = item.varaintID;
+
+    // Find the index instead of the item
+    const existingItemIndex = newlineItems.findIndex(
+      (lineItem) => lineItem.variantID === variantID
+    );
+    const quantity = 1;
+
+    if (existingItemIndex !== -1) {
+      // Update quantity using the index
+      newlineItems[existingItemIndex].quantity += quantity;
+    } else {
+      newlineItems.push({
+        variantID: variantID,
+        quantity: quantity,
+      });
+    }
+
+    dispatch({ type: "SET_LINEITEM", payload: newlineItems });
     const newModelLevels = createModelFromPSingle(state, dispatch);
     let newLevels = [...levels];
     let newCumulativeHeight = cumulativeHeight;
@@ -519,6 +552,29 @@ export const addLevel = (state, dispatch, toast) => {
         const NEWPostionz = PositionZ;
         NEWPostionX.push(newPositionX);
         NEWPostionz.push(newPositionZ);
+        const newlineItems = [...lineItem];
+        const item = baseTypeOptions.find(
+          (item) => item.value === selectedType
+        );
+        const variantID = item.varaintID;
+
+        // Find the index instead of the item
+        const existingItemIndex = newlineItems.findIndex(
+          (lineItem) => lineItem.variantID === variantID
+        );
+        const quantity = 1;
+
+        if (existingItemIndex !== -1) {
+          // Update quantity using the index
+          newlineItems[existingItemIndex].quantity += quantity;
+        } else {
+          newlineItems.push({
+            variantID: variantID,
+            quantity: quantity,
+          });
+        }
+
+        dispatch({ type: "SET_LINEITEM", payload: newlineItems });
         dispatch({ type: "Set_PositionX", payload: NEWPostionX });
         dispatch({ type: "Set_Positionz", payload: NEWPostionz });
         const adjustedXPosition = newPositionX;
@@ -571,6 +627,7 @@ export const removeLevel = (
     levelIndex,
     PositionX,
     PositionZ,
+    lineItem,
   } = state;
 
   // Check if there are levels to remove; if not, show an error toast
@@ -586,11 +643,42 @@ export const removeLevel = (
   }
 
   const newLevelIndex = levelIndex - 1;
-  dispatch({ type: "SET_LEVEL", payload: newLevelIndex });
-
   const lastLevel = levels[levels.length - 1];
   const lastGroupType = type.slice(0, -1); // Remove last item from type array
-  dispatch({ type: "ADD_TYPE", payload: lastGroupType });
+
+  // Create a new copy of lineItem array
+  let newLineItems = [...lineItem];
+
+  // Find the item in baseTypeOptions that matches the last level's groupType
+  const matchingBaseType = baseTypeOptions.find(
+    (item) => item.value === lastLevel.groupType
+  );
+
+  if (matchingBaseType) {
+    // Find the index of the item in lineItems
+    const index = newLineItems.findIndex(
+      (item) => item.variantID === matchingBaseType.varaintID
+    );
+
+    if (index !== -1) {
+      if (newLineItems[index].quantity === 1) {
+        // Remove the item completely if quantity would become 0
+        newLineItems = newLineItems.filter((_, i) => i !== index);
+      } else {
+        // Decrease quantity by 1
+        newLineItems[index] = {
+          ...newLineItems[index],
+          quantity: newLineItems[index].quantity - 1,
+        };
+      }
+    }
+  }
+
+  // Dispatch the updated lineItems
+  dispatch({ type: "SET_LINEITEM", payload: newLineItems });
+
+  dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
+  dispatch({ type: "SET_TYPE", payload: lastGroupType });
   dispatch({
     type: "SET_CUMULATIVE_HEIGHT",
     payload: cumulativeHeight - lastLevel.height,
@@ -602,7 +690,7 @@ export const removeLevel = (
 
   const updatedDescripation = { ...descripation };
   delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
-  dispatch({ type: "REMOVE_DESCRIPTION", payload: updatedDescripation });
+  dispatch({ type: "SET_DESCRIPTION", payload: updatedDescripation });
 
   const lastValue = value[value.length - 1];
   const newPrice = price === initialPrice ? 0 : price - lastValue;
@@ -613,7 +701,7 @@ export const removeLevel = (
   const newPositionX = PositionX.slice(0, -1);
   const newPositionZ = PositionZ.slice(0, -1);
   dispatch({ type: "Set_PositionX", payload: newPositionX });
-  dispatch({ type: "Set_PositionZ", payload: newPositionZ });
+  dispatch({ type: "Set_Positionz", payload: newPositionZ });
 
   dispatch({ type: "SET_DROP_DOWN", payload: drop_down - 1 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
@@ -625,27 +713,28 @@ export const removeLevel = (
 };
 
 export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
-  const { levels } = state;
-  const newlevels = levels;
-  newlevels.splice(0, newlevels.length);
+  dispatch({ type: "SET_LOADING" });
+
+  // Reset all state values
   setVariantID(null);
   setIdNull(true);
-  // console.log("newlevels", newlevels);
+
   dispatch({ type: "SET_PRICE", payload: 0 });
-  dispatch({ type: "RESET_ALL" });
-  dispatch({ type: "SET_MODEL", payload: null });
-  dispatch({ type: "SET_MODEL_IOS", payload: null });
   dispatch({ type: "SET_BASE_TYPE", payload: "" });
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
-  dispatch({ type: "SET_LEVEL", payload: newlevels });
+  dispatch({ type: "SET_LEVELS", payload: [] }); // Changed from SET_LEVEL to SET_LEVELS for consistency
   dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
   dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: 0 });
   dispatch({ type: "Set_PositionX", payload: [] });
-  dispatch({ type: "Set_PositionZ", payload: [] });
-  dispatch({ type: "SET_PLATFORM_NAME", payload: "" });
+  dispatch({ type: "Set_Positionz", payload: [] });
+  dispatch({ type: "SET_LINEITEM", payload: [] }); // Properly reset lineItem array
+  dispatch({ type: "SET_MODEL", payload: null });
+  dispatch({ type: "SET_MODEL_IOS", payload: null });
   dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
-  dispatch({ type: "REMOVE_DESCRIPTION", payload: { base: "" } });
+  dispatch({ type: "SET_DESCRIPTION", payload: { base: "" } });
+  dispatch({ type: "RESET_ALL" });
+
   toast.info("Reset all settings to default");
 };
