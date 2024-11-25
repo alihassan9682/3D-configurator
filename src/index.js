@@ -6,11 +6,9 @@ import reportWebVitals from "./reportWebVitals";
 import ErrorBoundary from "./Components/errorBoundary";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
   document.getElementById("root")
 );
 

@@ -55,7 +55,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   );
 };
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, groupRef }) => {
+const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh }) => {
   const { scene } = useGLTF(url);
   const clonedScene = scene.clone();
 
@@ -100,7 +100,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, g
   }
 
   return (
-    <group ref={groupRef} position={position} scale={scale}>
+    <group position={position} scale={scale}>
       <primitive object={clonedScene} />
       {isMesh ? detectionMeshes : null}
     </group>
@@ -151,14 +151,16 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   }, [dispatch, localSelectedPart, localPlatformName]);
 
   const handleExportUSDZ = () => {
-    if (!groupRef.current) return;
-
+    if (!sceneRef.current) return;
+    THREE.Cache.clear(); // Clear Three.js cache
+    // console.log(sceneRef.current);
     const exporter = new USDZExporter(); // Instantiate the exporter
-    exporter.parse(groupRef.current, (usdz) => {
+    exporter.parse(sceneRef.current, (usdz) => {
       const blob = new Blob([usdz], { type: "application/octet-stream" }); // Convert to blob
       dispatch({ type: "SET_MODEL_IOS", payload: blob });
-      // const url = URL.createObjectURL(blob);
-      // // Create an anchor element to trigger the download
+      const url = URL.createObjectURL(blob);
+      // console.log(url);
+      // Create an anchor element to trigger the download
       // const a = document.createElement("a");
       // a.href = url;
       // a.download = "models.usdz"; // Set the download filename
@@ -237,22 +239,22 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
               <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
               <directionalLight position={[-10, 10, -10]} intensity={0.5} />
               <pointLight position={[0, 5, 5]} intensity={0.8} />
-
-              {levels.map((level, index) => (
-                <Level
-                  key={`${level.url}-${index}-${Math.random()}`}
-                  url={level.url}
-                  position={level.position}
-                  scale={[scale, scale, scale]}
-                  rotation={level.rotation}
-                  onClick={handleClick}
-                  levelIndex={index}
-                  groupType={level.groupType}
-                  parentGroupType={index > 0 ? levels[index - 1].groupType : null}
-                  isMesh={isMesh}
-                  groupRef={groupRef}
-                />
-              ))}
+              <group ref={groupRef}>
+                {levels.map((level, index) => (
+                  <Level
+                    key={`${level.url}-${index}-${Math.random()}`}
+                    url={level.url}
+                    position={level.position}
+                    scale={[scale, scale, scale]}
+                    rotation={level.rotation}
+                    onClick={handleClick}
+                    levelIndex={index}
+                    groupType={level.groupType}
+                    parentGroupType={index > 0 ? levels[index - 1].groupType : null}
+                    isMesh={isMesh}
+                  />
+                ))}
+              </group>
               <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
             </Suspense>
           </Canvas>

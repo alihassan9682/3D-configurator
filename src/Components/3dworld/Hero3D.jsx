@@ -136,8 +136,9 @@ const Hero3D = () => {
         // console.log("IdNull",IdNull)
         // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
-        console.log("Line Item", state.lineItem)
-    }, [state.descripation, state.baseType, state.model, state.modelIos, variant_ID, IdNull, state.levels, state.lineItem])
+        // console.log("Line Item", state.lineItem)
+        // console.log(state.modelIos)
+    }, [state.descripation, state.baseType, state.model, variant_ID, IdNull, state.levels, state.lineItem])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
