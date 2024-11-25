@@ -29,7 +29,6 @@ import {
   levelUrls,
   baseTypeOptions,
   conditionalOptions,
-  priceMap,
 } from "./constants";
 export {
   ModelViewer,
@@ -59,6 +58,5 @@ export {
   addToCart,
   MdRotate90DegreesCw,
   // actions,
-  priceMap,
   HiMenu,
 };

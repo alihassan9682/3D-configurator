@@ -1,6 +1,5 @@
 import Client from "shopify-buy";
-import { useEffect, useState } from "react";
-import { actualHeights, levelUrls, priceMap, baseTypeOptions } from "./index";
+import { actualHeights, levelUrls, baseTypeOptions } from "./index";
 // Initial state of the application
 export const initialState = {
   scale: 0.05,
@@ -12,13 +11,11 @@ export const initialState = {
   selectedLength: 24,
   platformsPerLevel: 1,
   descripation: { base: "" },
-  price: 0,
-  value: [],
   isLoading: false,
   isInCart: false,
   model: null,
   selectedPart: 0,
-  initalPrice: 0,
+  inital: 0,
   drop_down: 1,
   rotation: 0,
   type: [],
@@ -76,10 +73,10 @@ export const heroReducer = (state, action) => {
         ...state,
         rotation: action.payload,
       };
-    case "SET_INITIAL_PRICE":
+    case "SET_INITIAL_":
       return {
         ...state,
-        initalPrice: action.payload,
+        inital: action.payload,
       };
     case "SET_PLATFORM_NAME":
       return {
@@ -106,16 +103,7 @@ export const heroReducer = (state, action) => {
         ...state,
         isLoading: !state.isLoading,
       };
-    case "SET_PRICE":
-      return {
-        ...state,
-        price: action.payload,
-      };
-    case "SET_VALUE":
-      return {
-        ...state,
-        value: action.payload,
-      };
+
     case "SET_SELECTED_PART_Z":
       return {
         ...state,
@@ -425,14 +413,7 @@ export const addToCart = async (
   }
 };
 // Calculating the Prcie of the model based on the selected type and length
-export const Price = (selectedType, selectedLength, price, dispatch, value) => {
-  const selectedValue = value;
-  const additionalPrice = priceMap[selectedType]?.[selectedLength] || 0;
-  const updatedPrice = price + additionalPrice;
-  selectedValue.push(additionalPrice);
-  dispatch({ type: "SET_PRICE", payload: updatedPrice });
-  dispatch({ type: "SET_VALUE", payload: selectedValue });
-};
+
 // Makign the Descripation for the model to be displayed in the cart
 export const convert = (value) => {
   const typeMap = {
@@ -489,14 +470,11 @@ export const addLevel = (state, dispatch, toast) => {
   const {
     selectedType,
     PositionZ,
-    price,
     levels,
     cumulativeHeight,
     platformsPerLevel,
-    selectedLength,
     selectedPart,
     drop_down,
-    value,
     levelIndex,
     selectedPartZ,
     PositionX,
@@ -582,7 +560,6 @@ export const addLevel = (state, dispatch, toast) => {
     dispatch({ type: "SET_LOADING" });
     const Dropdownlevel = drop_down + 1;
     dispatch({ type: "SET_DROP_DOWN", payload: Dropdownlevel });
-    Price(selectedType, selectedLength, price, dispatch, value);
     const newLevelIndex = levelIndex + 1;
     dispatch({ type: "SET_LEVEL_INDEX", payload: newLevelIndex });
     // const details = {
@@ -684,9 +661,6 @@ export const removeLevel = (
     cumulativeHeight,
     drop_down,
     descripation,
-    value,
-    price,
-    initialPrice,
     type,
     levelIndex,
     PositionX,
@@ -756,12 +730,6 @@ export const removeLevel = (
   delete updatedDescripation[`drop_down_level_${drop_down - 1}`];
   dispatch({ type: "SET_DESCRIPTION", payload: updatedDescripation });
 
-  const lastValue = value[value.length - 1];
-  const newPrice = price === initialPrice ? 0 : price - lastValue;
-  const newValueArray = value.slice(0, -1);
-  dispatch({ type: "SET_PRICE", payload: newPrice });
-  dispatch({ type: "SET_VALUE", payload: newValueArray });
-
   const newPositionX = PositionX.slice(0, -1);
   const newPositionZ = PositionZ.slice(0, -1);
   dispatch({ type: "Set_PositionX", payload: newPositionX });
@@ -783,7 +751,6 @@ export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
   setVariantID(null);
   setIdNull(true);
 
-  dispatch({ type: "SET_PRICE", payload: 0 });
   dispatch({ type: "SET_BASE_TYPE", payload: "" });
   dispatch({ type: "SET_DROP_DOWN", payload: 1 });
   dispatch({ type: "SET_LEVELS", payload: [] }); // Changed from SET_LEVEL to SET_LEVELS for consistency
@@ -798,6 +765,7 @@ export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
   dispatch({ type: "SET_MODEL_IOS", payload: null });
   dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
   dispatch({ type: "SET_DESCRIPTION", payload: { base: "" } });
+  dispatch({ type: "SET_CART" });
   dispatch({ type: "RESET_ALL" });
 
   toast.info("Reset all settings to default");

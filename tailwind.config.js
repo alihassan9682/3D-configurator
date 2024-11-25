@@ -1,5 +1,5 @@
 module.exports = {
-  purge: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
+  purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
@@ -40,6 +40,9 @@ module.exports = {
           "typing 4s steps(40) infinite alternate, blink 45s infinite, break 20s linear",
       },
     },
+  },
+  height: {
+    "safari-height": "-webkit-fill-available",
   },
 
   plugins: [],

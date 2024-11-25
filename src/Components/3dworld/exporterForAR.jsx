@@ -11,13 +11,20 @@ const LoadingIndicator = () => {
   return (
     <mesh visible position={[0, 0, 0]}>
       <sphereGeometry args={[1, 16, 16]} />
-      <meshStandardMaterial color="orange" transparent opacity={0} roughness={1} metalness={1} />
+      <meshStandardMaterial
+        color="orange"
+        transparent
+        opacity={0}
+        roughness={1}
+        metalness={1}
+      />
     </mesh>
   );
 };
 
 const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, groupType }) => {
   const meshRef = useRef();
+
   useFrame(({ raycaster, camera, mouse }) => {
     if (meshRef.current) {
       raycaster.setFromCamera(mouse, camera);
@@ -26,6 +33,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
     }
   });
 
+  // Adjust position based on group type and platform number
   if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
     (groupType === "PQUAD_L" && platformNumber === 4)) {
     position[2] = 20;
@@ -33,6 +41,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
     position[2] = -12;
   }
 
+  // Adjust size based on group type and platform number
   let adjustedSize = [...size];
   if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
     if ((groupType === "PTRIPLE_L" && (platformNumber === 2 || platformNumber === 3)) ||
@@ -71,17 +80,21 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh })
     [onClick, groupType]
   );
 
+  // Calculate bounding box and mesh sizes
   const bbox = new THREE.Box3().setFromObject(clonedScene);
   const modelSize = new THREE.Vector3();
   bbox.getSize(modelSize);
+
   const detectionMeshes = [];
   const platformCount = getPlatformCount(groupType);
 
+  // Configure mesh dimensions and spacing
   const spacing = 2;
   const meshPadding = 5;
   const totalWidth = modelSize.x;
   const singleMeshWidth = (totalWidth - (spacing * (platformCount - 1))) / platformCount;
 
+  // Create detection meshes for each platform
   for (let i = 0; i < platformCount; i++) {
     const startX = bbox.min.x + (i * (singleMeshWidth + spacing));
     const centerX = startX + (singleMeshWidth / 2);
@@ -112,63 +125,77 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSceneReady, setIsSceneReady] = useState(false);
   const [localSelectedPart, setLocalSelectedPart] = useState(null);
   const [localPlatformName, setLocalPlatformName] = useState('');
   const groupRef = useRef();
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
   const ClickHandler = () => {
     const { camera, scene } = useThree();
     useEffect(() => {
       cameraRef.current = camera;
       sceneRef.current = scene;
+      const timeout = setTimeout(() => {
+        setIsSceneReady(true);
+      }, 1500);
+      return () => clearTimeout(timeout);
     }, [camera, scene]);
     return null;
   };
 
   const exportModel = useCallback(() => {
-    if (!sceneRef.current) return;
+    if (!sceneRef.current || !isSceneReady) return;
 
-    const exporter = new GLTFExporter();
-    exporter.parse(
-      sceneRef.current,
-      (result) => {
-        const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
-        const modelUrl = URL.createObjectURL(blob);
-        dispatch({ type: "SET_MODEL", payload: modelUrl });
+    return new Promise((resolve, reject) => {
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        sceneRef.current,
+        (result) => {
+          try {
+            const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
+            const modelUrl = URL.createObjectURL(blob);
+            dispatch({ type: "SET_MODEL", payload: modelUrl });
 
-        // Dispatch selected part information only during export
-        if (localSelectedPart) {
-          dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
-          dispatch({ type: "SET_SELECTED_PART", payload: localSelectedPart.exactX });
-          if (localSelectedPart.exactZ) {
-            dispatch({ type: "SET_SELECTED_PART_Z", payload: localSelectedPart.exactZ });
+            if (localSelectedPart) {
+              dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
+              dispatch({ type: "SET_SELECTED_PART", payload: localSelectedPart.exactX });
+              if (localSelectedPart.exactZ) {
+                dispatch({ type: "SET_SELECTED_PART_Z", payload: localSelectedPart.exactZ });
+              }
+            }
+
+            captureModelSnapshot();
+            resolve();
+          } catch (error) {
+            console.error("Error in GLTF export:", error);
+            reject(error);
           }
-        }
-
-        captureModelSnapshot();
-      },
-      { binary: true }
-    );
-  }, [dispatch, localSelectedPart, localPlatformName]);
-
-  const handleExportUSDZ = () => {
-    if (!sceneRef.current) return;
-    THREE.Cache.clear(); // Clear Three.js cache
-    // console.log(sceneRef.current);
-    const exporter = new USDZExporter(); // Instantiate the exporter
-    exporter.parse(sceneRef.current, (usdz) => {
-      const blob = new Blob([usdz], { type: "application/octet-stream" }); // Convert to blob
-      dispatch({ type: "SET_MODEL_IOS", payload: blob });
-      const url = URL.createObjectURL(blob);
-      // console.log(url);
-      // Create an anchor element to trigger the download
-      // const a = document.createElement("a");
-      // a.href = url;
-      // a.download = "models.usdz"; // Set the download filename
-      // a.click();
-
-      // Revoke the object URL after download
+        },
+        { binary: true }
+      );
     });
-  };
+  }, [dispatch, localSelectedPart, localPlatformName, isSceneReady]);
+
+  const handleExportUSDZ = useCallback(() => {
+    if (!sceneRef.current || !isSceneReady) return;
+
+    return new Promise((resolve, reject) => {
+      try {
+        THREE.Cache.clear();
+        const exporter = new USDZExporter();
+        exporter.parse(sceneRef.current, (usdz) => {
+          const blob = new Blob([usdz], { type: "application/octet-stream" });
+          dispatch({ type: "SET_MODEL_IOS", payload: blob });
+          resolve();
+        });
+      } catch (error) {
+        console.error("Error in USDZ export:", error);
+        reject(error);
+      }
+    });
+  }, [dispatch, isSceneReady]);
 
   const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
     const platformName = `${groupType} Platform ${platformNumber}`;
@@ -205,16 +232,32 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     });
   }, [dispatch]);
 
+  const performExports = useCallback(async () => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await exportModel();
+      await handleExportUSDZ();
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => performExports(), 1000);
+      } else {
+        setIsLoading(false);
+        toast.error("Failed to export model after multiple attempts");
+      }
+    }
+  }, [exportModel, handleExportUSDZ, retryCount]);
+
   useEffect(() => {
     if (levels.length > 0) {
       setIsLoading(true);
-      setTimeout(() => {
-        exportModel();
-        handleExportUSDZ();
-        setIsLoading(false);
-      }, 1000);
+      if (isSceneReady) {
+        performExports();
+      }
     }
-  }, [levels]);
+  }, [levels, isSceneReady, performExports]);
 
   return (
     <div
@@ -255,7 +298,12 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
                   />
                 ))}
               </group>
-              <OrbitControls target={[0, 0, 0]} enablePan={true} enableZoom={true} enableRotate={true} />
+              <OrbitControls
+                target={[0, 0, 0]}
+                enablePan={true}
+                enableZoom={true}
+                enableRotate={true}
+              />
             </Suspense>
           </Canvas>
 

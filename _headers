@@ -1,0 +1,4 @@
+/*
+  Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Content-Type: application/json, application/octet-stream */

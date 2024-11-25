@@ -61,9 +61,7 @@ const Hero3D = () => {
             (option) => option.id === parseInt(id)
         );
         if (baseTypeFromId) {
-            dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
             dispatch({ type: "SET_BASE_TYPE", payload: baseTypeFromId.value });
-            dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
             const item = {
@@ -86,8 +84,6 @@ const Hero3D = () => {
             (option) => option.value === e.target.value
         )
         handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
-        dispatch({ type: "SET_PRICE", payload: baseTypeFromId.price });
-        dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
         setVariantID(baseTypeFromId.varaintID);
         const item = {
             variantID: baseTypeFromId.varaintID,
@@ -148,7 +144,44 @@ const Hero3D = () => {
             toast.error("Please select a base type to start.");
             return;
         }
+
+        // Check if device is iOS/Apple
+        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
         setMesh(false);
+
+        if (state.modelIos && isAppleDevice) {
+
+            if (!state.modelIos) {
+                console.error('No model URL available');
+           
+                return;
+            }
+
+            // Add 2 second delay for Apple devices
+            setTimeout(() => {
+                try {
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(state.modelIos);
+                    console.log("URL", url);
+                    link.href = url;
+                    link.download = 'model.usdz';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } catch (error) {
+                    console.error('Download error:', error);
+                    toast.error("Error downloading model. Please try again.");
+                }
+            }, 2000);
+        } else if (!isAppleDevice) {
+            // Optional: Show message for non-Apple devices
+            toast.info("AR view is only available on Apple devices.");
+        }
+
         toggleView("AR", dispatch);
         if (window.innerWidth < 768) {
             scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -199,35 +232,7 @@ const Hero3D = () => {
                         </button>
                     </div>
                 </div>
-                <div className='flex justify-center items-center my-2'>
-                    <button
-                        onClick={() => {
-                            if (!state.modelIos) {
-                                console.error('No model URL available');
-                                return;
-                            }
-                            try {
-                                const link = document.createElement('a');
-                                const url = URL.createObjectURL(state.modelIos);
-                                console.log("URL", url)
-                                link.href = url;
-                                link.download = 'model.usdz';
-                                link.style.display = 'none';
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                setTimeout(() => URL.revokeObjectURL(url), 10000);
-                            } catch (error) {
-                                console.error('Download error:', error);
-                            }
-                        }}
-                        className="bg-gray-300 px-2 flex justify-center  py-3 text-sm rounded-full shadow-md md:hidden hover:bg-gray-4400 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition duration-300"
-                        disabled={!state.model || !state.baseType}
-                    >
-                        <MdOutlineFileDownload size={20} className="mr-2" />
-                        Download Model
-                    </button>
-                </div>
+
                 <h2 className="text-2xl md:text-2xl mb-4 text-gray-900 text-center md:text-left font-semibold">
                     Model Configurator
                 </h2>
@@ -250,83 +255,85 @@ const Hero3D = () => {
                             Reset
                         </button>
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                            Select Platform Type:
-                        </label>
+                    <div className="space-y-6">
                         <div className="relative">
-                            {IdNull ? <select
-                                value={state.baseType}
-                                onChange={handleBaseTypeChange1}
-                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                disabled={state.baseType}
-                                placeholder='Select Base Type'
-                            >
-                                <option value="" disabled>Select Base Type</option>
-                                {baseTypeOptions.map((options, index) => (
-                                    <option key={index} value={options.value}>
-                                        {options.label}
-                                    </option>
-                                ))}
-                            </select> :
-                                <input
-                                    type="text"
-                                    value={state.baseType}
-                                    className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    disabled
-                                    placeholder={state.baseType}
-                                />
-                            }
-
-                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                <FaLayerGroup size={20} />
+                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                                Select Platform Type:
+                            </label>
+                            <div className="relative">
+                                {IdNull ? (
+                                    <select
+                                        value={state.baseType}
+                                        onChange={handleBaseTypeChange1}
+                                        className="block w-full p-2 pl-10 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
+                                        disabled={state.baseType}
+                                        placeholder="Select Base Type"
+                                    >
+                                        <option value="" disabled>Select Base Type</option>
+                                        {baseTypeOptions.map((option, index) => (
+                                            <option key={index} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={state.baseType}
+                                        className="block w-full p-2 pl-10 bg-gray-100 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                                        disabled
+                                        placeholder={state.baseType}
+                                    />
+                                )}
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                                    <FaLayerGroup size={20} />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                            Select Number of Platforms:
-                        </label>
-                        <div className="relative">
-                            <select
-                                value={state.selectedType}
-                                onChange={handleTypeChange}
-                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled={!state.baseType}
-                            >
-                                <option value="">Select Platform</option>
-                                {state.baseType &&
-                                    conditionalOptions[state.baseType].map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))
-                                }
-                            </select>
 
-                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                <FaLayerGroup size={20} />
+                        <div className="relative">
+                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                                Select Number of Platforms:
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={state.selectedType}
+                                    onChange={handleTypeChange}
+                                    className="block w-full p-2 pl-10 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
+                                    disabled={!state.baseType}
+                                >
+                                    <option value="">Select Platform</option>
+                                    {state.baseType &&
+                                        conditionalOptions[state.baseType].map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                </select>
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                                    <FaLayerGroup size={20} />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                            Select Length (in inches):
-                        </label>
                         <div className="relative">
-                            <select
-                                value={state.selectedLength}
-                                onChange={handleLengthChange}
-                                className="p-2 pl-10 border border-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled={!state.baseType}
-                            >
-                                <option value={6}>6</option>
-                                <option value={12}>12</option>
-                                <option value={24}>24</option>
-                            </select>
-                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">
-                                <FaRuler size={20} />
+                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                                Select Length (in inches):
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={state.selectedLength}
+                                    onChange={handleLengthChange}
+                                    className="block w-full p-2 pl-10 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
+                                    disabled={!state.baseType}
+                                >
+                                    <option value={6}>6</option>
+                                    <option value={12}>12</option>
+                                    <option value={24}>24</option>
+                                </select>
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                                    <FaLayerGroup size={20} />
+                                </div>
                             </div>
                         </div>
                     </div>
