@@ -145,17 +145,17 @@ const Hero3D = () => {
             return;
         }
 
-        // Check if device is iOS/Apple
-        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // // Check if device is iOS/Apple
+        // const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+        //     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         setMesh(false);
 
-        if (state.modelIos && isAppleDevice) {
+        if (state.modelIos) {
 
             if (!state.modelIos) {
                 console.error('No model URL available');
-           
+
                 return;
             }
 
@@ -177,9 +177,6 @@ const Hero3D = () => {
                     toast.error("Error downloading model. Please try again.");
                 }
             }, 2000);
-        } else if (!isAppleDevice) {
-            // Optional: Show message for non-Apple devices
-            toast.info("AR view is only available on Apple devices.");
         }
 
         toggleView("AR", dispatch);

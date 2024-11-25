@@ -127,10 +127,17 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const [isLoading, setIsLoading] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
   const [localSelectedPart, setLocalSelectedPart] = useState(null);
-  const [localPlatformName, setLocalPlatformName] = useState('');
+  const [localPlatformName, setLocalPlatformName] = useState("");
   const groupRef = useRef();
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
+
+  const handleLevelLoad = useCallback(() => {
+    if (levels.every((level) => level.isLoaded)) {
+      setIsSceneReady(true);
+      setIsLoading(false);
+    }
+  }, [levels]);
 
   const ClickHandler = () => {
     const { camera, scene } = useThree();
@@ -179,7 +186,10 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   }, [dispatch, localSelectedPart, localPlatformName, isSceneReady]);
 
   const handleExportUSDZ = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) return;
+    if (!sceneRef.current || !isSceneReady) {
+      toast.error("Scene is not ready. Please wait.");
+      return;
+    }
 
     return new Promise((resolve, reject) => {
       try {
@@ -222,10 +232,10 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
   const captureModelSnapshot = useCallback(() => {
     if (!canvasRef.current) return;
-    const canvas = canvasRef.current.querySelector('canvas');
+    const canvas = canvasRef.current.querySelector("canvas");
     if (!canvas) return;
 
-    const snapshotDataUrl = canvas.toDataURL('image/png');
+    const snapshotDataUrl = canvas.toDataURL("image/png");
     dispatch({
       type: "SET_MODEL_SNAPSHOT",
       payload: snapshotDataUrl
@@ -233,29 +243,32 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   }, [dispatch]);
 
   const performExports = useCallback(async () => {
+    if (!isSceneReady) {
+      toast.error("Scene is not ready. Please wait.");
+      return;
+    }
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await exportModel();
       await handleExportUSDZ();
       setIsLoading(false);
     } catch (error) {
       console.error("Export error:", error);
       if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
         setTimeout(() => performExports(), 1000);
       } else {
         setIsLoading(false);
         toast.error("Failed to export model after multiple attempts");
       }
     }
-  }, [exportModel, handleExportUSDZ, retryCount]);
+  }, [exportModel, handleExportUSDZ, isSceneReady, retryCount]);
 
   useEffect(() => {
-    if (levels.length > 0) {
+    if (levels.length > 0 && isSceneReady) {
       setIsLoading(true);
-      if (isSceneReady) {
-        performExports();
-      }
+      performExports();
     }
   }, [levels, isSceneReady, performExports]);
 
