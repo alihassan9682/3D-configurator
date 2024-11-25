@@ -236,8 +236,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           >
             <ClickHandler />
             <Suspense fallback={<LoadingIndicator />}>
-              <spotLight position={[10, 10, 9]} intensity={1.5} castShadow />
-              <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+              <spotLight position={[0, 0, 9]} intensity={1.5} castShadow />
+              <directionalLight position={[0, 10, -10]} intensity={0.5} />
               <pointLight position={[0, 5, 5]} intensity={0.8} />
               <group ref={groupRef}>
                 {levels.map((level, index) => (

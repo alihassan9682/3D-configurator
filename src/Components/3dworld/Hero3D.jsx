@@ -67,10 +67,11 @@ const Hero3D = () => {
             handleBaseTypeChange(baseTypeFromId.value, state.levels, levelUrls, actualHeights, state.scale, dispatch, toast, state.cumulativeHeight, state.rotation);
             setVariantID(baseTypeFromId.varaintID);
             const item = {
-                variantId: baseTypeFromId.varaintID,
+                variantID: baseTypeFromId.varaintID,
                 quantity: 1,
             }
-            const lineItemsToAdd = [item];
+            const lineItemsToAdd = state.lineItem;
+            lineItemsToAdd.push(item);
             dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
         } else {
             setIdNull(true)
@@ -89,10 +90,12 @@ const Hero3D = () => {
         dispatch({ type: "SET_INITIAL_PRICE", payload: baseTypeFromId.price })
         setVariantID(baseTypeFromId.varaintID);
         const item = {
-            variantId: baseTypeFromId.varaintID,
+            variantID: baseTypeFromId.varaintID,
             quantity: 1,
         }
-        const lineItemsToAdd = [item];
+        const lineItemsToAdd = state.lineItem;
+        lineItemsToAdd.push(item);
+
         dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
     };
     const updatedDiscriptaion = () => {
@@ -136,7 +139,7 @@ const Hero3D = () => {
         // console.log("IdNull",IdNull)
         // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
-        // console.log("Line Item", state.lineItem)
+        console.log("Line Item", state.lineItem)
         // console.log(state.modelIos)
     }, [state.descripation, state.baseType, state.model, variant_ID, IdNull, state.levels, state.lineItem])
 
@@ -374,7 +377,7 @@ const Hero3D = () => {
                 )}
             </div>
             <ToastContainer />
-            <Footer className="w-full flex-shrink-0" />
+            <Footer className=" block lg:hidden w-full flex-shrink-0" />
         </div>
     );
 }

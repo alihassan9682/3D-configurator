@@ -19,7 +19,7 @@ function App() {
             <Route path="*" element={<Navigate to="/home/" />} />
           </Routes>
         </div>
-        <Footer className="hidden lg:block" />
+        <Footer className="hidden lg:flex" />
       </div>
     </Router>
   );

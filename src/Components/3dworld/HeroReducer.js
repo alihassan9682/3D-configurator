@@ -1,5 +1,5 @@
 import Client from "shopify-buy";
-
+import { useEffect, useState } from "react";
 import { actualHeights, levelUrls, priceMap, baseTypeOptions } from "./index";
 // Initial state of the application
 export const initialState = {
@@ -265,6 +265,20 @@ export const toggleView = (view, dispatch) => {
   dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 };
 
+/**
+ * Creates or retrieves an existing checkout
+ * @param {Client} client - Shopify client instance
+ * @returns {Object} Checkout object
+ */
+
+/**
+ * Debug logger for cart operations
+ */
+
+const debugLog = (message, data) => {
+  console.log(`[Cart Debug] ${message}`, JSON.stringify(data, null, 2));
+};
+
 export const addToCart = async (
   checkout,
   state,
@@ -273,93 +287,143 @@ export const addToCart = async (
   dispatch,
   setCheckout
 ) => {
-  const { isInCart, isLoading, price, descripation, baseType, lineItem } =
-    state;
-
-  if (!checkout || !baseType) {
-    toast.error("No checkout found");
-    return;
-  }
-  if (!lineItem || lineItem.length === 0) {
-    toast.error("No items to add to cart");
+  // Early validation of state and items
+  if (!state) {
+    toast.error("Invalid state provided");
+    debugLog("Invalid state:", state);
     return;
   }
 
-  if (isInCart || isLoading) return;
+  const { isInCart, isLoading, lineItem } = state;
+
+  // Debug log the incoming line item data
+  debugLog("Incoming line item data:", lineItem);
+
+  // Validate lineItem structure with more detailed logging
+  if (!Array.isArray(lineItem)) {
+    toast.error("Cart items are not properly formatted");
+    debugLog("Invalid lineItem format:", lineItem);
+    return;
+  }
+
+  // Prevent duplicate submissions
+  if (isInCart || isLoading) {
+    debugLog("Duplicate submission prevented", { isInCart, isLoading });
+    return;
+  }
+
   dispatch({ type: "SET_Loading" });
 
-  const MAX_ATTRIBUTE_LENGTH = 255;
-
-  // Function to split long strings into chunks
-  const splitString = (str, maxLength) => {
-    const result = [];
-    for (let i = 0; i < str.length; i += maxLength) {
-      result.push(str.slice(i, i + maxLength));
-    }
-    return result;
-  };
-
-  // Split the description into smaller parts
-  const descriptionChunks = splitString(
-    JSON.stringify(descripation),
-    MAX_ATTRIBUTE_LENGTH
-  );
-
-  // Common custom attributes for all line items
-  const commonCustomAttributes = [
-    { key: "Price after Customization", value: JSON.stringify(price) },
-    { key: "Base Type", value: baseType },
-    ...descriptionChunks.map((chunk, index) => ({
-      key: `Description_Part${index + 1}`,
-      value: chunk,
-    })),
-  ];
-
-  // Prepare line items from the lineItem array
-  const lineItemsToAdd = lineItem.map((item) => ({
-    variantId: `gid://shopify/ProductVariant/${item.variantID}`,
-    quantity: item.quantity,
-    customAttributes: commonCustomAttributes,
-  }));
-
-  const retryWithBackoff = async (fn, retries = 5, delay = 1000) => {
-    try {
-      return await fn();
-    } catch (error) {
-      if (retries > 0 && error.message.includes("Throttled")) {
-        await new Promise((res) => setTimeout(res, delay));
-        return retryWithBackoff(fn, retries - 1, delay * 2);
-      }
-      throw error;
-    }
-  };
-
-  const client = Client.buildClient({
-    domain: "duralifthardware.com",
-    storefrontAccessToken: process.env.REACT_APP_API_KEY,
-  });
-
   try {
-    // Add all line items to cart
-    const updatedCheckout = await retryWithBackoff(() =>
-      client.checkout.addLineItems(checkout.id, lineItemsToAdd)
-    );
+    // Initialize Shopify client
+    const client = Client.buildClient({
+      domain: "duralifthardware.com",
+      storefrontAccessToken: process.env.REACT_APP_API_KEY,
+    });
 
+    // Ensure checkout exists before proceeding
+    let currentCheckout = checkout;
+    if (!currentCheckout?.id) {
+      debugLog("No existing checkout, creating new one");
+      currentCheckout = await client.checkout.create();
+      debugLog("New checkout created:", currentCheckout);
+    }
+
+    // Validate and format line items with improved error handling
+    const validatedLineItems = [];
+    for (const item of lineItem) {
+      debugLog("Processing item:", item);
+
+      // Detailed validation of each item
+      if (!item) {
+        debugLog("Null or undefined item found");
+        continue;
+      }
+
+      if (!item.variantID) {
+        debugLog("Item missing variantID:", item);
+        continue;
+      }
+
+      // Format the item with explicit type checking
+      const formattedItem = {
+        variantId: `gid://shopify/ProductVariant/${item.variantID}`,
+        quantity: Math.max(1, parseInt(item.quantity) || 1), // Ensure minimum quantity of 1
+      };
+
+      debugLog("Formatted item:", formattedItem);
+      validatedLineItems.push(formattedItem);
+    }
+
+    // Double-check we have items to add
+    if (!validatedLineItems.length) {
+      throw new Error("No valid items to add to cart");
+    }
+
+    debugLog("Final validated items:", validatedLineItems);
+
+    // Add items to checkout with retry mechanism
+    let retryCount = 0;
+    const maxRetries = 3;
+    let updatedCheckout;
+
+    while (retryCount < maxRetries) {
+      try {
+        updatedCheckout = await client.checkout.addLineItems(
+          currentCheckout.id,
+          validatedLineItems
+        );
+        break; // Success, exit loop
+      } catch (error) {
+        retryCount++;
+        debugLog(`Attempt ${retryCount} failed:`, error);
+        if (retryCount === maxRetries) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+      }
+    }
+
+    if (!updatedCheckout?.lineItems) {
+      throw new Error("Failed to update checkout after multiple attempts");
+    }
+
+    debugLog("Checkout updated successfully:", {
+      checkoutId: updatedCheckout.id,
+      lineItemCount: updatedCheckout.lineItems.length,
+    });
+
+    // Update state and handle redirect
     setCheckout(updatedCheckout);
     dispatch({ type: "SET_CART" });
-    window.location.href = updatedCheckout.webUrl;
-  } catch (error) {
-    if (error.message.includes("Throttled")) {
-      toast.error("Too many requests. Please try again later.");
+
+    if (updatedCheckout.webUrl) {
+      // Use timeout to ensure state updates complete
+      setTimeout(() => {
+        window.location.assign(updatedCheckout.webUrl);
+      }, 100);
     } else {
-      toast.error(`Failed to add to cart: ${error.message}`);
+      throw new Error("No checkout URL available");
     }
-    console.error("Failed to add to cart:", error);
+  } catch (error) {
+    debugLog("Error occurred:", {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    });
+
+    // More specific error messages
+    if (error.message.includes("invalid")) {
+      toast.error("Item validation failed. Please try again.");
+    } else if (error.message.includes("No valid items")) {
+      toast.error("Please ensure all items are properly selected");
+    } else if (error.message.includes("checkout")) {
+      toast.error("Cart initialization failed. Please refresh and try again.");
+    } else {
+      toast.error("Unable to add items to cart. Please try again.");
+    }
   } finally {
     dispatch({ type: "SET_Loading" });
   }
 };
-
 // Calculating the Prcie of the model based on the selected type and length
 export const Price = (selectedType, selectedLength, price, dispatch, value) => {
   const selectedValue = value;
