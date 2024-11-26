@@ -145,13 +145,13 @@ const Hero3D = () => {
             return;
         }
 
-        // // Check if device is iOS/Apple
-        // const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
-        //     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // Check if device is iOS/Apple
+        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         setMesh(false);
 
-        if (state.modelIos) {
+        if (state.modelIos && isAppleDevice) {
 
             if (!state.modelIos) {
                 console.error('No model URL available');
@@ -178,10 +178,11 @@ const Hero3D = () => {
                 }
             }, 2000);
         }
-
-        toggleView("AR", dispatch);
-        if (window.innerWidth < 768) {
-            scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+        else {
+            toggleView("AR", dispatch);
+            if (window.innerWidth < 768) {
+                scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     };
 
@@ -192,7 +193,7 @@ const Hero3D = () => {
                     <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                 </div>
                 <div className="flex justify-center mb-2">
-                    <div className="flex bg-gray-300 rounded-full p-1 shadow-inner">
+                    <div className="flex bg-gray-300 rounded-full p-1 shadow-inner w-full">
                         <button
                             onClick={handleARViewClick}
                             className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "AR"
@@ -205,7 +206,7 @@ const Hero3D = () => {
                             }}
                         >
                             <div className="flex items-center gap-2">
-                                <TbAugmentedReality size={24} /> <span>AR View</span>
+                                <TbAugmentedReality size={24} /> <span>View in Room</span>
                             </div>
                         </button>
                         <button
