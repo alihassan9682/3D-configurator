@@ -170,7 +170,7 @@ const ARView = ({ model }) => {
   }, [debugHTML]);
 
   return (
-    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
+    <div className="w-full h-screen">
       <iframe ref={iframeRef} title="AR View" style={{ width: "100%", height: "100%", border: "none" }} />
     </div>
   );

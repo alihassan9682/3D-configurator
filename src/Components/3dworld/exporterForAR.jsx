@@ -249,7 +249,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await exportModel();
       await handleExportUSDZ();
       setIsLoading(false);
@@ -276,7 +276,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   return (
     <div
       ref={canvasRef}
-      className="flex flex-wrap h-screen w-screen flex-col items-center bg-gray-200 justify-center relative"
+      className="flex  h-screen w-full items-center  justify-center bg-gray-200 relative"
     >
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
