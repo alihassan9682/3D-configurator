@@ -195,7 +195,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       try {
         THREE.Cache.clear();
         const exporter = new USDZExporter();
-        exporter.parse(sceneRef.current, (usdz) => {
+        exporter.parse(groupRef.current, (usdz) => {
           const blob = new Blob([usdz], { type: "application/octet-stream" });
           dispatch({ type: "SET_MODEL_IOS", payload: blob });
           resolve();
@@ -264,6 +264,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       }
     }
   }, [exportModel, handleExportUSDZ, isSceneReady, retryCount]);
+
 
   useEffect(() => {
     if (levels.length > 0 && isSceneReady) {

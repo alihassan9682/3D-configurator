@@ -135,7 +135,7 @@ const Hero3D = () => {
         // console.log("IdNull",IdNull)
         // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
-        console.log("Line Item", state.lineItem)
+        // console.log("Line Item", state.lineItem)
         // console.log(state.modelIos)
     }, [state.descripation, state.baseType, state.model, variant_ID, IdNull, state.levels, state.lineItem])
 
@@ -151,7 +151,7 @@ const Hero3D = () => {
 
         setMesh(false);
 
-        if (state.modelIos && isAppleDevice) {
+        if (state.modelIos) {
 
             if (!state.modelIos) {
                 console.error('No model URL available');
@@ -164,7 +164,7 @@ const Hero3D = () => {
                 try {
                     const link = document.createElement('a');
                     const url = URL.createObjectURL(state.modelIos);
-                    console.log("URL", url);
+                    // console.log("URL", url);
                     link.href = url;
                     link.download = 'model.usdz';
                     link.style.display = 'none';
@@ -178,25 +178,25 @@ const Hero3D = () => {
                 }
             }, 2000);
         }
-        else {
+        // else {
             toggleView("AR", dispatch);
             if (window.innerWidth < 768) {
                 scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
             }
-        }
+        // }
     };
 
     return (
-        <div className="flex flex-col md:flex-row w-screen h-screen lg:mb-3 bg-gray-200" ref={scrollToTopRef}>
-            <div className="w-full md:w-80 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
+        <div className="flex flex-col md:flex-row w-screen h-full lg:mb-3 bg-gray-200 overflow-hidden" ref={scrollToTopRef}>
+            <div className="w-full md:w-80 lg:w-96 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
                 <div className="flex justify-center mb-4">
                     <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                 </div>
                 <div className="flex justify-center mb-2">
-                    <div className="flex bg-gray-300 rounded-full p-1 shadow-inner w-full">
+                    <div className="flex  rounded-full justify-center items-center p-1 shadow-inner w-full">
                         <button
                             onClick={handleARViewClick}
-                            className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "AR"
+                            className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 ${state.activeView === "AR"
                                 ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
                                 }`}
@@ -214,7 +214,7 @@ const Hero3D = () => {
                                 setMesh(!mesh)
                                 toggleView("VR", dispatch)
                             }}
-                            className={`px-4 py-2 rounded-full transition duration-300 ${state.activeView === "VR"
+                            className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 ${state.activeView === "VR"
                                 ? "bg-gray-700 text-white"
                                 : "bg-gray-300 text-gray-700"
                                 }`}
@@ -225,13 +225,13 @@ const Hero3D = () => {
                         >
                             <div className="flex items-center gap-2">
                                 <TbView360Number size={24} />
-                                <span>VR View</span>
+                                <span>View in VR</span>
                             </div>
                         </button>
                     </div>
                 </div>
 
-                <h2 className="text-2xl md:text-2xl mb-4 text-gray-900 text-center md:text-left font-semibold">
+                <h2 className="text-2xl md:text-2xl mb-4 lg:left-6 relative text-gray-900  justify-center text-center md:text-left font-semibold">
                     Model Configurator
                 </h2>
                 <div className="flex flex-col space-y-4 xl:space-y-2">
@@ -330,13 +330,13 @@ const Hero3D = () => {
                                     <option value={24}>24</option>
                                 </select>
                                 <div className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                                    <FaLayerGroup size={20} />
+                                    <FaRuler size={20} />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-wrap justify-evenly md:justify-start space-x-4 mt-4 ">
+                <div className="flex flex-wrap justify-evenly md:justify-start  lg:justify-evenly space-x-4 mt-4 ">
                     <button
                         onClick={() => addLevel(state, dispatch, toast)}
                         className="bg-blue-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300"
