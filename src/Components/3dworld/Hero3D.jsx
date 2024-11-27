@@ -178,12 +178,12 @@ const Hero3D = () => {
                 }
             }, 2000);
         }
-        // else {
+        else {
             toggleView("AR", dispatch);
             if (window.innerWidth < 768) {
                 scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
             }
-        // }
+        }
     };
 
     return (
