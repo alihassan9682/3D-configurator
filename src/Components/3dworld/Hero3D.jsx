@@ -155,32 +155,42 @@ const Hero3D = () => {
         setMesh(false);
 
         if (isAppleDevice && state.modelIos) {
-            // Apple device: Download USDZ file
-            setTimeout(() => {
-                try {
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(state.modelIos);
-                    link.href = url;
-                    link.download = 'model.usdz';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(() => URL.revokeObjectURL(url), 10000);
-                } catch (error) {
-                    console.error('Download error:', error);
-                    toast.error("Error downloading model. Please try again.");
-                }
-            }, 2000);
+        // Apple device: Download USDZ file
+        setTimeout(() => {
+            try {
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(state.modelIos);
+                link.href = url;
+                link.download = 'model.usdz';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } catch (error) {
+                console.error('Download error:', error);
+                toast.error("Error downloading model. Please try again.");
+            }
+        }, 1000);
         } else {
             // Open VR view for non-Apple devices as fallback
             toggleView("AR", dispatch);
+            console.log("AR View Clicked", scrollToARRef.current);
             if (window.innerWidth < 768) {
                 scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
             }
         }
     };
 
+    useEffect(() => {
+        if (scrollToARRef.current) {
+            console.log("scrollToARRef is not empty:", scrollToARRef.current);
+            // Perform actions with the ref, e.g., scrollIntoView
+            scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            console.error("scrollToARRef is empty!");
+        }
+    }, [scrollToARRef]);
 
     return (
         <div className="flex flex-col h-full 2xl:h-auto bg-gray-200">
@@ -357,9 +367,7 @@ const Hero3D = () => {
                     </div>
                     {/* Buttons, Forms, etc. */}
                 </div>
-
-                {/* Main Viewer Area */}
-                <div ref={scrollToARRef} className="w-full h-full">
+                <div className="w-full h-full" ref={scrollToARRef}>
                     {state.activeView === "VR" ? (
                         <div className="flex-1 p-2 md:p-3 flex w-full items-center justify-center h-full shadow-inner rounded-3xl">
                             <ModelViewer
@@ -388,7 +396,7 @@ const Hero3D = () => {
             </div>
             <ToastContainer />
             {/* Footer */}
-            <Footer className="block xl:hidden bg-gray-800 text-white p-4" />
+            <Footer className="block  bg-gray-800 text-white p-4" />
         </div >
 
     );

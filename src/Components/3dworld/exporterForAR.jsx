@@ -8,13 +8,14 @@ import { FaArrowUp } from "react-icons/fa";
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 
 const LoadingIndicator = () => {
+  console.log('Loading indicator rendered');
   return (
     <mesh visible position={[0, 0, 0]}>
       <sphereGeometry args={[1, 16, 16]} />
       <meshStandardMaterial
         color="orange"
         transparent
-        opacity={0}
+        opacity={0.5}
         roughness={1}
         metalness={1}
       />
@@ -64,8 +65,11 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   );
 };
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh }) => {
+const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, setIsSceneReady }) => {
   const { scene } = useGLTF(url);
+  // console.log(`Loading level with URL: ${url}`);
+  // console.log('Loaded scene:', scene);
+
   const clonedScene = scene.clone();
 
   const handleClick = useCallback(
@@ -115,7 +119,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh })
   return (
     <group position={position} scale={scale}>
       <primitive object={clonedScene} />
-      {isMesh ? detectionMeshes : null}
+      {(isMesh ? detectionMeshes : null)}
     </group>
   );
 };
@@ -132,19 +136,15 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
 
-  const handleLevelLoad = useCallback(() => {
-    if (levels.every((level) => level.isLoaded)) {
-      setIsSceneReady(true);
-      setIsLoading(false);
-    }
-  }, [levels]);
 
   const ClickHandler = () => {
     const { camera, scene } = useThree();
+    cameraRef.current = camera;
+    sceneRef.current = scene;
     useEffect(() => {
-      cameraRef.current = camera;
-      sceneRef.current = scene;
+
       const timeout = setTimeout(() => {
+        // console.log('Scene ready timeout triggered');
         setIsSceneReady(true);
       }, 1500);
       return () => clearTimeout(timeout);
@@ -153,7 +153,10 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   };
 
   const exportModel = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) return;
+    if (!sceneRef.current || !isSceneReady) {
+      // console.warn('Scene not ready for export');
+      return Promise.reject('Scene not ready');
+    }
 
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
@@ -174,9 +177,10 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             }
 
             captureModelSnapshot();
+            // console.log('Model export successful');
             resolve();
           } catch (error) {
-            console.error("Error in GLTF export:", error);
+            // console.error("Error in GLTF export:", error);
             reject(error);
           }
         },
@@ -188,7 +192,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const handleExportUSDZ = useCallback(() => {
     if (!sceneRef.current || !isSceneReady) {
       toast.error("Scene is not ready. Please wait.");
-      return;
+      return Promise.reject('Scene not ready');
     }
 
     return new Promise((resolve, reject) => {
@@ -198,10 +202,11 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         exporter.parse(groupRef.current, (usdz) => {
           const blob = new Blob([usdz], { type: "application/octet-stream" });
           dispatch({ type: "SET_MODEL_IOS", payload: blob });
+          console.log('USDZ export successful');
           resolve();
         });
       } catch (error) {
-        console.error("Error in USDZ export:", error);
+        // console.error("Error in USDZ export:", error);
         reject(error);
       }
     });
@@ -241,38 +246,97 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       payload: snapshotDataUrl
     });
   }, [dispatch]);
+  const [networkSpeed, setNetworkSpeed] = useState(null);
+
+  const measureNetworkSpeed = useCallback(async () => {
+    const testUrl = "https://via.placeholder.com/10"; // Small image for testing
+    const startTime = performance.now();
+    try {
+      await fetch(testUrl);
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      const speed = 10 / (duration / 1000); // Size (KB) / Time (s)
+      // console.log(`Network speed: ${speed.toFixed(2)} KB/s`);
+      setNetworkSpeed(speed);
+    } catch (error) {
+      // console.error("Network speed test failed", error);
+    }
+  }, []);
 
   const performExports = useCallback(async () => {
+    // console.log("Starting exports, scene ready:", isSceneReady);
+
+    // Check if the scene is ready before proceeding
     if (!isSceneReady) {
-      toast.error("Scene is not ready. Please wait.");
-      return;
+      toast.error("Scene is not ready. Please wait for it to be ready before exporting.");
+      // console.warn("Scene is not ready, skipping export...");
+      return; // Exit the function early if the scene is not ready
     }
+
+    const timeout = networkSpeed > 100 ? 0 : 10000; // Instant export if speed > 100 KB/s
+    // console.log(`Export timeout set to: ${timeout}ms based on network speed`);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // console.log("Waiting before export...");
+      await new Promise((resolve) => setTimeout(resolve, timeout)); // Dynamic timeout
+
+      // console.log("Exporting model...");
       await exportModel();
+
+      // console.log("Exporting USDZ...");
       await handleExportUSDZ();
+
+      // console.log("Exports completed successfully");
       setIsLoading(false);
+      toast.success("Export completed successfully!");
     } catch (error) {
       console.error("Export error:", error);
+
+      // Retry logic if export fails
       if (retryCount < maxRetries) {
+        // console.log(`Retrying export (Attempt ${retryCount + 1})`);
         setRetryCount((prev) => prev + 1);
-        setTimeout(() => performExports(), 1000);
+        setTimeout(() => performExports(), 5000); // Retry after 5 seconds
       } else {
+        console.error("Export failed after multiple attempts");
         setIsLoading(false);
-        toast.error("Failed to export model after multiple attempts");
+        toast.error("Failed to export model after multiple attempts.");
       }
     }
-  }, [exportModel, handleExportUSDZ, isSceneReady, retryCount]);
-
+  }, [exportModel, handleExportUSDZ, isSceneReady, retryCount, maxRetries, networkSpeed]);
 
   useEffect(() => {
+    measureNetworkSpeed();
+  }, [measureNetworkSpeed]);
+
+
+  // Global loading timeout
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (!isSceneReady) {
+        // console.error('Scene loading timed out');
+        setIsSceneReady(true);
+        setIsLoading(false);
+        toast.error('Model loading timed out');
+      }
+    }, 30000); // 30 seconds timeout
+
+    return () => clearTimeout(loadingTimeout);
+  }, [isSceneReady]);
+
+  // Main export trigger effect
+  useEffect(() => {
+    // console.log('Levels length:', levels.length);
+    // console.log('Is Scene Ready:', isSceneReady);
+
     if (levels.length > 0 && isSceneReady) {
+      // console.log('Initiating exports');
       setIsLoading(true);
       performExports();
+    } else if (levels.length > 0) {
+      console.warn('Scene not ready, waiting...');
     }
   }, [levels, isSceneReady, performExports]);
-
   return (
     <div
       ref={canvasRef}
@@ -309,6 +373,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
                     groupType={level.groupType}
                     parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                     isMesh={isMesh}
+                    setIsSceneReady={setIsSceneReady}
                   />
                 ))}
               </group>

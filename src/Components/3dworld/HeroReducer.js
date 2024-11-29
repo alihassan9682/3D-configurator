@@ -208,8 +208,8 @@ export const handleBaseTypeChange = (
     if (level.length === 1) {
       const defaultLength = 24;
       const defaultUrl = levelUrls[newBaseType][defaultLength];
-      const defaultHeight = actualHeights[defaultLength] * scale;
-
+      // const defaultHeight = actualHeights[defaultLength];
+      const defaultHeight = actualHeights[defaultLength];
       const updatedLevels = level.map((lev, index) => {
         if (index === 0) {
           return {
@@ -381,7 +381,7 @@ export const addToCart = async (
 
     // Update state and handle redirect
     setCheckout(updatedCheckout);
-    dispatch({ type: "SET_CART" , payload: true});
+    dispatch({ type: "SET_CART", payload: true });
 
     if (updatedCheckout.webUrl) {
       // Use timeout to ensure state updates complete
@@ -765,7 +765,7 @@ export const resetAll = (state, dispatch, toast, setVariantID, setIdNull) => {
   dispatch({ type: "SET_MODEL_IOS", payload: null });
   dispatch({ type: "SET_MODEL_SNAPSHOT", payload: null });
   dispatch({ type: "SET_DESCRIPTION", payload: { base: "" } });
-  dispatch({ type: "SET_CART" , payload: false});
+  dispatch({ type: "SET_CART", payload: false });
   dispatch({ type: "RESET_ALL" });
 
   toast.info("Reset all settings to default");
