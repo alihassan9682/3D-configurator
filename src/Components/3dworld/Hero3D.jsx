@@ -155,23 +155,23 @@ const Hero3D = () => {
         setMesh(false);
 
         if (isAppleDevice && state.modelIos) {
-        // Apple device: Download USDZ file
-        setTimeout(() => {
-            try {
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(state.modelIos);
-                link.href = url;
-                link.download = 'model.usdz';
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                setTimeout(() => URL.revokeObjectURL(url), 10000);
-            } catch (error) {
-                console.error('Download error:', error);
-                toast.error("Error downloading model. Please try again.");
-            }
-        }, 500);
+            // Apple device: Download USDZ file
+            setTimeout(() => {
+                try {
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(state.modelIos);
+                    link.href = url;
+                    link.download = 'model.usdz';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } catch (error) {
+                    console.error('Download error:', error);
+                    toast.error("Error downloading model. Please try again.");
+                }
+            }, 500);
         } else {
             // Open VR view for non-Apple devices as fallback
             toggleView("AR", dispatch);
@@ -204,14 +204,14 @@ const Hero3D = () => {
                     <div>
                         <div className="flex justify-center mb-2">
                             <div
-                                className="flex rounded-full justify-center items-center p-1 shadow-inner bg-gray-100"
+                                className="flex rounded-full md:mx-3 justify-center items-center p-1 shadow-inner bg-gray-100"
                                 style={{
-                                    boxShadow: "inset 0px 4px 8px rgba(0, 0, 0, 0.15)", // Custom inner shadow
+                                    boxShadow: "inset 0px 4px 8px rgba(0, 0, 0, 0.15)",
                                 }}
                             >
                                 <button
                                     onClick={handleARViewClick}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
                                         }`}
                                     style={{
                                         borderTopRightRadius: 0,
@@ -227,7 +227,7 @@ const Hero3D = () => {
                                         setMesh(!mesh);
                                         toggleView("VR", dispatch);
                                     }}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
                                         }`}
                                     style={{
                                         borderTopLeftRadius: 0,
