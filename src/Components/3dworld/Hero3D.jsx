@@ -211,7 +211,7 @@ const Hero3D = () => {
                             >
                                 <button
                                     onClick={handleARViewClick}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
                                         }`}
                                     style={{
                                         borderTopRightRadius: 0,
@@ -227,7 +227,7 @@ const Hero3D = () => {
                                         setMesh(!mesh);
                                         toggleView("VR", dispatch);
                                     }}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
                                         }`}
                                     style={{
                                         borderTopLeftRadius: 0,
