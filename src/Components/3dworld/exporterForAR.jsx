@@ -8,7 +8,6 @@ import { FaArrowUp } from "react-icons/fa";
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 
 const LoadingIndicator = () => {
-  console.log('Loading indicator rendered');
   return (
     <mesh visible position={[0, 0, 0]}>
       <sphereGeometry args={[1, 16, 16]} />
@@ -188,7 +187,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             }
 
             // captureModelSnapshot();
-            console.log("GLTF export successful");
+            // console.log("GLTF export successful");
 
             resolve();
           } catch (error) {
@@ -216,7 +215,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           try {
             const blob = new Blob([usdz], { type: "application/octet-stream" });
             dispatch({ type: "SET_MODEL_IOS", payload: blob });
-            console.log("USDZ export successful");
+            // console.log("USDZ export successful");
             resolve();
           } catch (error) {
             console.error("Error in USDZ export processing:", error);
