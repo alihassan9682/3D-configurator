@@ -65,7 +65,7 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   );
 };
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, setIsSceneReady }) => {
+const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, setIsSceneReady, originalScale }) => {
   const { scene } = useGLTF(url);
   // console.log(`Loading level with URL: ${url}`);
   // console.log('Loaded scene:', scene);
@@ -117,7 +117,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   }
 
   return (
-    <group position={position} scale={scale}>
+    <group position={position} scale={originalScale ? scale : [1, 1, 1]}>
       <primitive object={clonedScene} />
       {(isMesh ? detectionMeshes : null)}
     </group>
@@ -125,6 +125,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
 };
 
 const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart, isMesh }) => {
+  const [networkSpeed, setNetworkSpeed] = useState(null);
   const sceneRef = useRef(new THREE.Scene());
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
@@ -135,7 +136,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const groupRef = useRef();
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
-
+  const [originalScale, setOriginalScale] = useState(false);
 
   const ClickHandler = () => {
     const { camera, scene } = useThree();
@@ -151,17 +152,27 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }, [camera, scene]);
     return null;
   };
+  // const logSceneDimensions = () => {
+  //   if (!sceneRef.current) return;
+
+  //   const box = new THREE.Box3().setFromObject(sceneRef.current);
+  //   const size = new THREE.Vector3();
+  //   box.getSize(size);
+
+  //   console.log("Scene Dimensions:", size); // Check size in scene
+  // };
+
 
   const exportModel = useCallback(() => {
     if (!sceneRef.current || !isSceneReady) {
-      // console.warn('Scene not ready for export');
-      return Promise.reject('Scene not ready');
+      console.warn("Scene not ready for export");
+      return Promise.reject("Scene not ready");
     }
 
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       exporter.parse(
-        sceneRef.current,
+        groupRef.current,
         (result) => {
           try {
             const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
@@ -176,15 +187,16 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
               }
             }
 
-            captureModelSnapshot();
-            // console.log('Model export successful');
+            // captureModelSnapshot();
+            console.log("GLTF export successful");
+
             resolve();
           } catch (error) {
-            // console.error("Error in GLTF export:", error);
+            console.error("Error in GLTF export:", error);
             reject(error);
           }
         },
-        { binary: true }
+        { binary: true } // Export as GLB
       );
     });
   }, [dispatch, localSelectedPart, localPlatformName, isSceneReady]);
@@ -192,25 +204,32 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const handleExportUSDZ = useCallback(() => {
     if (!sceneRef.current || !isSceneReady) {
       toast.error("Scene is not ready. Please wait.");
-      return Promise.reject('Scene not ready');
+      return Promise.reject("Scene not ready");
     }
 
     return new Promise((resolve, reject) => {
       try {
         THREE.Cache.clear();
         const exporter = new USDZExporter();
+
         exporter.parse(groupRef.current, (usdz) => {
-          const blob = new Blob([usdz], { type: "application/octet-stream" });
-          dispatch({ type: "SET_MODEL_IOS", payload: blob });
-          console.log('USDZ export successful');
-          resolve();
+          try {
+            const blob = new Blob([usdz], { type: "application/octet-stream" });
+            dispatch({ type: "SET_MODEL_IOS", payload: blob });
+            console.log("USDZ export successful");
+            resolve();
+          } catch (error) {
+            console.error("Error in USDZ export processing:", error);
+            reject(error);
+          }
         });
       } catch (error) {
-        // console.error("Error in USDZ export:", error);
+        console.error("Error in USDZ export:", error);
         reject(error);
       }
     });
   }, [dispatch, isSceneReady]);
+
 
   const handleClick = useCallback(({ position, levelIndex, platformNumber, groupType }) => {
     const platformName = `${groupType} Platform ${platformNumber}`;
@@ -235,33 +254,18 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     setLocalSelectedPart(selectionData);
   }, []);
 
-  const captureModelSnapshot = useCallback(() => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current.querySelector("canvas");
-    if (!canvas) return;
+  // const captureModelSnapshot = useCallback(() => {
+  //   if (!canvasRef.current) return;
+  //   const canvas = canvasRef.current.querySelector("canvas");
+  //   if (!canvas) return;
 
-    const snapshotDataUrl = canvas.toDataURL("image/png");
-    dispatch({
-      type: "SET_MODEL_SNAPSHOT",
-      payload: snapshotDataUrl
-    });
-  }, [dispatch]);
-  const [networkSpeed, setNetworkSpeed] = useState(null);
+  //   const snapshotDataUrl = canvas.toDataURL("image/png");
+  //   dispatch({
+  //     type: "SET_MODEL_SNAPSHOT",
+  //     payload: snapshotDataUrl
+  //   });
+  // }, [dispatch]);
 
-  const measureNetworkSpeed = useCallback(async () => {
-    const testUrl = "https://via.placeholder.com/10"; // Small image for testing
-    const startTime = performance.now();
-    try {
-      await fetch(testUrl);
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-      const speed = 10 / (duration / 1000); // Size (KB) / Time (s)
-      // console.log(`Network speed: ${speed.toFixed(2)} KB/s`);
-      setNetworkSpeed(speed);
-    } catch (error) {
-      // console.error("Network speed test failed", error);
-    }
-  }, []);
 
   const performExports = useCallback(async () => {
     // console.log("Starting exports, scene ready:", isSceneReady);
@@ -281,13 +285,14 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       await new Promise((resolve) => setTimeout(resolve, timeout)); // Dynamic timeout
 
       // console.log("Exporting model...");
+      setOriginalScale(false);
       await exportModel();
-
+      // await logSceneDimensions();
       // console.log("Exporting USDZ...");
       await handleExportUSDZ();
-
-      // console.log("Exports completed successfully");
+      setOriginalScale(true);
       setIsLoading(false);
+      // console.log("Exports completed successfully");
       toast.success("Export completed successfully!");
     } catch (error) {
       console.error("Export error:", error);
@@ -304,10 +309,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       }
     }
   }, [exportModel, handleExportUSDZ, isSceneReady, retryCount, maxRetries, networkSpeed]);
-
-  useEffect(() => {
-    measureNetworkSpeed();
-  }, [measureNetworkSpeed]);
 
 
   // Global loading timeout
@@ -326,17 +327,15 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
   // Main export trigger effect
   useEffect(() => {
-    // console.log('Levels length:', levels.length);
-    // console.log('Is Scene Ready:', isSceneReady);
 
     if (levels.length > 0 && isSceneReady) {
-      // console.log('Initiating exports');
       setIsLoading(true);
       performExports();
     } else if (levels.length > 0) {
       console.warn('Scene not ready, waiting...');
     }
-  }, [levels, isSceneReady, performExports]);
+  }, [levels, isSceneReady]);
+
   return (
     <div
       ref={canvasRef}
@@ -374,6 +373,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
                     parentGroupType={index > 0 ? levels[index - 1].groupType : null}
                     isMesh={isMesh}
                     setIsSceneReady={setIsSceneReady}
+                    originalScale={originalScale}
                   />
                 ))}
               </group>

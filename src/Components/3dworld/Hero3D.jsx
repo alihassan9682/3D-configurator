@@ -171,7 +171,7 @@ const Hero3D = () => {
                 console.error('Download error:', error);
                 toast.error("Error downloading model. Please try again.");
             }
-        }, 1000);
+        }, 500);
         } else {
             // Open VR view for non-Apple devices as fallback
             toggleView("AR", dispatch);
@@ -184,7 +184,7 @@ const Hero3D = () => {
 
     useEffect(() => {
         if (scrollToARRef.current) {
-            console.log("scrollToARRef is not empty:", scrollToARRef.current);
+            // console.log("scrollToARRef is not empty:", scrollToARRef.current);
             // Perform actions with the ref, e.g., scrollIntoView
             scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
         } else {
