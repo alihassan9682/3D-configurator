@@ -175,29 +175,26 @@ const Hero3D = () => {
         } else {
             // Open VR view for non-Apple devices as fallback
             toggleView("AR", dispatch);
-            console.log("AR View Clicked", scrollToARRef.current);
             if (window.innerWidth < 768) {
                 scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
             }
         }
     };
 
-    useEffect(() => {
-        if (scrollToARRef.current) {
-            // console.log("scrollToARRef is not empty:", scrollToARRef.current);
-            // Perform actions with the ref, e.g., scrollIntoView
-            scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            console.error("scrollToARRef is empty!");
-        }
-    }, [scrollToARRef]);
+    // useEffect(() => {
+    //     if (scrollToARRef.current) {
+    //         // console.log("scrollToARRef is not empty:", scrollToARRef.current);
+    //         // Perform actions with the ref, e.g., scrollIntoView
+    //         scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+    //     } else {
+    //         console.error("scrollToARRef is empty!");
+    //     }
+    // }, [scrollToARRef]);
 
     return (
         <div className="flex flex-col h-full 2xl:h-auto bg-gray-200">
-            {/* Main Content */}
             <div className="flex flex-col md:flex-row w-full flex-grow h-full lg:mb-3 overflow-hidden" ref={scrollToTopRef}>
                 <div className="w-full md:w-80 lg:w-96 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
-                    {/* Add your left panel content here */}
                     <div className="flex justify-center mb-4 lg:mb-2">
                         <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                     </div>
@@ -384,7 +381,7 @@ const Hero3D = () => {
                             />
                         </div>
                     ) : state.activeView === "AR" ? (
-                        <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
+                        <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl" >
                             <ARView model={state.model} />
                         </div>
                     ) : (

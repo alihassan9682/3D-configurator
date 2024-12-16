@@ -253,16 +253,6 @@ export const toggleView = (view, dispatch) => {
   dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 };
 
-/**
- * Creates or retrieves an existing checkout
- * @param {Client} client - Shopify client instance
- * @returns {Object} Checkout object
- */
-
-/**
- * Debug logger for cart operations
- */
-
 const debugLog = (message, data) => {
   console.log(`[Cart Debug] ${message}`, JSON.stringify(data, null, 2));
 };
@@ -314,13 +304,13 @@ export const addToCart = async (
     if (!currentCheckout?.id) {
       debugLog("No existing checkout, creating new one");
       currentCheckout = await client.checkout.create();
-      debugLog("New checkout created:", currentCheckout);
+      // debugLog("New checkout created:", currentCheckout);
     }
 
     // Validate and format line items with improved error handling
     const validatedLineItems = [];
     for (const item of lineItem) {
-      debugLog("Processing item:", item);
+      // debugLog("Processing item:", item);
 
       // Detailed validation of each item
       if (!item) {
@@ -339,7 +329,7 @@ export const addToCart = async (
         quantity: Math.max(1, parseInt(item.quantity) || 1), // Ensure minimum quantity of 1
       };
 
-      debugLog("Formatted item:", formattedItem);
+      // debugLog("Formatted item:", formattedItem);
       validatedLineItems.push(formattedItem);
     }
 
@@ -348,7 +338,7 @@ export const addToCart = async (
       throw new Error("No valid items to add to cart");
     }
 
-    debugLog("Final validated items:", validatedLineItems);
+    // debugLog("Final validated items:", validatedLineItems);
 
     // Add items to checkout with retry mechanism
     let retryCount = 0;
@@ -364,7 +354,7 @@ export const addToCart = async (
         break; // Success, exit loop
       } catch (error) {
         retryCount++;
-        debugLog(`Attempt ${retryCount} failed:`, error);
+        // debugLog(`Attempt ${retryCount} failed:`, error);
         if (retryCount === maxRetries) throw error;
         await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
       }
@@ -374,10 +364,10 @@ export const addToCart = async (
       throw new Error("Failed to update checkout after multiple attempts");
     }
 
-    debugLog("Checkout updated successfully:", {
-      checkoutId: updatedCheckout.id,
-      lineItemCount: updatedCheckout.lineItems.length,
-    });
+    // debugLog("Checkout updated successfully:", {
+    //   checkoutId: updatedCheckout.id,
+    //   lineItemCount: updatedCheckout.lineItems.length,
+    // });
 
     // Update state and handle redirect
     setCheckout(updatedCheckout);

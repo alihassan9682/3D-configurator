@@ -116,7 +116,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   }
 
   return (
-    <group position={position} scale={originalScale ? scale : [1, 1, 1]}>
+    <group position={position} scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}>
       <primitive object={clonedScene} />
       {(isMesh ? detectionMeshes : null)}
     </group>
