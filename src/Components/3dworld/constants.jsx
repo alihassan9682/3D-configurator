@@ -58,7 +58,6 @@ export const levelUrls = {
   },
 };
 export const baseTypeOptions = [
-
   {
     id: 8699606597851,
     value: "PSINGLE",

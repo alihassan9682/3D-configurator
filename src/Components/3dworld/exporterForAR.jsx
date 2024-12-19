@@ -116,9 +116,16 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   }
 
   return (
-    <group position={position} scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}>
+    <group
+      position={[
+        position[0],
+        position[1] * (originalScale ? 1 : 0.5),
+        position[2],
+      ]}
+      scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}
+    >
       <primitive object={clonedScene} />
-      {(isMesh ? detectionMeshes : null)}
+      {isMesh ? detectionMeshes : null}
     </group>
   );
 };
@@ -177,18 +184,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
             const modelUrl = URL.createObjectURL(blob);
             dispatch({ type: "SET_MODEL", payload: modelUrl });
-
-            if (localSelectedPart) {
-              dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
-              dispatch({ type: "SET_SELECTED_PART", payload: localSelectedPart.exactX });
-              if (localSelectedPart.exactZ) {
-                dispatch({ type: "SET_SELECTED_PART_Z", payload: localSelectedPart.exactZ });
-              }
-            }
-
             // captureModelSnapshot();
             // console.log("GLTF export successful");
-
             resolve();
           } catch (error) {
             console.error("Error in GLTF export:", error);
@@ -249,8 +246,15 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           platformNumber === 3 ? 3.06 : 4.59;
       selectionData = { exactX };
     }
-
+    console.log("Selection Data:", selectionData);
     setLocalSelectedPart(selectionData);
+    if (localSelectedPart) {
+      dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
+      dispatch({ type: "SET_SELECTED_PART", payload: selectionData.exactX });
+      if (localSelectedPart.exactZ) {
+        dispatch({ type: "SET_SELECTED_PART_Z", payload: selectionData.exactZ });
+      }
+    }
   }, []);
 
   // const captureModelSnapshot = useCallback(() => {
