@@ -118,7 +118,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   return (
     <group
       position={[
-        position[0],
+        position[0] * (originalScale ? 1 : 0.5),
         position[1] * (originalScale ? 1 : 0.5),
         position[2],
       ]}

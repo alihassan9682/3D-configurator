@@ -508,7 +508,10 @@ export const addLevel = (state, dispatch, toast) => {
     PositionZ.length > 0 ? PositionZ[PositionZ.length - 1] : selectedPartZ;
   const newPositionZ = Number(previousPositionZ) + Number(selectedPartZ);
   const newX = PositionX;
+  const newZ = PositionZ;
+  newZ.push(newPositionZ);
   newX.push(newPositionX);
+  dispatch({ type: "SET_POSITION_Z", payload: newZ });
   dispatch({ type: "SET_POSITION_X", payload: newX });
   for (const modelLevel of newModelLevels) {
     for (let j = 0; j < platformsPerLevel; j++) {
