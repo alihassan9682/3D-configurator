@@ -253,40 +253,31 @@ export const toggleView = (view, dispatch) => {
   dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 };
 
-const debugLog = (message, data) => {
-  return console.log(message);
-};
-
 export const addToCart = async (
   checkout,
   state,
   variant_ID,
   toast,
   dispatch,
-  setCheckout
+  setCheckout,
+  description // Use this parameter to set custom attributes
 ) => {
   // Early validation of state and items
   if (!state) {
     toast.error("Invalid state provided");
-    debugLog("Invalid state:", state);
     return;
   }
 
   const { isInCart, isLoading, lineItem } = state;
 
-  // Debug log the incoming line item data
-  debugLog("Incoming line item data:", lineItem);
-
-  // Validate lineItem structure with more detailed logging
+  // Validate lineItem structure
   if (!Array.isArray(lineItem)) {
     toast.error("Cart items are not properly formatted");
-    debugLog("Invalid lineItem format:", lineItem);
     return;
   }
 
   // Prevent duplicate submissions
   if (isInCart || isLoading) {
-    debugLog("Duplicate submission prevented", { isInCart, isLoading });
     return;
   }
 
@@ -302,34 +293,26 @@ export const addToCart = async (
     // Ensure checkout exists before proceeding
     let currentCheckout = checkout;
     if (!currentCheckout?.id) {
-      debugLog("No existing checkout, creating new one");
       currentCheckout = await client.checkout.create();
-      // debugLog("New checkout created:", currentCheckout);
     }
 
-    // Validate and format line items with improved error handling
+    // Validate and format line items
     const validatedLineItems = [];
     for (const item of lineItem) {
-      // debugLog("Processing item:", item);
+      if (!item || !item.variantID) continue;
 
-      // Detailed validation of each item
-      if (!item) {
-        debugLog("Null or undefined item found");
-        continue;
-      }
-
-      if (!item.variantID) {
-        debugLog("Item missing variantID:", item);
-        continue;
-      }
-
-      // Format the item with explicit type checking
+      // Format the item with custom attributes for description
       const formattedItem = {
         variantId: `gid://shopify/ProductVariant/${item.variantID}`,
         quantity: Math.max(1, parseInt(item.quantity) || 1), // Ensure minimum quantity of 1
+        customAttributes: [
+          {
+            key: "description",
+            value: JSON.stringify(description) || "No description provided", // Set description
+          },
+        ],
       };
 
-      // debugLog("Formatted item:", formattedItem);
       validatedLineItems.push(formattedItem);
     }
 
@@ -337,8 +320,6 @@ export const addToCart = async (
     if (!validatedLineItems.length) {
       throw new Error("No valid items to add to cart");
     }
-
-    // debugLog("Final validated items:", validatedLineItems);
 
     // Add items to checkout with retry mechanism
     let retryCount = 0;
@@ -354,7 +335,6 @@ export const addToCart = async (
         break; // Success, exit loop
       } catch (error) {
         retryCount++;
-        // debugLog(`Attempt ${retryCount} failed:`, error);
         if (retryCount === maxRetries) throw error;
         await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
       }
@@ -363,11 +343,6 @@ export const addToCart = async (
     if (!updatedCheckout?.lineItems) {
       throw new Error("Failed to update checkout after multiple attempts");
     }
-
-    // debugLog("Checkout updated successfully:", {
-    //   checkoutId: updatedCheckout.id,
-    //   lineItemCount: updatedCheckout.lineItems.length,
-    // });
 
     // Update state and handle redirect
     setCheckout(updatedCheckout);
@@ -382,12 +357,6 @@ export const addToCart = async (
       throw new Error("No checkout URL available");
     }
   } catch (error) {
-    debugLog("Error occurred:", {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-    });
-
     // More specific error messages
     if (error.message.includes("invalid")) {
       toast.error("Item validation failed. Please try again.");
@@ -402,23 +371,16 @@ export const addToCart = async (
     dispatch({ type: "SET_Loading" });
   }
 };
-// Calculating the Prcie of the model based on the selected type and length
 
 // Makign the Descripation for the model to be displayed in the cart
 export const convert = (value) => {
   const typeMap = {
-    PSINGLE:
-      "1X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform",
-    PDOUBLE:
-      "1 x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform",
-    PTRIPLE:
-      "3X Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
-    PQUAD:
-      "4x Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
-    PTRIPLE_L:
-      "3X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
-    PQUAD_L:
-      "4X_L Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Single Storage Platform ",
+    PSINGLE: "1X PSINGLE",
+    PDOUBLE: "2x PSINGLE",
+    PTRIPLE: "3X PSINGLE ",
+    PQUAD: "4x PSINGLE ",
+    PTRIPLE_L: "3X_L PSINGLE ",
+    PQUAD_L: "4X_L PSINGLE ",
   };
   return typeMap[value] || "Invalid Type";
 };

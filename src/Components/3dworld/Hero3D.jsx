@@ -99,7 +99,7 @@ const Hero3D = () => {
         const Position = state.platformName || 1; // Default to 1 if platformName is empty
         const updatedDescription = {
             [`drop_down_level_${state.drop_down - 1}`]:
-                `${convert(state.selectedType)} Dura-Lift Elevate Adjustable Height Overhead Garage Door Ceiling Double Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
+                `${convert(state.selectedType)} Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
             // Uncomment to add image link
             // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
         };
@@ -121,7 +121,7 @@ const Hero3D = () => {
         }
     };
     const addTOCart = () => {
-        variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)
+        variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout, state.descripation)
     }
     useEffect(() => {
         console.log("updated descripation", state.descripation)

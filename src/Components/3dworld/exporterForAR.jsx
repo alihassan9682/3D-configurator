@@ -120,7 +120,7 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
       position={[
         position[0] * (originalScale ? 1 : 0.5),
         position[1] * (originalScale ? 1 : 0.5),
-        position[2] * (originalScale ? 1 : 0.7),
+        position[2] * (originalScale ? 1 : 0.2),
       ]}
       scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}
     >
@@ -330,7 +330,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       }
     }
     console.log("Selected Part:", localSelectedPart);
-  }, [localSelectedPart, dispatch]);
+  }, [dispatch, levels, localSelectedPart]);
 
   // Main export trigger effect
   useEffect(() => {
