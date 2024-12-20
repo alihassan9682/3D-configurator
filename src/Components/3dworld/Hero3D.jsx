@@ -110,7 +110,7 @@ const Hero3D = () => {
 
     useEffect(() => {
         updatedDiscriptaion();
-    }, [state.modelSnapshot, state.platformName]); // Triggers only when modelSnapshot or platformName changes
+    }, [state.levels]); // Triggers only when modelSnapshot or platformName changes
 
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);
@@ -124,7 +124,7 @@ const Hero3D = () => {
         variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout)
     }
     useEffect(() => {
-        // console.log("updated descripation", state.descripation)
+        console.log("updated descripation", state.descripation)
         // console.log("updated price", state.price)
         // console.log('Price:', state.price);
         // console.log('selectedPartZ:', state.selectedPartZ);
@@ -142,45 +142,45 @@ const Hero3D = () => {
     }, [state.selectedPart, state.PositionX])
 
     const handleARViewClick = () => {
-        if (state.baseType === "") {
-            toast.error("Please select a base type to start.");
-            return;
-        }
-        if (state.model === null || state.modelIos === null) {
-            toast.error("Model is loading.Please Wait .....");
-            return;
-        }
-        // Check if device is iOS/Apple
-        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // if (state.baseType === "") {
+        //     toast.error("Please select a base type to start.");
+        //     return;
+        // }
+        // if (state.model === null || state.modelIos === null) {
+        //     toast.error("Model is loading.Please Wait .....");
+        //     return;
+        // }
+        // // Check if device is iOS/Apple
+        // const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+        //     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        setMesh(false);
+        // setMesh(false);
 
-        if (isAppleDevice && state.modelIos) {
-            // Apple device: Download USDZ file
-            setTimeout(() => {
-                try {
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(state.modelIos);
-                    link.href = url;
-                    link.download = 'model.usdz';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(() => URL.revokeObjectURL(url), 10000);
-                } catch (error) {
-                    console.error('Download error:', error);
-                    toast.error("Error downloading model. Please try again.");
-                }
-            }, 500);
-        } else {
-            // Open VR view for non-Apple devices as fallback
-            toggleView("AR", dispatch);
-            if (window.innerWidth < 768) {
-                scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+        // if (isAppleDevice && state.modelIos) {
+        //     // Apple device: Download USDZ file
+        //     setTimeout(() => {
+        //         try {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(state.modelIos);
+        link.href = url;
+        link.download = 'model.usdz';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        //             setTimeout(() => URL.revokeObjectURL(url), 10000);
+        //         } catch (error) {
+        //             console.error('Download error:', error);
+        //             toast.error("Error downloading model. Please try again.");
+        //         }
+        //     }, 500);
+        // } else {
+        //     // Open VR view for non-Apple devices as fallback
+        //     toggleView("AR", dispatch);
+        //     if (window.innerWidth < 768) {
+        //         scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+        //     }
+        // }
     };
 
     // useEffect(() => {

@@ -16,7 +16,7 @@ import PQ24 from "../../assets/GLBs/PQUAD/PQ24.glb";
 import PQL6 from "../../assets/GLBs/PQUADL/PQL6.glb";
 import PQL12 from "../../assets/GLBs/PQUADL/PQL12.glb";
 import PQL24 from "../../assets/GLBs/PQUADL/PQL24.glb";
-
+import pt11 from "../../assets/GLBs/PTRIPLE/Shelfs.glb"
 
 export const actualHeights = {
   6: 6,
