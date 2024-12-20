@@ -301,16 +301,10 @@ export const addToCart = async (
     for (const item of lineItem) {
       if (!item || !item.variantID) continue;
 
-      // Format the item with custom attributes for description
+      // Format the item (no custom attributes here for the description)
       const formattedItem = {
         variantId: `gid://shopify/ProductVariant/${item.variantID}`,
         quantity: Math.max(1, parseInt(item.quantity) || 1), // Ensure minimum quantity of 1
-        customAttributes: [
-          {
-            key: "description",
-            value: JSON.stringify(description) || "No description provided", // Set description
-          },
-        ],
       };
 
       validatedLineItems.push(formattedItem);
@@ -344,14 +338,29 @@ export const addToCart = async (
       throw new Error("Failed to update checkout after multiple attempts");
     }
 
+    // Add the custom description as a custom attribute to the checkout
+    const checkoutWithCustomDescription =
+      await client.checkout.updateAttributes(updatedCheckout.id, {
+        customAttributes: [
+          {
+            key: "description",
+            value: JSON.stringify(description) || "No description provided", // Set description here
+          },
+        ],
+      });
+
+    if (!checkoutWithCustomDescription) {
+      throw new Error("Failed to update checkout with custom attributes");
+    }
+
     // Update state and handle redirect
-    setCheckout(updatedCheckout);
+    setCheckout(checkoutWithCustomDescription);
     dispatch({ type: "SET_CART", payload: true });
 
-    if (updatedCheckout.webUrl) {
+    if (checkoutWithCustomDescription.webUrl) {
       // Use timeout to ensure state updates complete
       setTimeout(() => {
-        window.location.assign(updatedCheckout.webUrl);
+        window.location.assign(checkoutWithCustomDescription.webUrl);
       }, 100);
     } else {
       throw new Error("No checkout URL available");
