@@ -239,6 +239,7 @@ export const handleBaseTypeChange = (
       };
       dispatch({ type: "SET_LEVELS", payload: [newLevel] });
       dispatch({ type: "SET_CUMULATIVE_HEIGHT", payload: defaultHeight });
+      dispatch({ type: "SET_BASE_TYPE", payload: newBaseType });
       toast.success(
         `${
           levels.length === 0 ? "Added" : "Updated"
@@ -260,7 +261,7 @@ export const addToCart = async (
   toast,
   dispatch,
   setCheckout,
-  description // Use this parameter to set custom attributes
+  descripation // Fixed typo in parameter name
 ) => {
   // Early validation of state and items
   if (!state) {
@@ -270,13 +271,11 @@ export const addToCart = async (
 
   const { isInCart, isLoading, lineItem } = state;
 
-  // Validate lineItem structure
   if (!Array.isArray(lineItem)) {
     toast.error("Cart items are not properly formatted");
     return;
   }
 
-  // Prevent duplicate submissions
   if (isInCart || isLoading) {
     return;
   }
@@ -284,33 +283,39 @@ export const addToCart = async (
   dispatch({ type: "SET_Loading" });
 
   try {
-    // Initialize Shopify client
     const client = Client.buildClient({
       domain: "duralifthardware.com",
       storefrontAccessToken: process.env.REACT_APP_API_KEY,
     });
 
-    // Ensure checkout exists before proceeding
     let currentCheckout = checkout;
     if (!currentCheckout?.id) {
       currentCheckout = await client.checkout.create();
     }
 
-    // Validate and format line items
-    const validatedLineItems = [];
-    for (const item of lineItem) {
-      if (!item || !item.variantID) continue;
+    // Format line items with custom attributes for each item
+    const validatedLineItems = lineItem
+      .filter((item) => item && item.variantID)
+      .map((item, index, array) => {
+        const isLastItem = index === array.length - 1; // Check if it's the last item
 
-      // Format the item (no custom attributes here for the description)
-      const formattedItem = {
-        variantId: `gid://shopify/ProductVariant/${item.variantID}`,
-        quantity: Math.max(1, parseInt(item.quantity) || 1), // Ensure minimum quantity of 1
-      };
+        const customAttributes = [
+          {
+            key: "description",
+            value:
+              typeof descripation === "object"
+                ? JSON.stringify(descripation)
+                : descripation?.toString() || "No description provided",
+          },
+        ];
 
-      validatedLineItems.push(formattedItem);
-    }
+        return {
+          variantId: `gid://shopify/ProductVariant/${item.variantID}`,
+          quantity: Math.max(1, parseInt(item.quantity) || 1),
+          customAttributes: isLastItem ? customAttributes : [], // Only add description to the last item
+        };
+      });
 
-    // Double-check we have items to add
     if (!validatedLineItems.length) {
       throw new Error("No valid items to add to cart");
     }
@@ -326,11 +331,11 @@ export const addToCart = async (
           currentCheckout.id,
           validatedLineItems
         );
-        break; // Success, exit loop
+        break;
       } catch (error) {
         retryCount++;
         if (retryCount === maxRetries) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
 
@@ -338,35 +343,20 @@ export const addToCart = async (
       throw new Error("Failed to update checkout after multiple attempts");
     }
 
-    // Add the custom description as a custom attribute to the checkout
-    const checkoutWithCustomDescription =
-      await client.checkout.updateAttributes(updatedCheckout.id, {
-        customAttributes: [
-          {
-            key: "description",
-            value: JSON.stringify(description) || "No description provided", // Set description here
-          },
-        ],
-      });
-
-    if (!checkoutWithCustomDescription) {
-      throw new Error("Failed to update checkout with custom attributes");
-    }
-
     // Update state and handle redirect
-    setCheckout(checkoutWithCustomDescription);
+    setCheckout(updatedCheckout);
     dispatch({ type: "SET_CART", payload: true });
 
-    if (checkoutWithCustomDescription.webUrl) {
-      // Use timeout to ensure state updates complete
+    if (updatedCheckout.webUrl) {
       setTimeout(() => {
-        window.location.assign(checkoutWithCustomDescription.webUrl);
+        window.location.assign(updatedCheckout.webUrl);
       }, 100);
     } else {
       throw new Error("No checkout URL available");
     }
   } catch (error) {
-    // More specific error messages
+    console.error("Add to cart error:", error);
+
     if (error.message.includes("invalid")) {
       toast.error("Item validation failed. Please try again.");
     } else if (error.message.includes("No valid items")) {
@@ -440,6 +430,9 @@ export const addLevel = (state, dispatch, toast) => {
     drop_down,
     levelIndex,
     lineItem,
+    descripation,
+    platformName,
+    selectedLength,
   } = state;
 
   if (!selectedType) {
@@ -478,6 +471,7 @@ export const addLevel = (state, dispatch, toast) => {
   const previousPositionZ =
     PositionZ.length > 0 ? PositionZ[PositionZ.length - 1] : selectedPartZ;
   const newPositionZ = Number(previousPositionZ) + Number(selectedPartZ);
+  console.log("PosrionZ", newPositionZ);
   const newX = PositionX;
   const newZ = PositionZ;
   newZ.push(newPositionZ);
@@ -489,7 +483,7 @@ export const addLevel = (state, dispatch, toast) => {
       const newPosition = [
         newPositionX,
         -newCumulativeHeight - modelLevel.height,
-        newPositionZ,
+        0,
       ];
 
       const newLevel = {
@@ -504,8 +498,14 @@ export const addLevel = (state, dispatch, toast) => {
       newLevels.push(newLevel);
     }
   }
-
-  // Update state
+  const Position = platformName ? platformName : selectedType;
+  const updatedDescription = {
+    [`drop_down_level_${state.drop_down}`]: `${convert(
+      selectedType
+    )} Storage Platform ${selectedLength} INCH Drop Down, added below ${Position}`,
+  };
+  console.log(updatedDescription);
+  dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
   dispatch({ type: "SET_POSITION_X", payload: [...PositionX, newPositionX] });
   dispatch({ type: "SET_POSITION_Z", payload: [...PositionZ, newPositionZ] });
   dispatch({ type: "SET_LEVELS", payload: newLevels });
@@ -518,6 +518,7 @@ export const addLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_LEVEL_INDEX", payload: levelIndex + 1 });
   dispatch({ type: "SET_SELECTED_PART", payload: 0 });
   dispatch({ type: "SET_SELECTED_PART_Z", payload: 0 });
+  dispatch({ type: "PLATFROM_NAME", payload: "" });
   dispatch({ type: "SET_LOADING" });
 
   toast.success(`${selectedType} platform(s) added to the model`);

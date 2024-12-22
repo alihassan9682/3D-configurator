@@ -114,13 +114,13 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
       />
     );
   }
-
+  console.log(position[2])
   return (
     <group
       position={[
         position[0] * (originalScale ? 1 : 0.5),
         position[1] * (originalScale ? 1 : 0.5),
-        position[2] * (originalScale ? 1 : 0.2),
+        position[2] * (originalScale ? 1 : 0.5),
       ]}
       scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}
     >
@@ -248,6 +248,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }
     console.log("Selection Data:", selectionData);
     setLocalSelectedPart(selectionData);
+    dispatch({ type: "SET_SELECTED_PART", payload: selectionData.exactX });
+    dispatch({ type: "SET_SELECTED_PART_Z", payload: selectionData.exactZ });
+    dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
 
   }, []);
 
@@ -321,16 +324,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
     return () => clearTimeout(loadingTimeout);
   }, [isSceneReady]);
-  useEffect(() => {
-    if (localSelectedPart) {
-      dispatch({ type: "SET_PLATFORM_NAME", payload: localPlatformName });
-      dispatch({ type: "SET_SELECTED_PART", payload: localSelectedPart.exactX });
-      if (localSelectedPart.exactZ) {
-        dispatch({ type: "SET_SELECTED_PART_Z", payload: localSelectedPart.exactZ });
-      }
-    }
-    console.log("Selected Part:", localSelectedPart);
-  }, [dispatch, levels, localSelectedPart]);
 
   // Main export trigger effect
   useEffect(() => {
