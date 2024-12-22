@@ -114,7 +114,6 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
       />
     );
   }
-  console.log(position[2])
   return (
     <group
       position={[
@@ -246,8 +245,8 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           platformNumber === 3 ? 3.06 : 4.59;
       selectionData = { exactX };
     }
-    console.log("Selection Data:", selectionData);
-    setLocalSelectedPart(selectionData);
+    // console.log("Selection Data:", selectionData);
+    // setLocalSelectedPart(selectionData);
     dispatch({ type: "SET_SELECTED_PART", payload: selectionData.exactX });
     dispatch({ type: "SET_SELECTED_PART_Z", payload: selectionData.exactZ });
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });

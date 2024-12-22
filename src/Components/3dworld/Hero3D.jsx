@@ -36,7 +36,6 @@ const Hero3D = () => {
     const { id } = useParams();
     const [state, dispatch] = useReducer(heroReducer, initialState);
     const [checkout, setCheckout] = React.useState(null);
-    const [rotationValue, setRotationValue] = React.useState(0);
     const [variant_ID, setVariantID] = React.useState(null);
     const scrollToTopRef = React.useRef(null);
     const scrollToARRef = React.useRef(null);
@@ -94,23 +93,7 @@ const Hero3D = () => {
 
         dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
     };
-    // const updatedDiscriptaion = () => {
-    //     if (state.levels.length === 1) return null;
-    //     const Position = state.platformName || 1; // Default to 1 if platformName is empty
-    //     const updatedDescription = {
-    //         [`drop_down_level_${state.drop_down - 1}`]:
-    //             `${convert(state.selectedType)} Storage Platform ${state.selectedLength} INCH Drop Down, added below ${Position}`,
-    //         // Uncomment to add image link
-    //         // imageLink: `<a href="${imgurl}" target="_blank">View Configured Image</a>`,
-    //     };
 
-    //     // console.log("Updated Description:", updatedDescription);
-    //     dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
-    // };
-
-    // useEffect(() => {
-    //     updatedDiscriptaion();
-    // }, [state.levels]); // Triggers only when modelSnapshot or platformName changes
 
     const handleLengthChange = (e) => {
         const selectedLengthValue = parseInt(e.target.value);
@@ -124,42 +107,42 @@ const Hero3D = () => {
         variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout, state.descripation)
     }
     useEffect(() => {
-        console.log("updated descripation", state.descripation)
+        // console.log("updated descripation", state.descripation)
         // console.log("updated price", state.price)
         // console.log('Price:', state.price);
         // console.log('selectedPartZ:', state.selectedPartZ);
-        console.log('selectedPart:', state.selectedPart);
+        // console.log('selectedPart:', state.selectedPart);
         // console.log("MOdel" , state.model)
         // console.log("MOdel" , state.modelIos)
         // console.log("VarantID",variant_ID)
         // console.log("IdNull",IdNull)
-        console.log("Platform Name", state.platformName)
+        // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
         // console.log("Line Item", state.lineItem)
         // console.log(state.modelIos)
         // console.log("Selected Part", state.selectedPart)
-        console.log("PositionX", state.PositionX)
+        // console.log("PositionX", state.PositionX)
     }, [state.selectedPart, state.platformName, state.descripation])
 
     const handleARViewClick = () => {
-        // if (state.baseType === "") {
-        //     toast.error("Please select a base type to start.");
-        //     return;
-        // }
-        // if (state.model === null || state.modelIos === null) {
-        //     toast.error("Model is loading.Please Wait .....");
-        //     return;
-        // }
-        // // Check if device is iOS/Apple
-        // const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
-        //     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (state.baseType === "") {
+            toast.error("Please select a base type to start.");
+            return;
+        }
+        if (state.model === null || state.modelIos === null) {
+            toast.error("Model is loading.Please Wait .....");
+            return;
+        }
+        // Check if device is iOS/Apple
+        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        // setMesh(false);
+        setMesh(false);
 
-        // if (isAppleDevice && state.modelIos) {
-        //     // Apple device: Download USDZ file
-        //     setTimeout(() => {
-        //         try {
+        if (isAppleDevice && state.modelIos) {
+            // Apple device: Download USDZ file
+            setTimeout(() => {
+                try {
         const link = document.createElement('a');
         const url = URL.createObjectURL(state.modelIos);
         link.href = url;
@@ -169,29 +152,19 @@ const Hero3D = () => {
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 10000);
-        //         } catch (error) {
-        //             console.error('Download error:', error);
-        //             toast.error("Error downloading model. Please try again.");
-        //         }
-        //     }, 500);
-        // } else {
-        //     // Open VR view for non-Apple devices as fallback
-        //     toggleView("AR", dispatch);
-        //     if (window.innerWidth < 768) {
-        //         scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
-        //     }
-        // }
+                } catch (error) {
+                    console.error('Download error:', error);
+                    toast.error("Error downloading model. Please try again.");
+                }
+            }, 500);
+        } else {
+            // Open VR view for non-Apple devices as fallback
+            toggleView("AR", dispatch);
+            if (window.innerWidth < 768) {
+                scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
     };
-
-    // useEffect(() => {
-    //     if (scrollToARRef.current) {
-    //         // console.log("scrollToARRef is not empty:", scrollToARRef.current);
-    //         // Perform actions with the ref, e.g., scrollIntoView
-    //         scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
-    //     } else {
-    //         console.error("scrollToARRef is empty!");
-    //     }
-    // }, [scrollToARRef]);
 
     return (
         <div className="flex flex-col h-full 2xl:h-auto bg-gray-200">
