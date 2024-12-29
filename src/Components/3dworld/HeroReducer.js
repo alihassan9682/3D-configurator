@@ -25,7 +25,7 @@ export const initialState = {
   selectedPartZ: 0,
   top: true,
   PositionX: [],
-  PositionZ: [],
+  PositionZ: [0],
   modelSnapshot: null,
   modelIos: null,
   lineItem: [],
@@ -260,8 +260,7 @@ export const addToCart = async (
   variant_ID,
   toast,
   dispatch,
-  setCheckout,
-  descripation // Fixed typo in parameter name
+  setCheckout
 ) => {
   // Early validation of state and items
   if (!state) {
@@ -296,23 +295,21 @@ export const addToCart = async (
     // Format line items with custom attributes for each item
     const validatedLineItems = lineItem
       .filter((item) => item && item.variantID)
-      .map((item, index, array) => {
-        const isLastItem = index === array.length - 1; // Check if it's the last item
-
+      .map((item) => {
         const customAttributes = [
           {
             key: "description",
             value:
-              typeof descripation === "object"
-                ? JSON.stringify(descripation)
-                : descripation?.toString() || "No description provided",
+              typeof item.description === "object"
+                ? JSON.stringify(item.description)
+                : item.descripation?.toString() || "No description provided",
           },
         ];
 
         return {
           variantId: `gid://shopify/ProductVariant/${item.variantID}`,
           quantity: Math.max(1, parseInt(item.quantity) || 1),
-          customAttributes: isLastItem ? customAttributes : [], // Only add description to the last item
+          customAttributes, // Add unique description for each item
         };
       });
 
@@ -451,26 +448,47 @@ export const addLevel = (state, dispatch, toast) => {
   const existingItemIndex = updatedLineItems.findIndex(
     (item) => item.variantID === variantID
   );
-
   if (existingItemIndex !== -1) {
     updatedLineItems[existingItemIndex].quantity += 1;
+    const Position = platformName
+      ? platformName
+      : `${selectedType} Platform No 01`;
+    // Spread the existing descripation to create a new object
+    updatedLineItems[existingItemIndex].description = {
+      ...updatedLineItems[existingItemIndex].description,
+      [`drop_down_level_${state.drop_down}`]: `${convert(
+        selectedType
+      )} Storage Platform ${selectedLength} INCH Drop Down, added below ${Position}`,
+    };
   } else if (variantID) {
-    updatedLineItems.push({ variantID, quantity: 1 });
+    const Position = platformName
+      ? platformName
+      : `${selectedType} Platform No 01`;
+    updatedLineItems.push({
+      variantID,
+      quantity: 1,
+      description: {
+        [`drop_down_level_${state.drop_down}`]: `${convert(
+          selectedType
+        )} Storage Platform ${selectedLength} INCH Drop Down, added below ${Position}`,
+      },
+    });
   }
   dispatch({ type: "SET_LINEITEM", payload: updatedLineItems });
-
   // Generate levels
   const newModelLevels = createModelFromPSingle(state, dispatch);
   let newLevels = [...levels];
   let newCumulativeHeight = cumulativeHeight;
 
   const previousPositionX =
-    PositionX.length > 0 ? PositionX[PositionX.length - 1] : 0;
+    PositionX.length !== 0 ? PositionX[PositionX.length - 1] : 0;
   const newPositionX = Number(previousPositionX) + Number(selectedPart);
   console.log(newPositionX);
   const previousPositionZ =
-    PositionZ.length > 0 ? PositionZ[PositionZ.length - 1] : selectedPartZ;
+    PositionZ.length !== 0 ? PositionZ[PositionZ.length - 1] : 0;
+  console.log(previousPositionZ);
   const newPositionZ = Number(previousPositionZ) + Number(selectedPartZ);
+  console.log(selectedPartZ);
   console.log("PosrionZ", newPositionZ);
   const newX = PositionX;
   const newZ = PositionZ;
@@ -580,10 +598,14 @@ export const removeLevel = (
         newLineItems = newLineItems.filter((_, i) => i !== index);
       } else {
         // Decrease quantity by 1
-        newLineItems[index] = {
+        const new_descripation = (newLineItems[index] = {
           ...newLineItems[index],
           quantity: newLineItems[index].quantity - 1,
-        };
+          description:
+            delete newLineItems[index].description[
+              `drop_down_level_${drop_down - 1}`
+            ],
+        });
       }
     }
   }

@@ -136,7 +136,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   const cameraRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
-  const [localSelectedPart, setLocalSelectedPart] = useState(null);
   const [localPlatformName, setLocalPlatformName] = useState("");
   const groupRef = useRef();
   const [retryCount, setRetryCount] = useState(0);
@@ -157,23 +156,12 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }, [camera, scene]);
     return null;
   };
-  // const logSceneDimensions = () => {
-  //   if (!sceneRef.current) return;
-
-  //   const box = new THREE.Box3().setFromObject(sceneRef.current);
-  //   const size = new THREE.Vector3();
-  //   box.getSize(size);
-
-  //   console.log("Scene Dimensions:", size); // Check size in scene
-  // };
-
-
   const exportModel = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) {
+    if (!sceneRef.current || !isSceneReady || originalScale !== false) {
       console.warn("Scene not ready for export");
       return Promise.reject("Scene not ready");
     }
-
+    // console.log("Exporting model...");
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       exporter.parse(
@@ -194,13 +182,15 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         { binary: true } // Export as GLB
       );
     });
-  }, [dispatch, localSelectedPart, localPlatformName, isSceneReady]);
+  }, [dispatch, localPlatformName, isSceneReady]);
 
   const handleExportUSDZ = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) {
+    if (!sceneRef.current || !isSceneReady || originalScale !== false) {
       toast.error("Scene is not ready. Please wait.");
       return Promise.reject("Scene not ready");
     }
+
+    // console.log("Exporting model usdz...");
 
     return new Promise((resolve, reject) => {
       try {
@@ -245,7 +235,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
           platformNumber === 3 ? 3.06 : 4.59;
       selectionData = { exactX };
     }
-    // console.log("Selection Data:", selectionData);
+    console.log("Selection Data:", selectionData);
     // setLocalSelectedPart(selectionData);
     dispatch({ type: "SET_SELECTED_PART", payload: selectionData.exactX });
     dispatch({ type: "SET_SELECTED_PART_Z", payload: selectionData.exactZ });
@@ -253,52 +243,25 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
   }, []);
 
-  // const captureModelSnapshot = useCallback(() => {
-  //   if (!canvasRef.current) return;
-  //   const canvas = canvasRef.current.querySelector("canvas");
-  //   if (!canvas) return;
-
-  //   const snapshotDataUrl = canvas.toDataURL("image/png");
-  //   dispatch({
-  //     type: "SET_MODEL_SNAPSHOT",
-  //     payload: snapshotDataUrl
-  //   });
-  // }, [dispatch]);
-
-
   const performExports = useCallback(async () => {
-    // console.log("Starting exports, scene ready:", isSceneReady);
-
-    // Check if the scene is ready before proceeding
     if (!isSceneReady) {
       toast.error("Scene is not ready. Please wait for it to be ready before exporting.");
-      // console.warn("Scene is not ready, skipping export...");
       return; // Exit the function early if the scene is not ready
     }
 
-    const timeout = networkSpeed > 100 ? 0 : 10000; // Instant export if speed > 100 KB/s
-    // console.log(`Export timeout set to: ${timeout}ms based on network speed`);
-
+    const timeout = networkSpeed > 100 ? 0 : 10000;
     try {
-      // console.log("Waiting before export...");
       await new Promise((resolve) => setTimeout(resolve, timeout)); // Dynamic timeout
-
-      // console.log("Exporting model...");
       setOriginalScale(false);
       await exportModel();
-      // await logSceneDimensions();
-      // console.log("Exporting USDZ...");
       await handleExportUSDZ();
       setOriginalScale(true);
       setIsLoading(false);
-      // console.log("Exports completed successfully");
       toast.success("Export completed successfully!");
     } catch (error) {
       console.error("Export error:", error);
 
-      // Retry logic if export fails
       if (retryCount < maxRetries) {
-        // console.log(`Retrying export (Attempt ${retryCount + 1})`);
         setRetryCount((prev) => prev + 1);
         setTimeout(() => performExports(), 5000); // Retry after 5 seconds
       } else {
@@ -310,11 +273,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   }, [exportModel, handleExportUSDZ, isSceneReady, retryCount, maxRetries, networkSpeed]);
 
 
-  // Global loading timeout
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (!isSceneReady) {
-        // console.error('Scene loading timed out');
         setIsSceneReady(true);
         setIsLoading(false);
         toast.error('Model loading timed out');
@@ -324,18 +285,23 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     return () => clearTimeout(loadingTimeout);
   }, [isSceneReady]);
 
-  // Main export trigger effect
   useEffect(() => {
-
     if (levels.length > 0 && isSceneReady) {
       setIsLoading(true);
       performExports();
     } else if (levels.length > 0) {
       console.warn('Scene not ready, waiting...');
     }
-  }, [levels, isSceneReady]);
+  }, [levels.length, isSceneReady]);
 
+  useEffect(() => {
+    // console.log("originalScale", originalScale)
+  }, [originalScale])
+  useEffect(() => {
+    // console.log("isSceneReady", isSceneReady)
+  }, [isSceneReady])
   return (
+
     <div
       ref={canvasRef}
       className="flex  h-screen w-full items-center  justify-center bg-gray-200 relative"

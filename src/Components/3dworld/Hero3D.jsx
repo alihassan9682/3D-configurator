@@ -66,9 +66,14 @@ const Hero3D = () => {
             const item = {
                 variantID: baseTypeFromId.varaintID,
                 quantity: 1,
+                description: {
+                    base: baseTypeFromId.value
+                }
             }
             const lineItemsToAdd = state.lineItem;
+
             lineItemsToAdd.push(item);
+            console.log(lineItemsToAdd)
             dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
         } else {
             setIdNull(true)
@@ -87,6 +92,10 @@ const Hero3D = () => {
         const item = {
             variantID: baseTypeFromId.varaintID,
             quantity: 1,
+            description:
+            {
+                base: baseTypeFromId.value
+            }
         }
         const lineItemsToAdd = state.lineItem;
         lineItemsToAdd.push(item);
@@ -122,7 +131,7 @@ const Hero3D = () => {
         // console.log(state.modelIos)
         // console.log("Selected Part", state.selectedPart)
         // console.log("PositionX", state.PositionX)
-    }, [state.selectedPart, state.platformName, state.descripation])
+    }, [state.selectedPart, state.platformName, state.descripation, state.lineItem])
 
     const handleARViewClick = () => {
         if (state.baseType === "") {
@@ -143,15 +152,15 @@ const Hero3D = () => {
             // Apple device: Download USDZ file
             setTimeout(() => {
                 try {
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(state.modelIos);
-        link.href = url;
-        link.download = 'model.usdz';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(state.modelIos);
+                    link.href = url;
+                    link.download = 'model.usdz';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
                 } catch (error) {
                     console.error('Download error:', error);
                     toast.error("Error downloading model. Please try again.");
