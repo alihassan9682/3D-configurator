@@ -134,7 +134,6 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
 };
 
 const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart, isMesh }) => {
-  const [networkSpeed, setNetworkSpeed] = useState(null);
   const sceneRef = useRef(new THREE.Scene());
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
@@ -169,7 +168,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       exporter.parse(
-        groupRef.current,
+        sceneRef.current,
         (result) => {
           try {
             const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
@@ -189,23 +188,21 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   }, [dispatch, localPlatformName, isSceneReady]);
 
   const handleExportUSDZ = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) {
-      toast.error("Scene is not ready. Please wait.");
-      return Promise.reject("Scene not ready");
+    if (!sceneRef.current || !isSceneReady || !groupRef.current) {
+      toast.error("Scene or group is not ready. Please wait.");
+      return Promise.reject("Scene or group not ready");
     }
 
     console.log("Exporting model usdz...");
-
     return new Promise((resolve, reject) => {
       try {
         THREE.Cache.clear();
         const exporter = new USDZExporter();
 
-        exporter.parse(groupRef.current, (usdz) => {
+        exporter.parseAsync(groupRef.current).then((usdz) => {
           try {
             const blob = new Blob([usdz], { type: "application/octet-stream" });
             dispatch({ type: "SET_MODEL_IOS", payload: blob });
-            // console.log("USDZ export successful");
             resolve();
           } catch (error) {
             console.error("Error in USDZ export processing:", error);
@@ -259,6 +256,10 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       console.warn('Scene not ready, waiting...');
     }
   }, [levels, isSceneReady]);
+  useEffect(() => {
+    console.log("GroupRef", groupRef?.current?.group)
+  }
+    , [groupRef])
 
   const handleClick = useCallback(({ platformNumber, groupType }) => {
     const platformName = `${groupType} Platform ${platformNumber}`;
