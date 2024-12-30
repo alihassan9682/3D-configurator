@@ -153,9 +153,9 @@ const Hero3D = () => {
             setTimeout(() => {
                 try {
                     const link = document.createElement('a');
-                    const url = URL.createObjectURL(state.modelIos);
+                    const url = URL.createObjectURL(state.model);
                     link.href = url;
-                    link.download = 'model.usdz';
+                    link.download = 'model.gltf';
                     link.style.display = 'none';
                     document.body.appendChild(link);
                     link.click();

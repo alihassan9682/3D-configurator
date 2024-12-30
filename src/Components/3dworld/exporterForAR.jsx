@@ -160,7 +160,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
   };
 
   const exportModel = useCallback(() => {
-    if (!sceneRef.current || !isSceneReady) {
+    if (!sceneRef.current || !isSceneReady || !groupRef.current) {
       console.warn("Scene not ready for export");
       return Promise.reject("Scene not ready");
     }
@@ -168,14 +168,14 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       exporter.parse(
-        sceneRef.current,
+        groupRef.current,
         (result) => {
           try {
             const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
             const modelUrl = URL.createObjectURL(blob);
             dispatch({ type: "SET_MODEL", payload: modelUrl });
             // captureModelSnapshot();
-            // console.log("GLTF export successful");
+            console.log("GLTF ", modelUrl);
             resolve();
           } catch (error) {
             console.error("Error in GLTF export:", error);
