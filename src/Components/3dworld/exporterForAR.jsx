@@ -164,7 +164,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       console.warn("Scene not ready for export");
       return Promise.reject("Scene not ready");
     }
-    console.log("Exporting model...");
+    // console.log("Exporting model...");
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       exporter.parse(
@@ -193,7 +193,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       return Promise.reject("Scene or group not ready");
     }
 
-    console.log("Exporting model usdz...");
+    // console.log("Exporting model usdz...");
     return new Promise((resolve, reject) => {
       try {
         THREE.Cache.clear();
@@ -256,10 +256,6 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       console.warn('Scene not ready, waiting...');
     }
   }, [levels, isSceneReady]);
-  useEffect(() => {
-    console.log("GroupRef", groupRef?.current?.group)
-  }
-    , [groupRef])
 
   const handleClick = useCallback(({ platformNumber, groupType }) => {
     const platformName = `${groupType} Platform ${platformNumber}`;
