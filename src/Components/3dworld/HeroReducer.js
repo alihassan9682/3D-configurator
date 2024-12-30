@@ -29,6 +29,7 @@ export const initialState = {
   modelSnapshot: null,
   modelIos: null,
   lineItem: [],
+  performingExport: false,
 };
 // Reducer function for the application
 export const heroReducer = (state, action) => {
@@ -37,6 +38,11 @@ export const heroReducer = (state, action) => {
       return {
         ...state,
         levelIndex: action.payload,
+      };
+    case "SET_EXPORT":
+      return {
+        ...state,
+        performingExport: action.payload,
       };
     case "SET_BASE_TYPE":
       return {
@@ -262,6 +268,10 @@ export const addToCart = async (
   dispatch,
   setCheckout
 ) => {
+  const { performingExport } = state;
+  if (performingExport) {
+    toast.error("Please wait for the export to finish before adding to cart.");
+  }
   // Early validation of state and items
   if (!state) {
     toast.error("Invalid state provided");
@@ -430,13 +440,19 @@ export const addLevel = (state, dispatch, toast) => {
     descripation,
     platformName,
     selectedLength,
+    performingExport,
   } = state;
 
   if (!selectedType) {
     toast.error("Please select base model and type before adding levels.");
     return;
   }
-
+  if (performingExport) {
+    toast.error(
+      "Please wait for the export to finish before adding more levels."
+    );
+    return;
+  }
   dispatch({ type: "SET_LOADING" });
 
   const updatedLineItems = [...lineItem];
@@ -483,13 +499,12 @@ export const addLevel = (state, dispatch, toast) => {
   const previousPositionX =
     PositionX.length !== 0 ? PositionX[PositionX.length - 1] : 0;
   const newPositionX = Number(previousPositionX) + Number(selectedPart);
-  console.log(newPositionX);
+  // console.log(newPositionX);
   const previousPositionZ =
     PositionZ.length !== 0 ? PositionZ[PositionZ.length - 1] : 0;
-  console.log(previousPositionZ);
+  // console.log(previousPositionZ);
   const newPositionZ = Number(previousPositionZ) + Number(selectedPartZ);
-  console.log(selectedPartZ);
-  console.log("PosrionZ", newPositionZ);
+  // console.log(selectedPartZ);
   const newX = PositionX;
   const newZ = PositionZ;
   newZ.push(newPositionZ);
@@ -522,7 +537,7 @@ export const addLevel = (state, dispatch, toast) => {
       selectedType
     )} Storage Platform ${selectedLength} INCH Drop Down, added below ${Position}`,
   };
-  console.log(updatedDescription);
+  // console.log(updatedDescription);
   dispatch({ type: "SET_DESCRIPTION", payload: updatedDescription });
   dispatch({ type: "SET_POSITION_X", payload: [...PositionX, newPositionX] });
   dispatch({ type: "SET_POSITION_Z", payload: [...PositionZ, newPositionZ] });
@@ -560,11 +575,16 @@ export const removeLevel = (
     PositionX,
     PositionZ,
     lineItem,
+    performingExport,
   } = state;
 
   // Check if there are levels to remove; if not, show an error toast
   if (levels.length === 0) {
     toast.error("No levels to remove");
+    return;
+  }
+  if (performingExport) {
+    toast.error("Please wait for the export to finish before removing levels.");
     return;
   }
 

@@ -128,61 +128,71 @@ const Hero3D = () => {
         // console.log("Platform Name", state.platformName)
         // console.log("Levels", state.levels)
         // console.log("Line Item", state.lineItem)
-        // console.log(state.modelIos)
+        console.log(state.modelIos)
         // console.log("Selected Part", state.selectedPart)
         // console.log("PositionX", state.PositionX)
-    }, [state.selectedPart, state.platformName, state.descripation, state.lineItem])
+    }, [state.modelIos, state.platformName, state.descripation, state.lineItem])
 
     const handleARViewClick = () => {
-        if (state.baseType === "") {
-            toast.error("Please select a base type to start.");
-            return;
-        }
-        if (state.model === null || state.modelIos === null) {
-            toast.error("Model is loading.Please Wait .....");
-            return;
-        }
-        // Check if device is iOS/Apple
-        const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // if (state.baseType === "") {
+        //     toast.error("Please select a base type to start.");
+        //     return;
+        // }
+        // if (state.model === null || state.modelIos === null || state.performingExport) {
+        //     toast.error("Model is loading.Please Wait .....");
+        //     return;
+        // }
+        // // Check if device is iOS/Apple
+        // const isAppleDevice = /iPhone|iPad|iPod|Mac/i.test(navigator.userAgent) ||
+        //     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        setMesh(false);
+        // setMesh(false);
 
-        if (isAppleDevice && state.modelIos) {
-            // Apple device: Download USDZ file
-            setTimeout(() => {
-                try {
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(state.modelIos);
-                    link.href = url;
-                    link.download = 'model.usdz';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(() => URL.revokeObjectURL(url), 10000);
-                } catch (error) {
-                    console.error('Download error:', error);
-                    toast.error("Error downloading model. Please try again.");
-                }
-            }, 500);
-        } else {
-            // Open VR view for non-Apple devices as fallback
-            toggleView("AR", dispatch);
-            if (window.innerWidth < 768) {
-                scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+        // if (isAppleDevice && state.modelIos) {
+        //     // Apple device: Download USDZ file
+        //     setTimeout(() => {
+        //         try {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(state.modelIos);
+        link.href = url;
+        link.download = 'model.usdz';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        //         } catch (error) {
+        //             console.error('Download error:', error);
+        //             toast.error("Error downloading model. Please try again.");
+        //         }
+        //     }, 500);
+        // } else {
+        //     // Open VR view for non-Apple devices as fallback
+        //     toggleView("AR", dispatch);
+        //     if (window.innerWidth < 768) {
+        //         scrollToARRef.current.scrollIntoView({ behavior: 'smooth' });
+        //     }
+        // }
     };
 
     return (
-        <div className="flex flex-col h-full 2xl:h-auto bg-gray-200">
+        <div className="flex flex-col h-full 2xl:h-auto bg-gray-200 relative">
+            {/* Loading Overlay */}
+            {state.isLoading && (
+                <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="text-white flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-white" />
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col md:flex-row w-full flex-grow h-full lg:mb-3 overflow-hidden" ref={scrollToTopRef}>
                 <div className="w-full md:w-80 lg:w-96 p-4 md:p-6 bg-gray-200 shadow-2xl rounded-3xl flex-shrink-0">
                     <div className="flex justify-center mb-4 lg:mb-2">
                         <img src={logo} alt="Logo" className="w-24 md:w-36 h-auto transition-transform transform hover:scale-105" />
                     </div>
                     <div>
+                        {/* AR/VR Button Section */}
                         <div className="flex justify-center mb-2">
                             <div
                                 className="flex rounded-full md:mx-3 justify-center items-center p-1 shadow-inner bg-gray-100"
@@ -192,8 +202,7 @@ const Hero3D = () => {
                             >
                                 <button
                                     onClick={handleARViewClick}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
-                                        }`}
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "AR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"}`}
                                     style={{
                                         borderTopRightRadius: 0,
                                         borderBottomRightRadius: 0,
@@ -208,8 +217,7 @@ const Hero3D = () => {
                                         setMesh(!mesh);
                                         toggleView("VR", dispatch);
                                     }}
-                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"
-                                        }`}
+                                    className={`px-4 py-3 rounded-full whitespace-nowrap transition duration-300 md:text-sm lg:text-lg ${state.activeView === "VR" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700"}`}
                                     style={{
                                         borderTopLeftRadius: 0,
                                         borderBottomLeftRadius: 0,
@@ -223,12 +231,14 @@ const Hero3D = () => {
                             </div>
                         </div>
 
-
-                        <h2 className="text-2xl md:text-2xl mb-4 lg:left-10 relative text-gray-900  justify-center text-center md:text-left font-semibold">
+                        {/* Configurator Title */}
+                        <h2 className="text-2xl md:text-2xl mb-4 lg:left-10 relative text-gray-900 text-center md:text-left font-semibold">
                             Model Configurator
                         </h2>
+
                         <div className="flex flex-col space-y-4 xl:space-y-2">
                             <div className="flex justify-end mt-4 gap-3">
+                                {/* Add to Cart and Reset Buttons */}
                                 <button
                                     onClick={() => addTOCart()}
                                     className="bg-green-500 text-white px-4 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-green-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300"
@@ -246,6 +256,8 @@ const Hero3D = () => {
                                     Reset
                                 </button>
                             </div>
+
+                            {/* Select Inputs */}
                             <div className="space-y-6">
                                 <div className="relative">
                                     <label className="block text-gray-700 text-sm font-medium mb-2">
@@ -329,7 +341,8 @@ const Hero3D = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-wrap justify-evenly md:justify-start  lg:justify-evenly space-x-4 mt-4 ">
+                        {/* Buttons for Adding/Removing Levels */}
+                        <div className="flex flex-wrap justify-evenly md:justify-start lg:justify-evenly space-x-4 mt-4">
                             <button
                                 onClick={() => addLevel(state, dispatch, toast)}
                                 className="bg-blue-500 text-white px-3 py-2 flex items-center text-sm rounded-full shadow-md hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300"
@@ -346,7 +359,6 @@ const Hero3D = () => {
                             </button>
                         </div>
                     </div>
-                    {/* Buttons, Forms, etc. */}
                 </div>
                 <div className="w-full h-full" ref={scrollToARRef}>
                     {state.activeView === "VR" ? (
@@ -362,10 +374,11 @@ const Hero3D = () => {
                                 selectedPart={state.selectedPart}
                                 isMesh={mesh}
                                 setMesh={setMesh}
+                                performingExport={state.performingExport}
                             />
                         </div>
                     ) : state.activeView === "AR" ? (
-                        <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl" >
+                        <div className="flex-1 p-4 md:p-6 flex items-center justify-center h-full bg-white shadow-inner rounded-3xl">
                             <ARView model={state.model} />
                         </div>
                     ) : (
@@ -376,11 +389,10 @@ const Hero3D = () => {
                 </div>
             </div>
             <ToastContainer />
-            {/* Footer */}
-            <Footer className="block  bg-gray-800 text-white p-4" />
-        </div >
-
+            <Footer className="block bg-gray-800 text-white p-4" />
+        </div>
     );
+
 }
 
 export default Hero3D;
