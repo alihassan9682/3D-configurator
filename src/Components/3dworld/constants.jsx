@@ -1,60 +1,39 @@
-import PS6 from "../../assets/GLBs/PSINGLE/PS6.glb";
-import PS12 from "../../assets/GLBs/PSINGLE/PS12.glb";
-import PS24 from "../../assets/GLBs/PSINGLE/PS24.glb";
-import PD6 from "../../assets/GLBs/PDOUBLE/PD6.glb";
-import PD12 from "../../assets/GLBs/PDOUBLE/PD12.glb";
-import PD24 from "../../assets/GLBs/PDOUBLE/PD24.glb";
-import PT6 from "../../assets/GLBs/PTRIPLE/PT6.glb";
-import PT12 from "../../assets/GLBs/PTRIPLE/PT12.glb";
-import PT24 from "../../assets/GLBs/PTRIPLE/PT24.glb";
-import PTL6 from "../../assets/GLBs/PTRIPLEL/PTL6.glb";
-import PTL12 from "../../assets/GLBs/PTRIPLEL/PTL12.glb";
-import PTL24 from "../../assets/GLBs/PTRIPLEL/PTL24.glb";
-import PQ6 from "../../assets/GLBs/PQUAD/PQ6.glb";
-import PQ12 from "../../assets/GLBs/PQUAD/PQ12.glb";
-import PQ24 from "../../assets/GLBs/PQUAD/PQ24.glb";
-import PQL6 from "../../assets/GLBs/PQUADL/PQL6.glb";
-import PQL12 from "../../assets/GLBs/PQUADL/PQL12.glb";
-import PQL24 from "../../assets/GLBs/PQUADL/PQL24.glb";
-import pt11 from "../../assets/GLBs/PTRIPLE/Shelfs.glb"
-
 export const actualHeights = {
   6: 6,
   12: 12,
   24: 24,
 };
 
-
 export const levelUrls = {
   PSINGLE: {
-    6: PS6,
-    12: PS12,
-    24: PS24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167817/PS6_hccju0.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167824/PS12_pnlh44.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167834/PS24_dowmsz.glb",
   },
   PDOUBLE: {
-    6: PD6,
-    12: PD12,
-    24: PD24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167705/PD6_ofe1e0.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167767/PD12_l7mbj8.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167777/PD24_fffpfn.glb",
   },
   PTRIPLE: {
-    6: PT6,
-    12: PT12,
-    24: PT24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736168792/PT6_ivplo4.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736168799/PT12_nysblg.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736169052/PT24_izqnvs.glb",
   },
   PTRIPLE_L: {
-    6: PTL6,
-    12: PTL12,
-    24: PTL24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167976/PTL6_cahog5.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167991/PTL12_ikbeeg.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167999/PTL24_dqwi1q.glb",
   },
   PQUAD: {
-    6: PQ6,
-    12: PQ12,
-    24: PQ24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167868/PQ6_gp7bpd.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167874/PQ12_zmjkjm.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167887/PQ24_t4whun.glb",
   },
   PQUAD_L: {
-    6: PQL6,
-    12: PQL12,
-    24: PQL24,
+    6: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167920/PQL6_jbkkyu.glb",
+    12: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167930/PQL12_smzhu5.glb",
+    24: "https://res.cloudinary.com/drf2qiei6/image/upload/v1736167938/PQL24_a6k8vf.glb",
   },
 };
 export const baseTypeOptions = [

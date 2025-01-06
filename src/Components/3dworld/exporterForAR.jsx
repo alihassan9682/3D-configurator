@@ -174,11 +174,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
             const modelUrl = URL.createObjectURL(blob);
             dispatch({ type: "SET_MODEL", payload: modelUrl });
-            // captureModelSnapshot();
-            console.log("GLTF ", modelUrl);
             resolve();
           } catch (error) {
-            console.error("Error in GLTF export:", error);
+            // console.error("Error in GLTF export:", error);
             reject(error);
           }
         },
@@ -205,12 +203,12 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
             dispatch({ type: "SET_MODEL_IOS", payload: blob });
             resolve();
           } catch (error) {
-            console.error("Error in USDZ export processing:", error);
+            // console.error("Error in USDZ export processing:", error);
             reject(error);
           }
         });
       } catch (error) {
-        console.error("Error in USDZ export:", error);
+        // console.error("Error in USDZ export:", error);
         reject(error);
       }
     });
@@ -235,7 +233,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
       toast.success("Export completed successfully!");
     } catch (error) {
-      console.error("Export error:", error);
+      // console.error("Export error:", error);
       if (retryCount < maxRetries) {
         setRetryCount(prev => prev + 1);
         setTimeout(() => performExports(), 5000);
