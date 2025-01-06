@@ -152,14 +152,14 @@ const Hero3D = () => {
             // Apple device: Download USDZ file
             setTimeout(() => {
                 try {
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(state.model);
-                    link.href = url;
-                    link.download = 'model.gltf';
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(state.modelIos);
+        link.href = url;
+        link.download = 'model.usdz';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                 } catch (error) {
                     console.error('Download error:', error);
