@@ -73,7 +73,7 @@ const Hero3D = () => {
             const lineItemsToAdd = state.lineItem;
 
             lineItemsToAdd.push(item);
-            console.log(lineItemsToAdd)
+            // console.log(lineItemsToAdd)
             dispatch({ type: "SET_LINEITEM", payload: lineItemsToAdd });
         } else {
             setIdNull(true)
