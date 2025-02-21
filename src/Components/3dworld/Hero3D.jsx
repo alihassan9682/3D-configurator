@@ -35,7 +35,7 @@ import { MdOutlineFileDownload } from "react-icons/md";
 const Hero3D = () => {
     const { id } = useParams();
     const [state, dispatch] = useReducer(heroReducer, initialState);
-    const [checkout, setCheckout] = React.useState(null);
+    const [cart, setCart] = React.useState(null);
     const [variant_ID, setVariantID] = React.useState(null);
     const scrollToTopRef = React.useRef(null);
     const scrollToARRef = React.useRef(null);
@@ -46,14 +46,47 @@ const Hero3D = () => {
     }, [state.activeView]);
 
     useEffect(() => {
-        const client = Client.buildClient({
-            domain: 'duralifthardware.com',
-            storefrontAccessToken: process.env.REACT_APP_API_KEY,
-        });
-        client.checkout.create().then((checkout) => {
-            setCheckout(checkout);
+        const endpoint = "https://duralifthardware.com/api/2024-10/graphql.json";
+        const storefrontAccessToken = process.env.REACT_APP_API_KEY;
+
+        const createCartQuery = `
+      mutation {
+        cartCreate {
+          cart {
+            id
+            checkoutUrl
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+        fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
+            },
+            body: JSON.stringify({ query: createCartQuery }),
         })
-    }, [])
+            .then((response) => response.json())
+            .then((result) => {
+                if (result.data?.cartCreate?.cart) {
+                    setCart(result.data.cartCreate.cart);
+                } else {
+                    console.error(
+                        "Cart creation failed:",
+                        result.data?.cartCreate?.userErrors || result.errors
+                    );
+                }
+            })
+            .catch((error) => {
+                console.error("Error creating cart:", error);
+            });
+    }, []);
 
     useEffect(() => {
         const baseTypeFromId = baseTypeOptions.find(
@@ -113,7 +146,7 @@ const Hero3D = () => {
         }
     };
     const addTOCart = () => {
-        variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(checkout, state, variant_ID, toast, dispatch, setCheckout, state.descripation)
+        variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(cart, state, variant_ID, toast, dispatch, setCart, state.descripation)
     }
     useEffect(() => {
         // console.log("updated descripation", state.descripation)
@@ -152,14 +185,14 @@ const Hero3D = () => {
             // Apple device: Download USDZ file
             setTimeout(() => {
                 try {
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(state.modelIos);
-        link.href = url;
-        link.download = 'model.usdz';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(state.modelIos);
+                    link.href = url;
+                    link.download = 'model.usdz';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                 } catch (error) {
                     console.error('Download error:', error);

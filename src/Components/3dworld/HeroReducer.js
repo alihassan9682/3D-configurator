@@ -1,4 +1,5 @@
 import Client from "shopify-buy";
+
 import { actualHeights, levelUrls, baseTypeOptions } from "./index";
 // Initial state of the application
 export const initialState = {
@@ -254,32 +255,27 @@ export const handleBaseTypeChange = (
     }
   }
 };
-
-// CHangung the Application View from VR to AR
 export const toggleView = (view, dispatch) => {
   dispatch({ type: "SET_ACTIVE_VIEW", payload: view });
 };
 
 export const addToCart = async (
-  checkout,
+  cart, // Now a cart object with id and checkoutUrl, or null if not initialized
   state,
-  variant_ID,
   toast,
   dispatch,
-  setCheckout
+  setCart // Renamed from setCheckout for clarity
 ) => {
   const { performingExport } = state;
   if (performingExport) {
     toast.error("Please wait for the export to finish before adding to cart.");
+    return;
   }
-  // Early validation of state and items
   if (!state) {
     toast.error("Invalid state provided");
     return;
   }
-
   const { isInCart, isLoading, lineItem } = state;
-
   if (!Array.isArray(lineItem)) {
     toast.error("Cart items are not properly formatted");
     return;
@@ -291,53 +287,134 @@ export const addToCart = async (
 
   dispatch({ type: "SET_Loading" });
 
-  try {
-    const client = Client.buildClient({
-      domain: "duralifthardware.com",
-      storefrontAccessToken: process.env.REACT_APP_API_KEY,
-    });
+  const storefrontAccessToken = process.env.REACT_APP_API_KEY;
+  const endpoint = "https://duralifthardware.com/api/2024-10/graphql.json"; // Latest Storefront API version
 
-    let currentCheckout = checkout;
-    if (!currentCheckout?.id) {
-      currentCheckout = await client.checkout.create();
+  try {
+    let currentCart = cart;
+    if (!currentCart?.id) {
+      // Create a new cart
+      const createCartQuery = `
+        mutation {
+          cartCreate {
+            cart {
+              id
+              checkoutUrl
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const createResponse = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
+        },
+        body: JSON.stringify({ query: createCartQuery }),
+      });
+
+      const createResult = await createResponse.json();
+      if (!createResult.data?.cartCreate?.cart) {
+        throw new Error(
+          "Failed to create cart: " +
+            JSON.stringify(
+              createResult.data?.cartCreate?.userErrors || createResult.errors
+            )
+        );
+      }
+      currentCart = createResult.data.cartCreate.cart;
     }
 
-    // Format line items with custom attributes for each item
+    // Format line items for Shopify Cart API
     const validatedLineItems = lineItem
       .filter((item) => item && item.variantID)
-      .map((item) => {
-        const customAttributes = [
+      .map((item) => ({
+        merchandiseId: `gid://shopify/ProductVariant/${item.variantID}`, // Changed from variantId
+        quantity: Math.max(1, parseInt(item.quantity) || 1),
+        attributes: [
+          // Changed from customAttributes
           {
             key: "description",
             value:
               typeof item.description === "object"
                 ? JSON.stringify(item.description)
-                : item.descripation?.toString() || "No description provided",
+                : item.description?.toString() || "No description provided",
           },
-        ];
-
-        return {
-          variantId: `gid://shopify/ProductVariant/${item.variantID}`,
-          quantity: Math.max(1, parseInt(item.quantity) || 1),
-          customAttributes, // Add unique description for each item
-        };
-      });
+        ],
+      }));
 
     if (!validatedLineItems.length) {
       throw new Error("No valid items to add to cart");
     }
 
-    // Add items to checkout with retry mechanism
+    // Add items to the cart with retry mechanism
+    const addItemsQuery = `
+      mutation ($cartId: ID!, $lines: [CartLineInput!]!) {
+        cartLinesAdd(cartId: $cartId, lines: $lines) {
+          cart {
+            id
+            checkoutUrl
+            lines(first: 100) {
+              edges {
+                node {
+                  id
+                  quantity
+                  merchandise {
+                    ... on ProductVariant {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
     let retryCount = 0;
     const maxRetries = 3;
-    let updatedCheckout;
+    let updatedCart;
 
     while (retryCount < maxRetries) {
       try {
-        updatedCheckout = await client.checkout.addLineItems(
-          currentCheckout.id,
-          validatedLineItems
-        );
+        const addResponse = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
+          },
+          body: JSON.stringify({
+            query: addItemsQuery,
+            variables: {
+              cartId: currentCart.id,
+              lines: validatedLineItems,
+            },
+          }),
+        });
+
+        const addResult = await addResponse.json();
+        if (
+          addResult.errors ||
+          addResult.data?.cartLinesAdd?.userErrors?.length
+        ) {
+          throw new Error(
+            "Failed to add items: " +
+              JSON.stringify(
+                addResult.data?.cartLinesAdd?.userErrors || addResult.errors
+              )
+          );
+        }
+        updatedCart = addResult.data.cartLinesAdd.cart;
         break;
       } catch (error) {
         retryCount++;
@@ -346,17 +423,18 @@ export const addToCart = async (
       }
     }
 
-    if (!updatedCheckout?.lineItems) {
-      throw new Error("Failed to update checkout after multiple attempts");
+    if (!updatedCart?.lines?.edges?.length) {
+      throw new Error("Failed to update cart after multiple attempts");
     }
 
     // Update state and handle redirect
-    setCheckout(updatedCheckout);
+    setCart(updatedCart); // Updated to setCart
     dispatch({ type: "SET_CART", payload: true });
 
-    if (updatedCheckout.webUrl) {
+    const checkoutUrl = updatedCart.checkoutUrl;
+    if (checkoutUrl) {
       setTimeout(() => {
-        window.location.assign(updatedCheckout.webUrl);
+        window.location.assign(checkoutUrl);
       }, 100);
     } else {
       throw new Error("No checkout URL available");
@@ -368,17 +446,16 @@ export const addToCart = async (
       toast.error("Item validation failed. Please try again.");
     } else if (error.message.includes("No valid items")) {
       toast.error("Please ensure all items are properly selected");
-    } else if (error.message.includes("checkout")) {
+    } else if (error.message.includes("cart")) {
       toast.error("Cart initialization failed. Please refresh and try again.");
     } else {
       toast.error("Unable to add items to cart. Please try again.");
     }
   } finally {
-    dispatch({ type: "SET_Loading" });
+    dispatch({ type: "SET_Loading", payload: false });
   }
 };
 
-// Makign the Descripation for the model to be displayed in the cart
 export const convert = (value) => {
   const typeMap = {
     PSINGLE: "1X PSINGLE",

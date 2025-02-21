@@ -6,6 +6,35 @@ import {
   Navigate,
 } from "react-router-dom";
 import Hero3D from "./Components/3dworld/Hero3D";
+import CheckoutPage from "./Components/Payment/CheckOutPage"
+
+// Sample products array
+const products = [
+  {
+    id: 1,
+    name: 'Dura-Lift Elevate Adjustable Height Overhead 5251.46 Garage Door Ceiling Triple In Line Storage Platform (31 in. W x 93 in D)',
+    description: 'base*PTRIPLE',
+    price: 5251.46,
+    quantity: 1
+  },
+  {
+    id: 1,
+    name: 'Dura-Lift Elevate Adjustable Height Overhead 5251.46 Garage Door Ceiling Triple In Line Storage Platform (31 in. W x 93 in D)',
+    description: 'base*PTRIPLE',
+    price: 5251.46,
+    quantity: 3
+  },
+  {
+    id: 1,
+    name: 'Dura-Lift Elevate Adjustable Height Overhead 5251.46 Garage Door Ceiling Triple In Line Storage Platform (31 in. W x 93 in D)',
+    description: 'base*PTRIPLE',
+    price: 5251.46,
+    quantity: 4
+  },
+
+
+  // Add more products as needed
+];
 
 function App() {
   return (
@@ -16,6 +45,7 @@ function App() {
             <Route path="/" element={<Navigate to="/home/" />} />
             <Route path="/home/:id?" element={<Hero3D />} />
             <Route path="*" element={<Navigate to="/home/" />} />
+            <Route path="/payment" element={<CheckoutPage products={products} />} />
           </Routes>
         </div>
       </div>
