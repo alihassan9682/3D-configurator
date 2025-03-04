@@ -31,7 +31,7 @@ import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
 import Client from 'shopify-buy';
 import { MdOutlineFileDownload } from "react-icons/md";
-
+import { useNavigate } from 'react-router-dom';
 const Hero3D = () => {
     const { id } = useParams();
     const [state, dispatch] = useReducer(heroReducer, initialState);
@@ -41,6 +41,7 @@ const Hero3D = () => {
     const scrollToARRef = React.useRef(null);
     const [IdNull, setIdNull] = React.useState(false);
     const [mesh, setMesh] = React.useState(true);
+    const navigate = useNavigate()
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, [state.activeView]);
@@ -147,6 +148,7 @@ const Hero3D = () => {
     };
     const addTOCart = () => {
         variant_ID === null ? toast.error("Please select a base type to start.") : addToCart(cart, state, variant_ID, toast, dispatch, setCart, state.descripation)
+    // navigate("/payment")
     }
     useEffect(() => {
         // console.log("updated descripation", state.descripation)

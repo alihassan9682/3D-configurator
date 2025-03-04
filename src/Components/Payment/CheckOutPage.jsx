@@ -1,7 +1,6 @@
 import React from "react";
 import PSINGLE from "../../assets/PSINGLE.jpg";
 import Configure from "../../assets/ss.png";
-import PaymentForm from "./PaymentForm"
 import { useLocation } from "react-router-dom";
 const products = [
     {
@@ -26,6 +25,152 @@ const products = [
         quantity: 2,
     },
 ];
+const storefrontAccessToken = process.env.REACT_APP_API_KEY;
+const endpoint = "https://duralifthardware.com/api/2024-10/graphql.json";
+
+async function createCartWithMultipleItems(variantIds) {
+    try {
+        // First, create a new cart
+        const createCartQuery = `
+      mutation {
+        cartCreate {
+          cart {
+            id
+            checkoutUrl
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+        const createResponse = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Storefront-Access-Token': storefrontAccessToken
+            },
+            body: JSON.stringify({ query: createCartQuery })
+        });
+
+        const createResult = await createResponse.json();
+        const cartId = createResult.data.cartCreate.cart.id;
+        const checkoutUrl = createResult.data.cartCreate.cart.checkoutUrl;
+
+        if (!cartId) {
+            throw new Error('Failed to create cart: ' + JSON.stringify(createResult.data.cartCreate.userErrors));
+        }
+
+        // Prepare lines array with all variant IDs
+        const cartLines = variantIds.map(variantId => ({
+            quantity: 1,
+            merchandiseId: variantId
+        }));
+
+        // Add multiple items to the cart
+        const addItemsQuery = `
+      mutation ($cartId: ID!, $lines: [CartLineInput!]!) {
+        cartLinesAdd(cartId: $cartId, lines: $lines) {
+          cart {
+            id
+            checkoutUrl
+            lines(first: 10) {
+              edges {
+                node {
+                  id
+                  quantity
+                  merchandise {
+                    ... on ProductVariant {
+                      id
+                      title
+                      price {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            totalQuantity
+            cost {
+              totalAmount {
+                amount
+                currencyCode
+              }
+            }
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+        const variables = {
+            cartId: cartId,
+            lines: cartLines
+        };
+
+        const addResponse = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Storefront-Access-Token': storefrontAccessToken
+            },
+            body: JSON.stringify({
+                query: addItemsQuery,
+                variables: variables
+            })
+        });
+
+        const addResult = await addResponse.json();
+
+        if (addResult.data.cartLinesAdd.userErrors.length > 0) {
+            throw new Error('Failed to add items: ' + JSON.stringify(addResult.data.cartLinesAdd.userErrors));
+        }
+
+        // Return both cart details and checkout URL
+        return {
+            cart: addResult.data.cartLinesAdd.cart,
+            checkoutUrl: addResult.data.cartLinesAdd.cart.checkoutUrl
+        };
+
+    } catch (error) {
+        console.error('Error in cart operation:', error);
+        throw error;
+    }
+}
+
+// Example usage with redirect:
+async function testCartAndRedirect() {
+    try {
+        const testVariantIds = [
+            "gid://shopify/ProductVariant/45920037339355",
+            "gid://shopify/ProductVariant/45650105696475",
+            "gid://shopify/ProductVariant/45649839292635"
+        ];
+
+        const { cart, checkoutUrl } = await createCartWithMultipleItems(testVariantIds);
+
+        console.log('Cart created successfully with multiple items:', cart);
+        console.log('Checkout URL:', checkoutUrl);
+
+        // Redirect to checkout
+        if (checkoutUrl) {
+            window.location.href = checkoutUrl; // This will redirect the user to the checkout page
+        }
+
+        return { cart, checkoutUrl };
+
+    } catch (error) {
+        console.error('Test failed:', error);
+        throw error;
+    }
+}
 
 const CheckoutPage = () => {
     const location = useLocation();
@@ -35,7 +180,9 @@ const CheckoutPage = () => {
             {/* Left Side */}
             <div className="w-full md:w-2/3 p-4 flex items-center flex-col">
                 <h1 className="text-2xl font-bold mb-4">DURA-LIFT Door Hardware</h1>
-                <PaymentForm />
+                <div className="flex items-center justify-center mt-4">
+                    <img src={Configure} alt="" className="p-4 w-full  h-auto" />
+                </div>
             </div>
             <div>
             </div>
@@ -72,8 +219,16 @@ const CheckoutPage = () => {
                     <span>Total</span>
                     <span><span className="font-normal text-xs">USD</span> ${products.reduce((total, product) => total + product.price * product.quantity, 0).toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-center mt-4">
-                    <img src={Configure} alt="" className="p-4 w-1/2  h-auto" />
+
+                <div className="">
+                    <button className="bg-blue-500 text-white py-2 px-4 rounded-md text-sm" onClick={async () => {
+                        try {
+                            await testCartAndRedirect();
+                        } catch (error) {
+                            console.error('Error in checkout:', error);
+                            alert('There was an error in checkout. Please try again later.');
+                        }
+                    }}>Checkout</button>
                 </div>
             </div>
         </div>
