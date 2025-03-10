@@ -295,8 +295,11 @@ export const addToCart = async (
       publicAccessToken: process.env.REACT_APP_API_KEY,
     });
 
+    if (lineItem[0].description && lineItem[0].description.base) {
+      lineItem.reverse();
+    }
     // Format line items for Shopify Cart API
-    const validatedLineItems = lineItem.reverse()
+    const validatedLineItems = lineItem
       .filter((item) => item && item.variantID)
       .map((item) => ({
         merchandiseId: `gid://shopify/ProductVariant/${item.variantID}`, // Changed from variantId
