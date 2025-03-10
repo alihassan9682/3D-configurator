@@ -1,6 +1,6 @@
-import Client from "shopify-buy";
+import {createStorefrontApiClient} from '@shopify/storefront-api-client';
 
-import { actualHeights, levelUrls, baseTypeOptions } from "./index";
+import { actualHeights, levelUrls, baseTypeOptions, pSingleVariants } from "./index";
 // Initial state of the application
 export const initialState = {
   scale: 0.05,
@@ -287,65 +287,30 @@ export const addToCart = async (
 
   dispatch({ type: "SET_Loading" });
 
-  const storefrontAccessToken = process.env.REACT_APP_API_KEY;
-  const endpoint = "https://duralifthardware.com/api/2024-10/graphql.json"; // Latest Storefront API version
 
   try {
-    let currentCart = cart;
-    if (!currentCart?.id) {
-      // Create a new cart
-      const createCartQuery = `
-        mutation {
-          cartCreate {
-            cart {
-              id
-              checkoutUrl
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const createResponse = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
-        },
-        body: JSON.stringify({ query: createCartQuery }),
-      });
-
-      const createResult = await createResponse.json();
-      if (!createResult.data?.cartCreate?.cart) {
-        throw new Error(
-          "Failed to create cart: " +
-            JSON.stringify(
-              createResult.data?.cartCreate?.userErrors || createResult.errors
-            )
-        );
-      }
-      currentCart = createResult.data.cartCreate.cart;
-    }
+    const client = createStorefrontApiClient({
+      storeDomain: 'duralifthardware.com',
+      apiVersion: '2024-10',
+      publicAccessToken: process.env.REACT_APP_API_KEY,
+    });
 
     // Format line items for Shopify Cart API
-    const validatedLineItems = lineItem
+    const validatedLineItems = lineItem.reverse()
       .filter((item) => item && item.variantID)
       .map((item) => ({
         merchandiseId: `gid://shopify/ProductVariant/${item.variantID}`, // Changed from variantId
         quantity: Math.max(1, parseInt(item.quantity) || 1),
-        attributes: [
-          // Changed from customAttributes
-          {
-            key: "description",
-            value:
-              typeof item.description === "object"
-                ? JSON.stringify(item.description)
-                : item.description?.toString() || "No description provided",
-          },
-        ],
+        // attributes: [
+        //   // Changed from customAttributes
+        //   {
+        //     key: "description",
+        //     value:
+        //       typeof item.description === "object"
+        //         ? JSON.stringify(item.description)
+        //         : item.description?.toString() || "No description provided",
+        //   },
+        // ],
       }));
 
     if (!validatedLineItems.length) {
@@ -353,33 +318,34 @@ export const addToCart = async (
     }
 
     // Add items to the cart with retry mechanism
-    const addItemsQuery = `
-      mutation ($cartId: ID!, $lines: [CartLineInput!]!) {
-        cartLinesAdd(cartId: $cartId, lines: $lines) {
-          cart {
-            id
-            checkoutUrl
-            lines(first: 100) {
-              edges {
-                node {
-                  id
-                  quantity
-                  merchandise {
-                    ... on ProductVariant {
-                      id
-                    }
+
+    const operation = `mutation createCart($cartInput: CartInput) {
+      cartCreate(input: $cartInput) {
+        cart {
+          id
+          checkoutUrl
+          lines(first: 10) {
+            edges {
+              node {
+                id
+                merchandise {
+                  ... on ProductVariant {
+                    id
+                    title
                   }
                 }
               }
             }
           }
-          userErrors {
-            field
-            message
+          cost {
+            totalAmount {
+              amount
+              currencyCode
+            }
           }
         }
       }
-    `;
+    }`;
 
     let retryCount = 0;
     const maxRetries = 3;
@@ -387,34 +353,36 @@ export const addToCart = async (
 
     while (retryCount < maxRetries) {
       try {
-        const addResponse = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Shopify-Storefront-Access-Token": storefrontAccessToken,
-          },
-          body: JSON.stringify({
-            query: addItemsQuery,
-            variables: {
-              cartId: currentCart.id,
-              lines: validatedLineItems,
-            },
-          }),
-        });
+        const {data, errors} = await client.request(operation, {
+          variables: {
+            "cartInput": {
+              "lines": validatedLineItems
+              // [
+                // validatedLineItems
+                // {
+                //   "quantity": 1,
+                //   // "merchandiseId": "gid://shopify/ProductVariant/43162292814051"
+                //   // quantity: Math.max(1, parseInt(item.quantity) || 1),
+                //   // customAttributes, // Add unique description for each item
+                //   "merchandiseId": `gid://shopify/ProductVariant/${item.variantID}`
+                // }
+              // ]
+            }
+          }
+        })
 
-        const addResult = await addResponse.json();
         if (
-          addResult.errors ||
-          addResult.data?.cartLinesAdd?.userErrors?.length
+          errors ||
+          data?.cartLinesAdd?.userErrors?.length
         ) {
           throw new Error(
             "Failed to add items: " +
               JSON.stringify(
-                addResult.data?.cartLinesAdd?.userErrors || addResult.errors
+                data?.cartLinesAdd?.userErrors || errors
               )
           );
         }
-        updatedCart = addResult.data.cartLinesAdd.cart;
+        updatedCart = data.cartCreate.cart;
         break;
       } catch (error) {
         retryCount++;
@@ -470,17 +438,7 @@ export const convert = (value) => {
 
 const createModelFromPSingle = (state, dispatch) => {
   const { selectedType, selectedLength, scale, type } = state;
-  const psingleCount =
-    selectedType === "PTRIPLE" || selectedType === "PTRIPLE_L"
-      ? 3
-      : selectedType === "PDOUBLE"
-      ? 2
-      : selectedType === "PQUAD" || selectedType === "PQUAD_L"
-      ? 4
-      : selectedType === "PSINGLE"
-      ? 1
-      : 0;
-  dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
+
   const selecttype = [...type, selectedType];
   dispatch({ type: "ADD_TYPE", payload: selecttype });
 
@@ -533,16 +491,29 @@ export const addLevel = (state, dispatch, toast) => {
   dispatch({ type: "SET_LOADING" });
 
   const updatedLineItems = [...lineItem];
-  const selectedBaseType = baseTypeOptions.find(
-    (item) => item.value === selectedType
-  );
-  const variantID = selectedBaseType?.varaintID || null;
+  // const selectedBaseType = baseTypeOptions.find(
+  //   (item) => item.value === selectedType
+  // );
+  // const variantID = selectedBaseType?.varaintID || null;
+  const variantID = pSingleVariants[selectedLength];
+
+  const psingleCount =
+    selectedType === "PTRIPLE" || selectedType === "PTRIPLE_L"
+      ? 3
+      : selectedType === "PDOUBLE"
+      ? 2
+      : selectedType === "PQUAD" || selectedType === "PQUAD_L"
+      ? 4
+      : selectedType === "PSINGLE"
+      ? 1
+      : 0;
+  dispatch({ type: "SET_PSINGLE_COUNT", payload: psingleCount });
 
   const existingItemIndex = updatedLineItems.findIndex(
     (item) => item.variantID === variantID
   );
   if (existingItemIndex !== -1) {
-    updatedLineItems[existingItemIndex].quantity += 1;
+    updatedLineItems[existingItemIndex].quantity += psingleCount;
     const Position = platformName
       ? platformName
       : `${selectedType} Platform No 01`;
@@ -559,7 +530,7 @@ export const addLevel = (state, dispatch, toast) => {
       : `${selectedType} Platform No 01`;
     updatedLineItems.push({
       variantID,
-      quantity: 1,
+      quantity: psingleCount,
       description: {
         [`drop_down_level_${state.drop_down}`]: `${convert(
           selectedType
@@ -603,6 +574,7 @@ export const addLevel = (state, dispatch, toast) => {
         height: modelLevel.height,
         rotation: modelLevel.rotation,
         groupType: modelLevel.groupType,
+        singleType: selectedLength
       };
 
       newLevels.push(newLevel);
@@ -666,38 +638,54 @@ export const removeLevel = (
   }
 
   if (levels.length === 1) {
+    // toast.error("You can't remove base level");
+    // return;
     dispatch({ type: "SET_BASE_TYPE", payload: "" });
     setVariantID(null);
     setIdNull(true);
   }
 
   const newLevelIndex = levelIndex - 1;
-  const lastLevel = levels[levels.length - 1];
+  let lastLevel = levels[levels.length - 1];
   const lastGroupType = type.slice(0, -1); // Remove last item from type array
+  const levelType = lastLevel.groupType;
+  const singleType = lastLevel.singleType;
 
   // Create a new copy of lineItem array
   let newLineItems = [...lineItem];
+  const variantID = pSingleVariants[singleType];
 
   // Find the item in baseTypeOptions that matches the last level's groupType
   const matchingBaseType = baseTypeOptions.find(
-    (item) => item.value === lastLevel.groupType
+    (item) => item.value === levelType
   );
 
   if (matchingBaseType) {
+    const psingleCount =
+    levelType === "PTRIPLE" || levelType === "PTRIPLE_L"
+      ? 3
+      : levelType === "PDOUBLE"
+      ? 2
+      : levelType === "PQUAD" || levelType === "PQUAD_L"
+      ? 4
+      : levelType === "PSINGLE"
+      ? 1
+      : 0;
+
     // Find the index of the item in lineItems
     const index = newLineItems.findIndex(
-      (item) => item.variantID === matchingBaseType.varaintID
+      (item) => item.variantID === variantID
     );
 
     if (index !== -1) {
-      if (newLineItems[index].quantity === 1) {
+      if (newLineItems[index].quantity === 1 || newLineItems[index].quantity == psingleCount) {
         // Remove the item completely if quantity would become 0
         newLineItems = newLineItems.filter((_, i) => i !== index);
       } else {
-        // Decrease quantity by 1
+        // Decrease quantity by #psingleCount
         const new_descripation = (newLineItems[index] = {
           ...newLineItems[index],
-          quantity: newLineItems[index].quantity - 1,
+          quantity: newLineItems[index].quantity - psingleCount,
           description:
             delete newLineItems[index].description[
               `drop_down_level_${drop_down - 1}`

@@ -21,7 +21,6 @@ import { FaCartFlatbed } from "react-icons/fa6";
 import { GrPowerReset } from "react-icons/gr";
 import { MdAddCircleOutline } from "react-icons/md";
 import { IoMdCloseCircle } from "react-icons/io";
-import Client from "shopify-buy";
 import { MdRotate90DegreesCw } from "react-icons/md";
 
 import {
@@ -29,6 +28,7 @@ import {
   levelUrls,
   baseTypeOptions,
   conditionalOptions,
+  pSingleVariants
 } from "./constants";
 export {
   ModelViewer,
@@ -43,11 +43,11 @@ export {
   GrPowerReset,
   MdAddCircleOutline,
   IoMdCloseCircle,
-  Client,
   actualHeights,
   levelUrls,
   baseTypeOptions,
   conditionalOptions,
+  pSingleVariants,
   heroReducer,
   initialState,
   addLevel,

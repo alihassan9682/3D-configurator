@@ -29,7 +29,6 @@ import { useParams } from 'react-router-dom';
 import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
-import Client from 'shopify-buy';
 import { MdOutlineFileDownload } from "react-icons/md";
 import { useNavigate } from 'react-router-dom';
 const Hero3D = () => {

@@ -80,6 +80,11 @@ export const baseTypeOptions = [
   },
 ];
 
+export const pSingleVariants  = {
+  6: 46073495322843,
+  12: 46073614172379,
+  24: 46073618464987,
+};
 
 export const conditionalOptions = {
   PSINGLE: [{ value: "PSINGLE", label: "1" }],
