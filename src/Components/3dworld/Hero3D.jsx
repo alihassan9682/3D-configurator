@@ -157,6 +157,20 @@ const Hero3D = () => {
         );
   };
 
+  /**
+ * Handles the "View in AR" button click.
+ * 
+ * - Validates required selections and model loading state.
+ * - Detects the user's platform (iOS, Android, or compatible Mac).
+ * - If on a supported mobile platform:
+ *    - Creates a <model-viewer> element with AR capabilities.
+ *    - Configures AR settings such as scale, camera behavior, and AR modes.
+ *    - Triggers the device's native AR viewer (Scene Viewer on Android or Quick Look on iOS).
+ * - If not on a supported mobile platform:
+ *    - Shows a fallback 3D preview instead of AR mode.
+ * - Displays toast notifications for invalid states or unsupported platforms.
+ */
+
   const handleARViewClick = () => {
     if (state.baseType === "") {
       toast.error("Please select a base type to start.");
