@@ -1,11 +1,19 @@
-import React, { useEffect, useRef, Suspense, useCallback, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  Suspense,
+  useCallback,
+  useState,
+  useMemo,
+} from "react";
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { toast } from "react-toastify";
 import { FaArrowUp } from "react-icons/fa";
-import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
+import { USDZExporter } from "three/examples/jsm/exporters/USDZExporter";
+import { meterToInchesRatio } from "./constants";
 
 const LoadingIndicator = () => {
   return (
@@ -22,20 +30,30 @@ const LoadingIndicator = () => {
   );
 };
 
-const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, groupType }) => {
+const DetectionMesh = ({
+  position,
+  size,
+  onClick,
+  levelIndex,
+  platformNumber,
+  groupType,
+}) => {
   const meshRef = useRef();
 
   useFrame(({ raycaster, camera, mouse }) => {
     if (meshRef.current) {
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObject(meshRef.current);
-      document.body.style.cursor = intersects.length > 0 ? "pointer" : "default";
+      document.body.style.cursor =
+        intersects.length > 0 ? "pointer" : "default";
     }
   });
 
   // Adjust position based on group type and platform number
-  if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
-    (groupType === "PQUAD_L" && platformNumber === 4)) {
+  if (
+    (groupType === "PTRIPLE_L" && platformNumber === 3) ||
+    (groupType === "PQUAD_L" && platformNumber === 4)
+  ) {
     position[2] = 20;
   } else {
     position[2] = -12;
@@ -44,8 +62,12 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
   // Adjust size based on group type and platform number
   let adjustedSize = [...size];
   if (groupType === "PTRIPLE_L" || groupType === "PQUAD_L") {
-    if ((groupType === "PTRIPLE_L" && (platformNumber === 2 || platformNumber === 3)) ||
-      (groupType === "PQUAD_L" && (platformNumber === 3 || platformNumber === 4))) {
+    if (
+      (groupType === "PTRIPLE_L" &&
+        (platformNumber === 2 || platformNumber === 3)) ||
+      (groupType === "PQUAD_L" &&
+        (platformNumber === 3 || platformNumber === 4))
+    ) {
       adjustedSize[0] = 30;
     } else {
       adjustedSize[0] = size[0];
@@ -59,12 +81,28 @@ const DetectionMesh = ({ position, size, onClick, levelIndex, platformNumber, gr
       onClick={(e) => onClick(e, levelIndex, platformNumber)}
     >
       <boxGeometry args={adjustedSize} />
-      <meshBasicMaterial transparent opacity={0} wireframe={true} visible={false} />
+      <meshBasicMaterial
+        transparent
+        opacity={0}
+        wireframe={true}
+        visible={false}
+      />
     </mesh>
   );
 };
 
-const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, setIsSceneReady, originalScale, setOriginalScale }) => {
+const Level = ({
+  url,
+  position,
+  scale,
+  onClick,
+  levelIndex,
+  groupType,
+  isMesh,
+  setIsSceneReady,
+  originalScale,
+  setOriginalScale,
+}) => {
   const { scene } = useGLTF(url);
   // console.log(`Loading level with URL: ${url}`);
   // console.log('Loaded scene:', scene);
@@ -95,12 +133,13 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   const spacing = 2;
   const meshPadding = 5;
   const totalWidth = modelSize.x;
-  const singleMeshWidth = (totalWidth - (spacing * (platformCount - 1))) / platformCount;
+  const singleMeshWidth =
+    (totalWidth - spacing * (platformCount - 1)) / platformCount;
 
   // Create detection meshes for each platform
   for (let i = 0; i < platformCount; i++) {
-    const startX = bbox.min.x + (i * (singleMeshWidth + spacing));
-    const centerX = startX + (singleMeshWidth / 2);
+    const startX = bbox.min.x + i * (singleMeshWidth + spacing);
+    const centerX = startX + singleMeshWidth / 2;
 
     detectionMeshes.push(
       <DetectionMesh
@@ -118,22 +157,36 @@ const Level = ({ url, position, scale, onClick, levelIndex, groupType, isMesh, s
   useEffect(() => {
     setIsSceneReady(true);
   }, [setIsSceneReady]);
+
+  const groupPosition = useMemo(
+    () =>
+      new Array(3)
+        .fill(0)
+        .map((_, idx) => position[idx] * (originalScale ? 1 : 0.5)),
+    [position, originalScale]
+  );
+  const groupScale = useMemo(
+    () => (originalScale ? scale : new Array(3).fill(meterToInchesRatio)),
+    [originalScale, scale]
+  );
+
   return (
-    <group
-      position={[
-        position[0] * (originalScale ? 1 : 0.5),
-        position[1] * (originalScale ? 1 : 0.5),
-        position[2] * (originalScale ? 1 : 0.5),
-      ]}
-      scale={originalScale ? scale : [1 / 39.37, 1 / 39.37, 1 / 39.37]}
-    >
+    <group position={groupPosition} scale={groupScale}>
       <primitive object={clonedScene} />
       {isMesh ? detectionMeshes : null}
     </group>
   );
 };
 
-const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, selectedPart, isMesh }) => {
+const ModelViewer = ({
+  scale,
+  levels,
+  dispatch,
+  platformName,
+  scrollToTopRef,
+  selectedPart,
+  isMesh,
+}) => {
   const sceneRef = useRef(new THREE.Scene());
   const canvasRef = useRef(null);
   const cameraRef = useRef(null);
@@ -171,7 +224,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
         groupRef.current,
         (result) => {
           try {
-            const blob = new Blob([JSON.stringify(result)], { type: "application/json" });
+            const blob = new Blob([JSON.stringify(result)], {
+              type: "application/json",
+            });
             const modelUrl = URL.createObjectURL(blob);
             dispatch({ type: "SET_MODEL", payload: modelUrl });
             resolve();
@@ -216,7 +271,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
   const performExports = useCallback(async () => {
     if (!isSceneReady) {
-      toast.error("Scene is not ready. Please wait for it to be ready before exporting.");
+      toast.error(
+        "Scene is not ready. Please wait for it to be ready before exporting."
+      );
       return;
     }
 
@@ -224,7 +281,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
       dispatch({ type: "SET_EXPORT", payload: true });
 
       setOriginalScale(null);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await exportModel();
       await handleExportUSDZ();
       setOriginalScale(true);
@@ -235,7 +292,7 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     } catch (error) {
       // console.error("Export error:", error);
       if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
         setTimeout(() => performExports(), 5000);
       } else {
         setIsLoading(false);
@@ -244,14 +301,12 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     }
   }, [exportModel, handleExportUSDZ, isSceneReady, retryCount, maxRetries]);
 
-
-
   useEffect(() => {
     if (levels.length > 0 && isSceneReady === true) {
       setIsLoading(true);
       performExports();
     } else if (levels.length > 0) {
-      console.warn('Scene not ready, waiting...');
+      console.warn("Scene not ready, waiting...");
     }
   }, [levels, isSceneReady]);
 
@@ -261,36 +316,52 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
     setLocalPlatformName(platformName);
 
     let selectionData = {};
-    if ((groupType === "PTRIPLE_L" && platformNumber === 3) ||
-      (groupType === "PQUAD_L" && platformNumber === 4)) {
-      const exactX = platformNumber === 1 ? 0 :
-        (groupType === "PTRIPLE_L" && platformNumber === 3) || platformNumber === 2 ? 1.53 :
-          ((platformNumber === 3 || platformNumber === 4) && groupType === "PQUAD_L") ? 3.06 : 0;
+    if (
+      (groupType === "PTRIPLE_L" && platformNumber === 3) ||
+      (groupType === "PQUAD_L" && platformNumber === 4)
+    ) {
+      const exactX =
+        platformNumber === 1
+          ? 0
+          : (groupType === "PTRIPLE_L" && platformNumber === 3) ||
+            platformNumber === 2
+          ? 1.53
+          : (platformNumber === 3 || platformNumber === 4) &&
+            groupType === "PQUAD_L"
+          ? 3.06
+          : 0;
       const exactZ = 1.53;
       selectionData = { exactX, exactZ };
     } else {
-      const exactX = platformNumber === 1 ? 0 :
-        platformNumber === 2 ? 1.53 :
-          platformNumber === 3 ? 3.06 : 4.59;
+      const exactX =
+        platformNumber === 1
+          ? 0
+          : platformNumber === 2
+          ? 1.53
+          : platformNumber === 3
+          ? 3.06
+          : 4.59;
       selectionData = { exactX };
     }
     // console.log("Selection Data:", selectionData);
     dispatch({ type: "SET_SELECTED_PART", payload: selectionData.exactX });
     dispatch({ type: "SET_SELECTED_PART_Z", payload: selectionData.exactZ });
     dispatch({ type: "SET_PLATFORM_NAME", payload: platformName });
-
   }, []);
 
   return (
-
     <div
       ref={canvasRef}
       className="flex  h-screen w-full items-center  justify-center bg-gray-200 relative"
     >
       {levels.length === 0 ? (
         <div className="text-gray-600 text-center">
-          <p className="text-xl font-semibold mb-4">Add Levels and Configure Your Personalized Model</p>
-          <p>Please use the controls on the side to add levels to your model.</p>
+          <p className="text-xl font-semibold mb-4">
+            Add Levels and Configure Your Personalized Model
+          </p>
+          <p>
+            Please use the controls on the side to add levels to your model.
+          </p>
         </div>
       ) : (
         <>
@@ -316,7 +387,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
                     onClick={handleClick}
                     levelIndex={index}
                     groupType={level.groupType}
-                    parentGroupType={index > 0 ? levels[index - 1].groupType : null}
+                    parentGroupType={
+                      index > 0 ? levels[index - 1].groupType : null
+                    }
                     isMesh={isMesh}
                     setIsSceneReady={setIsSceneReady}
                     originalScale={originalScale}
@@ -347,7 +420,9 @@ const ModelViewer = ({ scale, levels, dispatch, platformName, scrollToTopRef, se
 
           <button
             className="block lg:hidden fixed bottom-6 right-6 z-50 p-2.5 bg-gray-500 hover:bg-gray-600 text-white rounded-full shadow-lg"
-            onClick={() => scrollToTopRef.current.scrollIntoView({ behavior: "smooth" })}
+            onClick={() =>
+              scrollToTopRef.current.scrollIntoView({ behavior: "smooth" })
+            }
           >
             <FaArrowUp className="text-2xl" />
           </button>
