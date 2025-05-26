@@ -25,23 +25,30 @@ import {
   addToCart,
 } from "./index";
 import Footer from "../Footer";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { FaLayerGroup } from "react-icons/fa6";
 import { MdOutlineCancel } from "react-icons/md";
 import { FaRuler } from "react-icons/fa";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import "@google/model-viewer";
+import ImageCarousel from "./ImageCarousel";
+import { hideARGestureGuideKey } from "./constants";
 const Hero3D = () => {
   const scrollToTopRef = useRef(null); // ✅ Define the ref
   const scrollToARRef = useRef(null);
   const { id } = useParams();
   const [state, dispatch] = useReducer(heroReducer, initialState);
   const [cart, setCart] = useState(null);
+  const [arLoading, setArLoading] = useState(false);
   const [variant_ID, setVariantID] = useState(null);
   const [IdNull, setIdNull] = useState(false);
+  const [showARGestureGuide, setShowARGestureGuide] = useState(false);
   const [mesh, setMesh] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const hideARGestureGuide = localStorage.getItem(hideARGestureGuideKey);
+  const modelViewerRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -158,74 +165,144 @@ const Hero3D = () => {
   };
 
   /**
- * Handles the "View in AR" button click.
- * 
- * - Validates required selections and model loading state.
- * - Detects the user's platform (iOS, Android, or compatible Mac).
- * - If on a supported mobile platform:
- *    - Creates a <model-viewer> element with AR capabilities.
- *    - Configures AR settings such as scale, camera behavior, and AR modes.
- *    - Triggers the device's native AR viewer (Scene Viewer on Android or Quick Look on iOS).
- * - If not on a supported mobile platform:
- *    - Shows a fallback 3D preview instead of AR mode.
- * - Displays toast notifications for invalid states or unsupported platforms.
- */
+   * Handles the "View in AR" button click.
+   *
+   * - Validates required selections and model loading state.
+   * - Detects the user's platform (iOS, Android, or compatible Mac).
+   * - If on a supported mobile platform:
+   *    - Creates a <model-viewer> element with AR capabilities.
+   *    - Configures AR settings such as scale, camera behavior, and AR modes.
+   *    - Triggers the device's native AR viewer (Scene Viewer on Android or Quick Look on iOS).
+   * - If not on a supported mobile platform:
+   *    - Shows a fallback 3D preview instead of AR mode.
+   * - Displays toast notifications for invalid states or unsupported platforms.
+   */
+
+  const showARView = async () => {
+    // Validate preconditions
+    if (!validatePreconditions()) return;
+
+    // Prepare for AR view
+    setMesh(false);
+
+    // Handle AR view based on device type
+    if (isMobileDevice()) {
+      await showMobileARView();
+    } else {
+      showDesktopFallback();
+    }
+  };
 
   const handleARViewClick = () => {
+    if (!validatePreconditions()) return;
+
+    if (hideARGestureGuide) {
+      showARView();
+    } else {
+      setShowARGestureGuide(true);
+    }
+  };
+
+  const validatePreconditions = () => {
     if (state.baseType === "") {
       toast.error("Please select a base type to start.");
-      return;
+      return false;
     }
+
     if (
       state.model === null ||
       state.modelIos === null ||
       state.performingExport
     ) {
       toast.error("Model is loading. Please wait...");
-      return;
+      return false;
     }
 
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    return true;
+  };
+
+  const isMobileDevice = () => {
+    const userAgent = navigator.userAgent;
+    const isAndroid = /Android/i.test(userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
     const isMacDesktop =
-      /Macintosh|Mac/i.test(navigator.userAgent) && !("ontouchend" in document);
-    const isMobile = isAndroid || isIOS || isMacDesktop;
+      /Macintosh|Mac/i.test(userAgent) && !("ontouchend" in document);
 
-    setMesh(false);
+    return isAndroid || isIOS || isMacDesktop;
+  };
 
-    if (isMobile) {
-      const viewer = document.createElement("model-viewer");
-      viewer.setAttribute(
-        "src",
+  const showMobileARView = async () => {
+    try {
+      const modelUrl =
         typeof state.model === "string"
           ? state.model
-          : URL.createObjectURL(state.model)
-      );
+          : URL.createObjectURL(state.model);
 
-      // 🔹 AR Settings
-      viewer.setAttribute("ar", "true");
-      viewer.setAttribute("ar-modes", "webxr scene-viewer quick-look");
-      viewer.setAttribute("ar-scale", "fixed");
-      viewer.setAttribute("ar-placement", "floor");
+      if (modelViewerRef.current) {
+        modelViewerRef.current.remove();
+      }
 
-      // 🔹 Prevent resizing and maintain real world scale.
-      viewer.setAttribute("scale", "1m 1m 1m");
+      modelViewerRef.current = createModelViewer(modelUrl);
+      document.body.appendChild(modelViewerRef.current);
 
-      // 🔹 Required for iOS Quick Look
-      viewer.setAttribute("quick-look-browsing", "true");
+      // Small delay to ensure viewer is ready
+      setArLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await modelViewerRef.current.activateAR?.();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Failed to launch AR view:", error);
+      toast.error("Failed to launch AR experience. Please try again.");
+    } finally {
+      setArLoading(false);
+    }
+  };
 
-      // 🔹 Restrict camera controls to movement only.
-      viewer.setAttribute("camera-controls", "false"); // Disable all controls
-      viewer.removeAttribute("camera-orbit"); // Remove orbit settings
-      viewer.removeAttribute("auto-rotate"); // Ensure auto-rotate is off
-      // 🔹 Prevent zoom.
-      viewer.setAttribute("disable-zoom", "true");
+  const createModelViewer = (modelUrl) => {
+    const viewer = document.createElement("model-viewer");
+    viewer.style.display = "none";
 
-      document.body.appendChild(viewer);
-      setTimeout(() => viewer.activateAR?.(), 500);
-    } else {
-      toast.info("AR is not available on desktop. Showing 3D preview.");
-      document.getElementById("model-viewer-container").style.display = "block";
+    // Model source
+    viewer.setAttribute("src", modelUrl);
+
+    // AR Configuration
+    const arAttributes = {
+      ar: "true",
+      "ar-modes": "webxr scene-viewer quick-look",
+      "ar-scale": "fixed",
+      "ar-placement": "floor",
+      "quick-look-browsing": "true",
+      "shadow-intensity": "1",
+      exposure: "1",
+    };
+
+    // Viewer behavior
+    const viewerAttributes = {
+      scale: "1 1 1",
+      "camera-controls": "false",
+      "disable-zoom": "true",
+    };
+
+    // Set all attributes
+    Object.entries({ ...arAttributes, ...viewerAttributes }).forEach(
+      ([key, value]) => {
+        viewer.setAttribute(key, value);
+      }
+    );
+
+    // Remove unwanted attributes
+    ["camera-orbit", "auto-rotate"].forEach((attr) => {
+      viewer.removeAttribute(attr);
+    });
+
+    return viewer;
+  };
+
+  const showDesktopFallback = () => {
+    toast.info("AR is not available on desktop. Showing 3D preview.");
+    const container = document.getElementById("model-viewer-container");
+    if (container) {
+      container.style.display = "block";
     }
   };
 
@@ -273,9 +350,14 @@ const Hero3D = () => {
                     borderTopRightRadius: 0,
                     borderBottomRightRadius: 0,
                   }}
+                  disabled={arLoading}
                 >
                   <div className="flex items-center gap-2">
-                    <TbAugmentedReality size={24} /> <span>View in Room</span>
+                    <TbAugmentedReality
+                      className={arLoading ? "animate-spin" : ""}
+                      size={24}
+                    />{" "}
+                    <span>View in Room</span>
                   </div>
                 </button>
                 <button
@@ -466,6 +548,14 @@ const Hero3D = () => {
       </div>
       <ToastContainer />
       <Footer className="block bg-gray-800 text-white p-4" />
+
+      {showARGestureGuide && (
+        <ImageCarousel
+          rotateInterval={3000}
+          onClose={() => setShowARGestureGuide(false)}
+          showARView={showARView}
+        />
+      )}
     </div>
   );
 };

@@ -80,7 +80,7 @@ export const baseTypeOptions = [
   },
 ];
 
-export const pSingleVariants  = {
+export const pSingleVariants = {
   6: 46073495322843,
   12: 46073614172379,
   24: 46073618464987,
@@ -120,3 +120,7 @@ export const conditionalOptions = {
     { value: "PQUAD_L", label: "4L" },
   ],
 };
+
+export const meterToInchesRatio = 0.02539998;
+
+export const hideARGestureGuideKey = "hideARGestureGuide";
